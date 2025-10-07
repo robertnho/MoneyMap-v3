@@ -1,0 +1,28 @@
+@import "tailwindcss";
+@config "../tailwind.config.js";
+
+/* seu CSS abaixo pode continuar igual */
+:root {
+  --cor-primaria: #10b981;
+  --cor-secundaria: #0ea5e9;
+}
+
+html, body, #root { height: 100%; }
+
+.container-app {
+  /* isto agora funciona no v4 */
+  @apply min-h-screen flex flex-col bg-gray-50 text-gray-900;
+}
+
+.layout-principal {
+  @apply flex-1 flex w-full max-w-7xl mx-auto gap-4 px-4 md:px-6 py-4;
+}
+
+.card {
+  @apply bg-white rounded-lg shadow border border-gray-100;
+}
+
+.titulo-secao {
+  @apply text-xl font-semibold text-gray-800;
+}
+
