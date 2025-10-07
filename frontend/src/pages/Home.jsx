@@ -1,5 +1,6 @@
 import React, { useState } from "react"
 import { useNavigate } from "react-router-dom"
+import { motion } from 'framer-motion'
 import { 
   PiggyBank, 
   TrendingUp, 
@@ -14,6 +15,7 @@ import {
   BarChart3,
   CheckCircle
 } from "lucide-react"
+import { Card, Button } from '../components/ui'
 
 export default function Home() {
   const [loading, setLoading] = useState(false)
@@ -32,52 +34,86 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 text-gray-900 dark:text-white">
       
       {/* Header */}
-      <header className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10 shadow-sm">
+      <motion.header 
+        className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10 shadow-sm"
+        initial={{ y: -100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+      >
         <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
+          <motion.div 
+            className="flex items-center space-x-3"
+            whileHover={{ scale: 1.05 }}
+          >
+            <motion.div 
+              className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center"
+              whileHover={{ rotate: 360 }}
+              transition={{ duration: 0.6 }}
+            >
               <PiggyBank className="w-6 h-6 text-white" />
-            </div>
+            </motion.div>
             <span className="text-2xl font-bold">MoneyMapp</span>
-          </div>
-          <button 
+          </motion.div>
+          <Button 
             onClick={() => navigate("/login")}
-            className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all shadow-md"
+            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-md"
           >
             Fazer Login
-          </button>
+          </Button>
         </div>
-      </header>
+      </motion.header>
 
       {/* Hero Section */}
       <section className="py-28 px-6 text-center bg-gradient-to-r from-blue-600 to-purple-700 text-white relative overflow-hidden">
         <div className="absolute inset-0 opacity-20 bg-pattern"></div>
         <div className="max-w-4xl mx-auto relative z-10">
-          <h1 className="text-5xl md:text-6xl font-extrabold mb-6 animate-fade-in">
+          <motion.h1 
+            className="text-5xl md:text-6xl font-extrabold mb-6"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.8 }}
+          >
             MoneyMapp TCC
-          </h1>
-          <h2 className="text-2xl md:text-3xl font-semibold mb-6">
+          </motion.h1>
+          <motion.h2 
+            className="text-2xl md:text-3xl font-semibold mb-6"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.8 }}
+          >
             A plataforma de educação financeira que transforma sua vida
-          </h2>
-          <p className="text-lg opacity-90 mb-10 max-w-2xl mx-auto">
+          </motion.h2>
+          <motion.p 
+            className="text-lg opacity-90 mb-10 max-w-2xl mx-auto"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6, duration: 0.8 }}
+          >
             Controle suas finanças, defina metas e aprenda a investir com uma experiência 
             simples, moderna e intuitiva — feita especialmente para jovens estudantes e profissionais.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button 
+          </motion.p>
+          <motion.div 
+            className="flex flex-col sm:flex-row gap-4 justify-center"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8, duration: 0.8 }}
+          >
+            <Button
               onClick={handleDemoAccess}
-              className="bg-white text-blue-600 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-gray-100 transition-all transform hover:scale-105 shadow-lg flex items-center justify-center gap-2"
+              className="bg-white text-blue-600 hover:bg-gray-100 shadow-lg px-8 py-4 text-lg font-semibold flex items-center justify-center gap-2"
+              loading={loading}
             >
-              Entrar em demonstração
-              <ChevronRight className="w-5 h-5" />
-            </button>
-            <button 
+              {!loading && <span>Entrar em demonstração</span>}
+              {!loading && <ChevronRight className="w-5 h-5" />}
+            </Button>
+            <Button
               onClick={() => navigate("/login")}
-              className="bg-transparent border-2 border-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-white hover:text-blue-600 transition-all transform hover:scale-105 shadow-lg"
+              variant="secondary"
+              className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-blue-600 shadow-lg px-8 py-4 text-lg font-semibold"
             >
               Fazer login
-            </button>
-          </div>
+            </Button>
+          </motion.div>
         </div>
       </section>
 
