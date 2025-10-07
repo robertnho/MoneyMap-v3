@@ -9,11 +9,25 @@ import {
   Trash2,
   Calendar,
   TrendingUp,
-  TrendingDown
+  TrendingDown,
+  Eye
 } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
+import { dadosDemo } from '../data/dadosDemo'
 
-// Dados mockados para demonstração
-const mockTransacoes = [
+// Componente de indicador do modo demo
+function IndicadorModoDemo() {
+  return (
+    <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 mb-6">
+      <Eye className="w-5 h-5" />
+      <span className="font-medium">Modo Demonstração</span>
+      <span className="text-blue-100 text-sm">• Todos os dados são fictícios</span>
+    </div>
+  )
+}
+
+// Dados mockados para demonstração (fallback)
+const mockTransacoesFallback = [
   {
     id: 1,
     descricao: 'Salário Mensal',
@@ -112,7 +126,11 @@ const categorias = [
 ]
 
 export default function Transacoes() {
-  const [transacoes, setTransacoes] = useState(mockTransacoes)
+  const { modoDemo } = useAuth()
+  
+  // Usar dados demo se estiver em modo demo
+  const transacoesIniciais = modoDemo ? dadosDemo.transacoes : mockTransacoesFallback
+  const [transacoes, setTransacoes] = useState(transacoesIniciais)
   const [filtros, setFiltros] = useState({
     busca: '',
     categoria: '',
@@ -153,6 +171,9 @@ export default function Transacoes() {
 
   return (
     <div className="p-4 md:p-6 space-y-6 animate-in fade-in duration-500">
+      {/* Indicador de Modo Demo */}
+      {modoDemo && <IndicadorModoDemo />}
+      
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>

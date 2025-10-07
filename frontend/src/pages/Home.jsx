@@ -16,18 +16,24 @@ import {
   CheckCircle
 } from "lucide-react"
 import { Card, Button } from '../components/ui'
+import { useAuth } from '../context/AuthContext'
 
 export default function Home() {
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
+  const { ativarModoDemo } = useAuth()
 
   const handleDemoAccess = async () => {
     setLoading(true)
-    localStorage.setItem("demoMode", "true")
+    
+    // Ativar modo demo no contexto
+    ativarModoDemo()
+    
+    // Simular carregamento antes de navegar para a página de loading
     setTimeout(() => {
       setLoading(false)
-      navigate("/dashboard")
-    }, 1500)
+      navigate("/demo-loading")
+    }, 800)
   }
 
   return (

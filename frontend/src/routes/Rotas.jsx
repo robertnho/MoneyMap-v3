@@ -5,6 +5,7 @@ import Home from '../pages/Home.jsx'
 import Login from '../pages/Login.jsx'
 import Registrar from '../pages/Registrar.jsx'
 import NotFound from '../pages/NotFound.jsx'
+import DemoLoading from '../pages/DemoLoading.jsx'
 
 // privadas
 import Dashboard from '../pages/Dashboard.jsx'
@@ -20,8 +21,12 @@ import DashboardLayout from '../layouts/DashboardLayout.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 
 function Privado({ children }) {
-  const { token } = useAuth()
-  return token ? children : <Navigate to="/login" replace />
+  const { token, modoDemo } = useAuth()
+  
+  // Permite acesso se tiver token válido OU estiver em modo demo
+  const temAcesso = token || modoDemo
+  
+  return temAcesso ? children : <Navigate to="/login" replace />
 }
 
 export default function Rotas() {
@@ -33,6 +38,7 @@ export default function Rotas() {
         <Route path="/home" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/registrar" element={<Registrar />} />
+        <Route path="/demo-loading" element={<DemoLoading />} />
       </Route>
 
       {/* Privado: um layout para todas as rotas autenticadas */}

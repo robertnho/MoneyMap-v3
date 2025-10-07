@@ -3,7 +3,7 @@ import { NavLink, Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 
 export default function Navbar() {
-  const { token, sair, usuario } = useAuth()
+  const { token, sair, usuario, modoDemo } = useAuth()
   const navigate = useNavigate()
 
   const linkClass = ({ isActive }) =>
@@ -12,7 +12,8 @@ export default function Navbar() {
 
   function aoSair() {
     sair()
-    navigate('/login', { replace: true })
+    // Se estiver em modo demo, volta para home, senão vai para login
+    navigate(modoDemo ? '/home' : '/login', { replace: true })
   }
 
   return (
@@ -33,16 +34,17 @@ export default function Navbar() {
             <NavLink to="/configuracoes" className={linkClass}>Configurações</NavLink>
 
             {/* Saudação + sair */}
-            {usuario?.name && (
+            {usuario?.nome && (
               <span className="hidden lg:inline text-sm text-gray-600 mx-2">
-                Olá, <strong className="font-medium">{usuario.name.split(' ')[0]}</strong>
+                Olá, <strong className="font-medium">{usuario.nome.split(' ')[0]}</strong>
+                {modoDemo && <span className="ml-1 text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">DEMO</span>}
               </span>
             )}
             <button
               onClick={aoSair}
-              className="text-sm bg-emerald-600 text-white px-3 py-1.5 rounded"
+              className="text-sm bg-emerald-600 text-white px-3 py-1.5 rounded hover:bg-emerald-700 transition-colors"
             >
-              Sair
+              {modoDemo ? 'Sair da Demo' : 'Sair'}
             </button>
           </div>
         ) : (

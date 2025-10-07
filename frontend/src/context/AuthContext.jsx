@@ -13,6 +13,7 @@ export function AuthProvider({ children }) {
     }
   })
   const [token, setToken] = useState(() => localStorage.getItem('mm_token') ?? '')
+  const [modoDemo, setModoDemo] = useState(() => localStorage.getItem('demoMode') === 'true')
 
   // Propaga/remova o Authorization no axios quando o token mudar
   useEffect(() => {
@@ -79,12 +80,39 @@ export function AuthProvider({ children }) {
   function sair() {
     setToken('')
     setUsuario(null)
+    setModoDemo(false)
     localStorage.removeItem('mm_token')
     localStorage.removeItem('mm_usuario')
+    localStorage.removeItem('demoMode')
     delete api.instancia.defaults.headers.common['Authorization']
   }
 
-  const value = useMemo(() => ({ usuario, token, entrar, registrar, sair }), [usuario, token])
+  // Função para ativar modo demo
+  function ativarModoDemo() {
+    const usuarioDemo = {
+      id: 'demo',
+      nome: 'Usuário Demo',
+      email: 'demo@moneymapp.com'
+    }
+    
+    setModoDemo(true)
+    setToken('demo-token')
+    setUsuario(usuarioDemo)
+    
+    localStorage.setItem('demoMode', 'true')
+    localStorage.setItem('mm_token', 'demo-token')
+    localStorage.setItem('mm_usuario', JSON.stringify(usuarioDemo))
+  }
+
+  const value = useMemo(() => ({ 
+    usuario, 
+    token, 
+    modoDemo, 
+    entrar, 
+    registrar, 
+    sair, 
+    ativarModoDemo 
+  }), [usuario, token, modoDemo])
 
   return <AuthContexto.Provider value={value}>{children}</AuthContexto.Provider>
 }
