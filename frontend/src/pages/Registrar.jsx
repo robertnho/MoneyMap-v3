@@ -29,38 +29,38 @@ export default function Registrar() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 transition-colors">
-      <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-100 dark:border-gray-700 p-6">
-        <h1 className="text-2xl font-semibold mb-2 text-gray-900 dark:text-white">Criar conta</h1>
-        <p className="text-sm text-gray-600 dark:text-gray-300 mb-6">Preencha os dados para começar.</p>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="w-full max-w-md bg-white rounded-lg shadow border border-gray-100 p-6">
+        <h1 className="text-2xl font-semibold mb-2">Criar conta</h1>
+        <p className="text-sm text-gray-600 mb-6">Preencha os dados para começar.</p>
 
-        {ok && <div className="mb-4 text-sm text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700 rounded p-3">Conta criada! Redirecionando…</div>}
-        {erro && <div className="mb-4 text-sm text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded p-3">{erro}</div>}
+        {ok && <div className="mb-4 text-sm text-emerald-800 bg-emerald-50 border border-emerald-200 rounded p-3">Conta criada! Redirecionando…</div>}
+        {erro && <div className="mb-4 text-sm text-red-700 bg-red-50 border border-red-200 rounded p-3">{erro}</div>}
 
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Nome</label>
+            <label className="block text-sm font-medium text-gray-700">Nome</label>
             <input required type="text" name="nome" value={form.nome} onChange={onChange}
-              className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-colors" />
+              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">E-mail</label>
+            <label className="block text-sm font-medium text-gray-700">E-mail</label>
             <input required type="email" name="email" value={form.email} onChange={onChange}
-              className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-colors" />
+              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Senha</label>
+            <label className="block text-sm font-medium text-gray-700">Senha</label>
             <input required type="password" name="senha" value={form.senha} onChange={onChange}
-              className="mt-1 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-colors" />
+              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500" />
           </div>
           <button disabled={loading}
-            className="w-full rounded-lg bg-emerald-600 text-white py-2.5 font-medium hover:bg-emerald-700 disabled:opacity-60 transition-colors">
+            className="w-full rounded-lg bg-emerald-600 text-white py-2.5 font-medium hover:bg-emerald-700 disabled:opacity-60">
             {loading ? 'Cadastrando…' : 'Criar conta'}
           </button>
         </form>
 
-        <p className="text-sm text-gray-600 dark:text-gray-300 mt-4">
-          Já tem conta? <Link to="/login" className="text-emerald-700 dark:text-emerald-400 hover:underline">Fazer login</Link>
+        <p className="text-sm text-gray-600 mt-4">
+          Já tem conta? <Link to="/login" className="text-emerald-700 hover:underline">Fazer login</Link>
         </p>
       </div>
     </div>

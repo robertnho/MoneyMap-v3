@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { 
   Plus, 
   Filter, 
@@ -9,26 +9,11 @@ import {
   Trash2,
   Calendar,
   TrendingUp,
-  TrendingDown,
-  Eye
+  TrendingDown
 } from 'lucide-react'
-import { useAuth } from '../context/AuthContext'
-import { dadosDemo } from '../data/dadosDemo'
-import { SkeletonTable } from '../components/ui'
 
-// Componente de indicador do modo demo
-function IndicadorModoDemo() {
-  return (
-    <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 mb-6">
-      <Eye className="w-5 h-5" />
-      <span className="font-medium">Modo Demonstração</span>
-      <span className="text-blue-100 text-sm">• Todos os dados são fictícios</span>
-    </div>
-  )
-}
-
-// Dados mockados para demonstração (fallback)
-const mockTransacoesFallback = [
+// Dados mockados para demonstração
+const mockTransacoes = [
   {
     id: 1,
     descricao: 'Salário Mensal',
@@ -127,21 +112,7 @@ const categorias = [
 ]
 
 export default function Transacoes() {
-  const { modoDemo } = useAuth()
-  const [loading, setLoading] = useState(true)
-  
-  // Usar dados demo se estiver em modo demo
-  const transacoesIniciais = modoDemo ? dadosDemo.transacoes : mockTransacoesFallback
-  const [transacoes, setTransacoes] = useState(transacoesIniciais)
-  
-  // Simular carregamento
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false)
-    }, 1200)
-    
-    return () => clearTimeout(timer)
-  }, [])
+  const [transacoes, setTransacoes] = useState(mockTransacoes)
   const [filtros, setFiltros] = useState({
     busca: '',
     categoria: '',
@@ -180,24 +151,8 @@ export default function Transacoes() {
     return new Date(dateString + 'T00:00:00').toLocaleDateString('pt-BR')
   }
 
-  // Mostrar skeleton enquanto carrega
-  if (loading) {
-    return (
-      <div className="p-4 md:p-6 space-y-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
-        <div className="mb-8">
-          <div className="animate-pulse bg-gray-200 dark:bg-gray-700 h-8 w-48 rounded mb-2"></div>
-          <div className="animate-pulse bg-gray-200 dark:bg-gray-700 h-5 w-64 rounded"></div>
-        </div>
-        <SkeletonTable rows={8} columns={5} />
-      </div>
-    )
-  }
-
   return (
-    <div className="p-4 md:p-6 space-y-6 animate-in fade-in duration-500 bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors">
-      {/* Indicador de Modo Demo */}
-      {modoDemo && <IndicadorModoDemo />}
-      
+    <div className="p-4 md:p-6 space-y-6 animate-in fade-in duration-500">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>

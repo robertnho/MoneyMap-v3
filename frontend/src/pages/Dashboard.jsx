@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { 
   TrendingUp, 
@@ -9,27 +9,39 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Clock,
-  ExternalLink,
-  Eye
+  ExternalLink
 } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
-import { useAuth } from '../context/AuthContext'
-import { dadosDemo } from '../data/dadosDemo'
-import { SkeletonDashboard } from '../components/ui'
 
-// Função para mapear dados demo para formato do dashboard
-const getDashboardData = (modoDemo) => {
-  if (!modoDemo) return null
+// Dados mockados para demonstração
+const mockData = {
+  saldo: 12450.80,
+  receitas: 8500.00,
+  despesas: 4250.30,
+  economia: 4249.70,
   
-  return {
-    saldo: dadosDemo.resumo.saldoTotal,
-    receitas: dadosDemo.resumo.receitasMes,
-    despesas: dadosDemo.resumo.despesasMes,
-    economia: dadosDemo.resumo.economiaMes,
-    receitasVsDespesas: dadosDemo.receitasVsDespesas,
-    categorias: dadosDemo.categorias,
-    transacoesRecentes: dadosDemo.transacoes.slice(0, 5) // Apenas as 5 mais recentes
-  }
+  receitasVsDespesas: [
+    { mes: 'Jul', receitas: 7200, despesas: 4800 },
+    { mes: 'Ago', receitas: 7800, despesas: 4200 },
+    { mes: 'Set', receitas: 8100, despesas: 4500 },
+    { mes: 'Out', receitas: 8500, despesas: 4250 },
+  ],
+  
+  categorias: [
+    { name: 'Alimentação', value: 1200, color: '#FF6B6B' },
+    { name: 'Transporte', value: 800, color: '#4ECDC4' },
+    { name: 'Moradia', value: 1500, color: '#45B7D1' },
+    { name: 'Lazer', value: 600, color: '#96CEB4' },
+    { name: 'Outros', value: 150.30, color: '#FFEAA7' },
+  ],
+  
+  transacoesRecentes: [
+    { id: 1, tipo: 'receita', descricao: 'Salário', valor: 5500.00, data: '2024-10-01', categoria: 'Trabalho' },
+    { id: 2, tipo: 'receita', descricao: 'Freelance', valor: 1200.00, data: '2024-10-02', categoria: 'Trabalho' },
+    { id: 3, tipo: 'despesa', descricao: 'Supermercado', valor: 320.50, data: '2024-10-02', categoria: 'Alimentação' },
+    { id: 4, tipo: 'despesa', descricao: 'Combustível', valor: 180.00, data: '2024-10-03', categoria: 'Transporte' },
+    { id: 5, tipo: 'despesa', descricao: 'Aluguel', valor: 1200.00, data: '2024-10-05', categoria: 'Moradia' },
+  ]
 }
 
 function StatCard({ title, value, subtitle, icon: Icon, trend, trendValue, color = 'blue' }) {
@@ -97,63 +109,8 @@ function TransactionItem({ transaction }) {
   )
 }
 
-// Componente de indicador do modo demo
-function IndicadorModoDemo() {
-  return (
-    <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 mb-6">
-      <Eye className="w-5 h-5" />
-      <span className="font-medium">Modo Demonstração</span>
-      <span className="text-blue-100 text-sm">• Todos os dados são fictícios</span>
-    </div>
-  )
-}
-
 export default function Dashboard() {
   const navigate = useNavigate()
-  const { modoDemo } = useAuth()
-  const [loading, setLoading] = useState(true)
-  
-  // Simular carregamento
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false)
-    }, 1500)
-    
-    return () => clearTimeout(timer)
-  }, [])
-  
-  // Mostrar skeleton enquanto carrega
-  if (loading) {
-    return <SkeletonDashboard />
-  }
-  
-  // Usar dados demo se estiver em modo demo
-  const mockData = getDashboardData(modoDemo) || {
-    saldo: 12450.80,
-    receitas: 8500.00,
-    despesas: 4250.30,
-    economia: 4249.70,
-    receitasVsDespesas: [
-      { mes: 'Jul', receitas: 7200, despesas: 4800 },
-      { mes: 'Ago', receitas: 7800, despesas: 4200 },
-      { mes: 'Set', receitas: 8100, despesas: 4500 },
-      { mes: 'Out', receitas: 8500, despesas: 4250 },
-    ],
-    categorias: [
-      { name: 'Alimentação', value: 1200, color: '#FF6B6B' },
-      { name: 'Transporte', value: 800, color: '#4ECDC4' },
-      { name: 'Moradia', value: 1500, color: '#45B7D1' },
-      { name: 'Lazer', value: 600, color: '#96CEB4' },
-      { name: 'Outros', value: 150.30, color: '#FFEAA7' },
-    ],
-    transacoesRecentes: [
-      { id: 1, tipo: 'receita', descricao: 'Salário', valor: 5500.00, data: '2024-10-01', categoria: 'Trabalho' },
-      { id: 2, tipo: 'receita', descricao: 'Freelance', valor: 1200.00, data: '2024-10-02', categoria: 'Trabalho' },
-      { id: 3, tipo: 'despesa', descricao: 'Supermercado', valor: 320.50, data: '2024-10-02', categoria: 'Alimentação' },
-      { id: 4, tipo: 'despesa', descricao: 'Combustível', valor: 180.00, data: '2024-10-03', categoria: 'Transporte' },
-      { id: 5, tipo: 'despesa', descricao: 'Aluguel', valor: 1200.00, data: '2024-10-05', categoria: 'Moradia' },
-    ]
-  }
   
   const formatMoney = (value) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -163,10 +120,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="p-4 md:p-6 space-y-6 animate-in fade-in duration-500 bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors">
-      {/* Indicador de Modo Demo */}
-      {modoDemo && <IndicadorModoDemo />}
-      
+    <div className="p-4 md:p-6 space-y-6 animate-in fade-in duration-500">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Dashboard Financeiro</h1>

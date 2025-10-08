@@ -16,24 +16,18 @@ import {
   CheckCircle
 } from "lucide-react"
 import { Card, Button } from '../components/ui'
-import { useAuth } from '../context/AuthContext'
 
 export default function Home() {
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
-  const { ativarModoDemo } = useAuth()
 
   const handleDemoAccess = async () => {
     setLoading(true)
-    
-    // Ativar modo demo no contexto
-    ativarModoDemo()
-    
-    // Simular carregamento antes de navegar para a página de loading
+    localStorage.setItem("demoMode", "true")
     setTimeout(() => {
       setLoading(false)
-      navigate("/demo-loading")
-    }, 800)
+      navigate("/dashboard")
+    }, 1500)
   }
 
   return (
@@ -71,6 +65,7 @@ export default function Home() {
 
       {/* Hero Section */}
       <section className="py-28 px-6 text-center bg-gradient-to-r from-blue-600 to-purple-700 text-white relative overflow-hidden">
+        <div className="absolute inset-0 opacity-20 bg-pattern"></div>
         <div className="max-w-4xl mx-auto relative z-10">
           <motion.h1 
             className="text-5xl md:text-6xl font-extrabold mb-6"
