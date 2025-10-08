@@ -1,11 +1,13 @@
 import React from 'react'
-import { ThemeProvider } from './contexts/ThemeContext.jsx'
-import Rotas from './routes/Rotas.jsx'
+import { Routes, Route } from 'react-router-dom'
+import Home from './pages/Home.jsx'
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <Rotas />
-    </ThemeProvider>
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/home" element={<Home />} />
+      <Route path="*" element={<div>Página não encontrada</div>} />
+    </Routes>
   )
 }
