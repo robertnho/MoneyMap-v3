@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area } from 'recharts'
 import { BarChart3, TrendingUp, Calendar, Filter, Download, DollarSign, ArrowUpRight, ArrowDownRight } from 'lucide-react'
+import { SkeletonChart, SkeletonCard } from '../components/ui'
 
 // Dados mockados para demonstração
 const mockData = {
@@ -71,6 +72,16 @@ function StatCard({ title, value, subtitle, icon: Icon, trend, trendValue, color
 
 export default function Relatorios() {
   const [filtroSelecionado, setFiltroSelecionado] = useState('6meses')
+  const [loading, setLoading] = useState(true)
+  
+  // Simular carregamento
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false)
+    }, 1300)
+    
+    return () => clearTimeout(timer)
+  }, [])
   
   const formatMoney = (value) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -83,8 +94,32 @@ export default function Relatorios() {
   const totalDespesas = mockData.receitasVsDespesas.reduce((acc, item) => acc + item.despesas, 0)
   const saldoTotal = totalReceitas - totalDespesas
 
+  // Mostrar skeleton enquanto carrega
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-6 sm:px-6">
+          <div className="animate-pulse bg-gray-200 dark:bg-gray-700 h-8 w-64 rounded mb-2"></div>
+          <div className="animate-pulse bg-gray-200 dark:bg-gray-700 h-5 w-48 rounded"></div>
+        </div>
+        <div className="px-4 py-6 sm:px-6 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <SkeletonCard key={i} />
+            ))}
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <SkeletonChart />
+            <SkeletonChart />
+          </div>
+          <SkeletonChart />
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50 animate-in fade-in duration-500">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 animate-in fade-in duration-500 transition-colors">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-4 py-6 sm:px-6">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">

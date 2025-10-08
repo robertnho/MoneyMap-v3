@@ -1,5 +1,6 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { Target, TrendingUp, Calendar, Plus, CheckCircle, Circle, DollarSign, Percent } from 'lucide-react'
+import { SkeletonList } from '../components/ui'
 
 // Dados mockados para demonstração
 const mockMetas = [
@@ -158,11 +159,43 @@ function MetaCard({ meta }) {
 }
 
 export default function Metas() {
+  const [loading, setLoading] = useState(true)
+  
+  // Simular carregamento
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false)
+    }, 1000)
+    
+    return () => clearTimeout(timer)
+  }, [])
+  
   const formatMoney = (value) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL'
     }).format(value)
+  }
+  
+  // Mostrar skeleton enquanto carrega
+  if (loading) {
+    return (
+      <div className="p-4 md:p-6 space-y-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
+        <div className="mb-8">
+          <div className="animate-pulse bg-gray-200 dark:bg-gray-700 h-8 w-48 rounded mb-2"></div>
+          <div className="animate-pulse bg-gray-200 dark:bg-gray-700 h-5 w-64 rounded"></div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+              <div className="animate-pulse bg-gray-200 dark:bg-gray-700 h-6 w-20 rounded mb-2"></div>
+              <div className="animate-pulse bg-gray-200 dark:bg-gray-700 h-8 w-16 rounded"></div>
+            </div>
+          ))}
+        </div>
+        <SkeletonList items={6} />
+      </div>
+    )
   }
 
   const metasAtivas = mockMetas.filter(m => m.status === 'ativo')
@@ -173,7 +206,7 @@ export default function Metas() {
   const progressoGeral = ((totalEconomizado / totalMetas) * 100)
 
   return (
-    <div className="p-4 md:p-6 space-y-6 animate-in fade-in duration-500">
+    <div className="p-4 md:p-6 space-y-6 animate-in fade-in duration-500 bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { 
   TrendingUp, 
@@ -15,6 +15,7 @@ import {
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { useAuth } from '../context/AuthContext'
 import { dadosDemo } from '../data/dadosDemo'
+import { SkeletonDashboard } from '../components/ui'
 
 // Função para mapear dados demo para formato do dashboard
 const getDashboardData = (modoDemo) => {
@@ -110,6 +111,21 @@ function IndicadorModoDemo() {
 export default function Dashboard() {
   const navigate = useNavigate()
   const { modoDemo } = useAuth()
+  const [loading, setLoading] = useState(true)
+  
+  // Simular carregamento
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false)
+    }, 1500)
+    
+    return () => clearTimeout(timer)
+  }, [])
+  
+  // Mostrar skeleton enquanto carrega
+  if (loading) {
+    return <SkeletonDashboard />
+  }
   
   // Usar dados demo se estiver em modo demo
   const mockData = getDashboardData(modoDemo) || {
@@ -147,7 +163,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="p-4 md:p-6 space-y-6 animate-in fade-in duration-500">
+    <div className="p-4 md:p-6 space-y-6 animate-in fade-in duration-500 bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors">
       {/* Indicador de Modo Demo */}
       {modoDemo && <IndicadorModoDemo />}
       
