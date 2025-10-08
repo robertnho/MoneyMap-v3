@@ -14,6 +14,10 @@ import Metas from '../pages/Metas.jsx'
 import Relatorios from '../pages/Relatorios.jsx'
 import Educacao from '../pages/Educacao.jsx'
 import ArtigoDetalhes from '../pages/ArtigoDetalhes.jsx'
+import Licoes from '../pages/Licoes.jsx'
+import LicaoDetalhes from '../pages/LicaoDetalhes.jsx'
+import Simuladores from '../pages/Simuladores.jsx'
+import Quiz from '../pages/Quiz.jsx'
 import Configuracoes from '../pages/Configuracoes.jsx'
 
 import PublicLayout from '../layouts/PublicLayout.jsx'
@@ -49,6 +53,10 @@ export default function Rotas() {
         <Route path="/relatorios" element={<Relatorios />} />
         <Route path="/educacao" element={<Educacao />} />
         <Route path="/educacao/artigo/:id" element={<ArtigoDetalhes />} />
+        <Route path="/educacao/licoes" element={<Licoes />} />
+        <Route path="/educacao/licao/:id" element={<LicaoDetalhes />} />
+        <Route path="/educacao/simuladores" element={<Simuladores />} />
+        <Route path="/educacao/quiz" element={<Quiz />} />
         <Route path="/configuracoes" element={<Configuracoes />} />
       </Route>
 
