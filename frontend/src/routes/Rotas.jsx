@@ -1,33 +1,32 @@
-import React from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
+import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 
-import Home from '../pages/Home.jsx'
-import Login from '../pages/Login.jsx'
-import Registrar from '../pages/Registrar.jsx'
-import NotFound from '../pages/NotFound.jsx'
+import Home from '../pages/Home.jsx';
+import Login from '../pages/Login.jsx';
+import Registrar from '../pages/Registrar.jsx';
+import NotFound from '../pages/NotFound.jsx';
 
-// privadas
-import Dashboard from '../pages/Dashboard.jsx'
-import Transacoes from '../pages/Transacoes.jsx'
-import Metas from '../pages/Metas.jsx'
-import Relatorios from '../pages/Relatorios.jsx'
-import Educacao from '../pages/Educacao.jsx'
-import ArtigoDetalhes from '../pages/ArtigoDetalhes.jsx'
-import Configuracoes from '../pages/Configuracoes.jsx'
+import Dashboard from '../pages/Dashboard.jsx';
+import Transacoes from '../pages/Transacoes.jsx';
+import Metas from '../pages/Metas.jsx';
+import Relatorios from '../pages/Relatorios.jsx';
+import Educacao from '../pages/Educacao.jsx';
+import ArtigoDetalhes from '../pages/ArtigoDetalhes.jsx';
+import Configuracoes from '../pages/Configuracoes.jsx';
 
-import PublicLayout from '../layouts/PublicLayout.jsx'
-import DashboardLayout from '../layouts/DashboardLayout.jsx'
-import { useAuth } from '../context/AuthContext.jsx'
+import PublicLayout from '../layouts/PublicLayout.jsx';
+import DashboardLayout from '../layouts/DashboardLayout.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
 
 function Privado({ children }) {
-  const { token } = useAuth()
-  return token ? children : <Navigate to="/login" replace />
+  const { token } = useAuth();
+  const demo = localStorage.getItem('demoMode') === 'true';
+  return token || demo ? children : <Navigate to="/login" replace />;
 }
 
 export default function Rotas() {
   return (
     <Routes>
-      {/* Público */}
       <Route element={<PublicLayout />}>
         <Route index element={<Home />} />
         <Route path="/home" element={<Home />} />
@@ -35,7 +34,6 @@ export default function Rotas() {
         <Route path="/registrar" element={<Registrar />} />
       </Route>
 
-      {/* Privado: um layout para todas as rotas autenticadas */}
       <Route element={<Privado><DashboardLayout /></Privado>}>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/transacoes" element={<Transacoes />} />
@@ -48,5 +46,5 @@ export default function Rotas() {
 
       <Route path="*" element={<NotFound />} />
     </Routes>
-  )
+  );
 }
