@@ -28,3 +28,6 @@ npm run dev             # http://localhost:5173
 
 ## CORS
 Backend já vem com `cors()` habilitado para aceitar chamadas do frontend dev.
+
+## Documentação complementar
+- [Guia unificado do sistema de avatar](./AVATAR_SYSTEM_README.md)
