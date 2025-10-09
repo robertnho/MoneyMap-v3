@@ -7,33 +7,41 @@ export default function DashboardLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="fixed inset-0 flex h-screen w-screen bg-gradient-to-br from-sky-200 via-indigo-200 to-blue-300 dark:from-zinc-900 dark:via-zinc-800 dark:to-zinc-900 overflow-hidden">
       {/* Sidebar fixa (desktop) + gaveta (mobile) */}
       <Sidebar aberto={mobileOpen} onFechar={() => setMobileOpen(false)} />
 
-      {/* Topbar da área logada */}
-      <header className="sticky top-0 z-20 bg-white/80 dark:bg-gray-800/80 backdrop-blur border-b border-gray-200 dark:border-gray-700 md:pl-20">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-3">
-          <button
-            className="md:hidden p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
-            onClick={() => setMobileOpen(true)}
-            aria-label="Abrir menu"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
-          <Link to="/dashboard" className="font-semibold text-emerald-600 dark:text-emerald-400">
-            MoneyMapp TCC
-          </Link>
-          <span className="text-sm text-gray-500 dark:text-gray-400">• Área logada</span>
-        </div>
-      </header>
+      {/* Conteúdo principal */}
+      <div className="flex flex-col flex-1 h-full md:ml-20">
+        {/* Topbar */}
+        <header className="flex-shrink-0 z-20 bg-white/60 dark:bg-gray-800/70 backdrop-blur border-b border-gray-200 dark:border-gray-700 px-6 py-3 flex items-center justify-between shadow-sm">
+          <div className="flex items-center gap-3">
+            <button
+              className="md:hidden p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+              onClick={() => setMobileOpen(true)}
+              aria-label="Abrir menu"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            <Link
+              to="/dashboard"
+              className="font-semibold text-indigo-600 dark:text-indigo-400 text-lg tracking-wide"
+            >
+              MoneyMapp TCC
+            </Link>
+            <span className="text-sm text-gray-500 dark:text-gray-400">
+              • Área logada
+            </span>
+          </div>
+        </header>
 
-      {/* Conteúdo: padding-left fixo no desktop para não sumir nada */}
-      <main className="md:pl-20">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <Outlet />
-        </div>
-      </main>
+        {/* Conteúdo da página (dashboard) */}
+        <main className="flex-1 h-0 p-6 overflow-y-auto">
+          <div className="h-full bg-white/70 dark:bg-zinc-900/70 rounded-2xl shadow-lg backdrop-blur-sm p-8 border border-white/20 dark:border-zinc-700">
+            <Outlet />
+          </div>
+        </main>
+      </div>
     </div>
   );
 }

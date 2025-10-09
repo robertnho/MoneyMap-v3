@@ -7,7 +7,16 @@
   --cor-secundaria: #0ea5e9;
 }
 
-html, body, #root { height: 100%; }
+html, body, #root { 
+  height: 100%; 
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+* {
+  box-sizing: border-box;
+}
 
 .container-app {
   /* isto agora funciona no v4 */
@@ -15,7 +24,7 @@ html, body, #root { height: 100%; }
 }
 
 .layout-principal {
-  @apply flex-1 flex w-full max-w-7xl mx-auto gap-4 px-4 md:px-6 py-4;
+  @apply flex-1 flex w-full gap-4 px-4 md:px-6 py-4;
 }
 
 .card {
