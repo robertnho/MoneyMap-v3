@@ -82,7 +82,25 @@ app.get('/docs', (req, res) => {
 // ===== ROTAS =====
 app.use('/auth', authRouter)
 
-// ===== SERVE SPA (produção) ou REDIRECIONA PARA O VITE (dev) =====
+// ===== ROTA RAIZ =====
+app.get('/', (req, res) => {
+  res.json({
+    message: '🚀 MoneyMap API está funcionando!',
+    version: '1.0.0',
+    status: 'online',
+    timestamp: new Date().toISOString(),
+    endpoints: {
+      health: '/health',
+      docs: '/docs',
+      auth: {
+        register: 'POST /auth/register',
+        login: 'POST /auth/login'
+      }
+    }
+  })
+})
+
+// ===== SERVE SPA (produção - opcional) =====
 const STATIC_DIR = process.env.STATIC_DIR
 if (STATIC_DIR && fs.existsSync(STATIC_DIR) && fs.existsSync(path.join(STATIC_DIR, 'index.html'))) {
   console.log('[server] Serving SPA from', STATIC_DIR)
@@ -91,11 +109,6 @@ if (STATIC_DIR && fs.existsSync(STATIC_DIR) && fs.existsSync(path.join(STATIC_DI
   app.get('*', (req, res, next) => {
     if (apiPrefixes.some((p) => req.path.startsWith(p))) return next()
     res.sendFile(path.join(STATIC_DIR, 'index.html'))
-  })
-} else {
-  app.get('/', (req, res) => {
-    const url = process.env.FRONTEND_URL || 'http://localhost:5173'
-    res.redirect(url)
   })
 }
 
