@@ -19,7 +19,7 @@ export default function Navbar() {
     <header className="bg-white border-b border-gray-200">
       <div className="max-w-7xl mx-auto flex items-center justify-between py-3 px-4">
         <Link to={token ? '/dashboard' : '/home'} className="text-emerald-600 font-bold text-xl">
-          MoneyMapp TCC
+          MoneyMapp
         </Link>
 
         {token ? (
