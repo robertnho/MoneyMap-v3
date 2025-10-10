@@ -131,39 +131,39 @@ function KpiCard({ title, value, trend = 'up', trendValue = '', icon: Icon, tone
         chipFg: 'text-indigo-700 dark:text-indigo-300',
         border: 'border-indigo-200/50 dark:border-indigo-800/50',
       },
-   })[tone],
-[tone]
-);
+    })[tone],
+    [tone]
+  )
 
   return (
     <div
-      className={`group rounded-2xl border ${scheme.border} ${scheme.bg} p-4 shadow-lg backdrop-blur transition-all duration-300 hover:shadow-xl hover:-translate-y-1 dark:shadow-2xl`}
+      className={`group rounded-2xl border ${scheme.border} ${scheme.bg} p-3 shadow-lg backdrop-blur transition-all duration-300 hover:shadow-xl hover:-translate-y-1 dark:shadow-2xl min-h-[110px]`}
     >
       <div className="flex items-start justify-between">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <div
-            className={`flex h-10 w-10 items-center justify-center rounded-xl shadow-md transition-transform duration-300 group-hover:scale-110 ${scheme.bg}`}
+            className={`flex h-9 w-9 items-center justify-center rounded-xl shadow-md transition-transform duration-300 group-hover:scale-110 ${scheme.bg}`}
           >
-            <Icon className={`h-5 w-5 ${scheme.fg}`} />
+            <Icon className={`h-4 w-4 ${scheme.fg}`} />
           </div>
           <div>
             <p className="mb-1 text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
               {title}
             </p>
-            <p className="leading-none text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+            <p className="leading-none text-xl font-bold text-zinc-900 dark:text-zinc-100">
               {value}
             </p>
           </div>
         </div>
         <span
-          className={`inline-flex items-center gap-1 rounded-xl px-2 py-1 text-xs font-medium shadow-sm ${scheme.chipBg} ${scheme.chipFg}`}
+          className={`inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium shadow-sm ${scheme.chipBg} ${scheme.chipFg}`}
         >
           {trend === 'up' ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
           {trendValue}
         </span>
       </div>
 
-      <div className="mt-3 flex items-center gap-2">
+      <div className="mt-2 flex items-center gap-2">
         <div className="h-1 w-full rounded-full bg-zinc-200 dark:bg-zinc-700">
           <div
             className={`h-1 rounded-full transition-all duration-700 ${
@@ -242,16 +242,16 @@ function FilterPanel({ year, setYear, month, setMonth }) {
   const months = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
 
   return (
-    <SectionCard title="Filtros" className="sticky top-[72px] self-start">
-      <div className="space-y-4">
+    <SectionCard title="Filtros" className="h-fit">
+      <div className="space-y-3">
         <div>
           <p className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Ano</p>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1">
             {years.map((y) => (
               <button
                 key={y}
                 onClick={() => setYear(y)}
-                className={`rounded-xl px-3 py-2 text-sm font-medium border transition-all duration-200 ${
+                className={`rounded-lg px-2 py-1.5 text-xs font-medium border transition-all duration-200 ${
                   year === y
                     ? 'border-transparent bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg shadow-violet-500/25'
                     : 'border-zinc-200/60 hover:border-zinc-300 hover:bg-zinc-100 dark:border-white/10 dark:hover:bg-zinc-800'
@@ -265,12 +265,12 @@ function FilterPanel({ year, setYear, month, setMonth }) {
 
         <div>
           <p className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Meses</p>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-4 gap-1">
             {months.map((m) => (
               <button
                 key={m}
                 onClick={() => setMonth(m)}
-                className={`rounded-xl px-2 py-2 text-xs font-medium capitalize border transition-all duration-200 ${
+                className={`rounded-lg px-1 py-1.5 text-xs font-medium capitalize border transition-all duration-200 ${
                   month === m
                     ? 'border-transparent bg-gradient-to-br from-purple-500 to-violet-600 text-white shadow-md'
                     : 'border-zinc-200/60 hover:border-zinc-300 hover:bg-zinc-100 dark:border-white/10 dark:hover:bg-zinc-800'
@@ -293,7 +293,7 @@ function FinancialInsightsCard() {
     { title: '🎯 Meta Próxima', desc: 'Faltam apenas R$ 1.400 para sua reserva de emergência', impact: '72% concluído', color: 'blue' },
   ]
   return (
-    <SectionCard title="Insights Financeiros" className="h-fit">
+    <SectionCard title="Insights Financeiros" className="h-full">
       <div className="space-y-2">
         {insights.map((insight, i) => (
           <div
@@ -337,6 +337,7 @@ function InvestmentCard() {
     <SectionCard
       title="Investimentos"
       right={<span className="text-sm font-medium text-violet-600 dark:text-violet-400">+R$ 87 este mês</span>}
+      className="h-full"
     >
       <div className="space-y-4">
         <div className="rounded-xl bg-gradient-to-br from-violet-50 to-purple-50 p-4 text-center dark:from-violet-950/20 dark:to-purple-950/20">
@@ -362,7 +363,7 @@ function InvestmentCard() {
 
 function WeatherFinanceCard() {
   return (
-    <SectionCard title="Clima Financeiro" className="relative overflow-hidden">
+    <SectionCard title="Clima Financeiro" className="relative overflow-hidden h-full">
       <div className="absolute -right-6 -top-6 h-16 w-16 rounded-full bg-gradient-to-br from-violet-400 to-purple-500 opacity-20"></div>
       <div className="relative">
         <div className="mb-3 flex items-center gap-3">
@@ -393,7 +394,7 @@ function GoalCard({ percent = 72 }) {
     { name: 'faltando', value: 100 - percent },
   ]
   return (
-    <SectionCard title="Progresso da Meta">
+    <SectionCard title="Progresso da Meta" className="h-full">
       <div className="flex items-center gap-6">
         <div className="h-[140px] w-[140px]">
           <ResponsiveContainer width="100%" height="100%">
@@ -427,7 +428,7 @@ function AccountsCard() {
     { nome: 'Itaú', valor: 5980.3, icon: CreditCard },
   ]
   return (
-    <SectionCard title="Saldo por Conta">
+    <SectionCard title="Saldo por Conta" className="h-full">
       <ul className="space-y-3">
         {contas.map(({ nome, valor, icon: Icon }, i) => (
           <li key={i} className="flex items-center justify-between">
@@ -451,7 +452,7 @@ function AlertsCard() {
     { tipo: 'Dica', msg: 'Você pode economizar 8% trocando plano de celular', tone: 'emerald' },
   ]
   return (
-    <SectionCard title="Alertas" right={<ShieldAlert className="h-5 w-5 text-amber-500" aria-hidden="true" />}>
+    <SectionCard title="Alertas" right={<ShieldAlert className="h-5 w-5 text-amber-500" aria-hidden="true" />} className="h-full">
       <ul className="space-y-2">
         {itens.map((a, i) => (
           <li
@@ -472,8 +473,8 @@ function AlertsCard() {
 
 function LineChartCard() {
   return (
-    <SectionCard title="Receita x Despesa (Linha)">
-      <div className="h-[260px]">
+    <SectionCard title="Receita x Despesa (Linha)" className="h-full">
+      <div className="h-[240px]">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={mockData.receitasVsDespesas}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
@@ -528,33 +529,33 @@ export default function Dashboard() {
 
       {/* Header */}
       <div className="sticky top-0 z-20 w-full border-b border-zinc-200/60 bg-white/90 backdrop-blur-xl shadow-lg shadow-zinc-100/50 dark:border-white/10 dark:bg-zinc-900/90 dark:shadow-zinc-900/50">
-        <div className="mx-auto flex max-w-[1600px] items-center justify-between px-6 py-4 lg:px-8">
-          <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-purple-600 shadow-lg">
-              <PiggyBank className="h-6 w-6 text-white" />
+        <div className="mx-auto flex max-w-[1440px] 2xl:max-w-[1600px] items-center justify-between px-6 py-3 lg:px-8">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-purple-600 shadow-lg">
+              <PiggyBank className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h1 className="bg-gradient-to-r from-zinc-900 to-zinc-700 bg-clip-text text-2xl font-bold text-transparent dark:from-zinc-100 dark:to-zinc-300 md:text-3xl">
+              <h1 className="bg-gradient-to-r from-zinc-900 to-zinc-700 bg-clip-text text-xl font-bold text-transparent dark:from-zinc-100 dark:to-zinc-300 md:text-2xl">
                 Dashboard Financeiro
               </h1>
-              <p className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
-                <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-emerald-500"></span>
+              <p className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">
+                <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500"></span>
                 Bem-vindo de volta! Suas finanças estão sendo monitoradas.
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => navigate('/transacoes')}
-              className="group inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-violet-500/25 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-violet-500/40 active:scale-95"
+              className="group inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 px-3 py-2 text-sm font-semibold text-white shadow-lg shadow-violet-500/25 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-violet-500/40 active:scale-95"
             >
               <PlusCircle className="h-4 w-4 transition-transform group-hover:rotate-90" />
               Nova Transação
             </button>
             <button
               onClick={() => navigate('/configuracoes')}
-              className="inline-flex items-center gap-2 rounded-xl border border-zinc-200/60 bg-white/80 px-4 py-2.5 text-sm font-medium text-zinc-700 shadow-sm backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:bg-white hover:shadow-md dark:border-white/10 dark:bg-zinc-800/80 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              className="inline-flex items-center gap-2 rounded-xl border border-zinc-200/60 bg-white/80 px-3 py-2 text-sm font-medium text-zinc-700 shadow-sm backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:bg-white hover:shadow-md dark:border-white/10 dark:bg-zinc-800/80 dark:text-zinc-300 dark:hover:bg-zinc-800"
             >
               <Settings className="h-4 w-4" />
               Configurações
@@ -564,10 +565,11 @@ export default function Dashboard() {
       </div>
 
       {/* Conteúdo */}
-      <div className="mx-auto max-w-[1800px] px-3 pb-4 pt-3 lg:px-4">
-        {/* KPIs + filtros */}
-        <div className="mb-4 grid grid-cols-12 gap-3">
-          <div className="col-span-12 lg:col-span-9">
+      <div className="mx-auto max-w-[1440px] 2xl:max-w-[1600px] px-6 pb-6 lg:px-8">
+        {/* SEÇÃO PRINCIPAL - Cards KPI e Filtros na mesma linha, colados no topo */}
+        <div className="mb-3 grid grid-cols-12 gap-3 pt-3">
+          {/* KPIs principais ocupando mais espaço */}
+          <div className="col-span-12 lg:col-span-9 xl:col-span-10">
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
               <KpiCard title="Saldo Total" value={money(mockData.saldo)} trend="up" trendValue="+12,3%" icon={Wallet} tone="violet" />
               <KpiCard title="Receitas do Mês" value={money(mockData.receitas)} trend="up" trendValue="+8,2%" icon={TrendingUp} tone="blue" />
@@ -575,23 +577,25 @@ export default function Dashboard() {
               <KpiCard title="Economia" value={money(mockData.economia)} trend="up" trendValue="+15,7%" icon={PiggyBank} tone="indigo" />
             </div>
           </div>
-          <div className="col-span-12 lg:col-span-3">
+
+          {/* Filtros compactos à direita */}
+          <div className="col-span-12 lg:col-span-3 xl:col-span-2">
             <FilterPanel year={year} setYear={setYear} month={month} setMonth={setMonth} />
           </div>
         </div>
 
-        {/* Cards rápidos */}
-        <div className="mb-4 grid grid-cols-12 gap-3">
-          <div className="col-span-12 md:col-span-3"><WeatherFinanceCard /></div>
-          <div className="col-span-12 md:col-span-3"><FinancialInsightsCard /></div>
-          <div className="col-span-12 md:col-span-3"><GoalCard percent={72} /></div>
-          <div className="col-span-12 md:col-span-3"><InvestmentCard /></div>
+        {/* SEGUNDA SEÇÃO - Cards auxiliares logo abaixo, sem muito espaçamento */}
+        <div className="mb-3 grid grid-cols-12 gap-3">
+          <div className="col-span-12 md:col-span-6 lg:col-span-3"><WeatherFinanceCard /></div>
+          <div className="col-span-12 md:col-span-6 lg:col-span-3"><FinancialInsightsCard /></div>
+          <div className="col-span-12 md:col-span-6 lg:col-span-3"><GoalCard percent={72} /></div>
+          <div className="col-span-12 md:col-span-6 lg:col-span-3"><InvestmentCard /></div>
         </div>
 
-        {/* Gráficos */}
-        <div className="mb-4 grid grid-cols-12 gap-3">
+        {/* TERCEIRA SEÇÃO - Gráficos compactos */}
+        <div className="mb-3 grid grid-cols-12 gap-3 items-stretch">
           <div className="col-span-12 lg:col-span-4">
-            <SectionCard title="Receitas vs Despesas">
+            <SectionCard title="Receitas vs Despesas" className="h-full">
               <div className="h-[240px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={mockData.receitasVsDespesas}>
@@ -608,7 +612,7 @@ export default function Dashboard() {
           </div>
 
           <div className="col-span-12 lg:col-span-4">
-            <SectionCard title="Gastos por Categoria">
+            <SectionCard title="Gastos por Categoria" className="h-full">
               <div className="h-[240px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -626,11 +630,12 @@ export default function Dashboard() {
           <div className="col-span-12 lg:col-span-4"><LineChartCard /></div>
         </div>
 
-        {/* Transações / Contas / Alertas */}
-        <div className="mb-4 grid grid-cols-12 gap-3">
+        {/* QUARTA SEÇÃO - Transações / Contas / Alertas */}
+        <div className="mb-3 grid grid-cols-12 gap-3 items-stretch">
           <div className="col-span-12 lg:col-span-4">
             <SectionCard
               title="Transações Recentes"
+              className="h-full"
               right={
                 <button onClick={() => navigate('/transacoes')} className="rounded-lg px-3 py-1.5 text-sm text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800">
                   Ver todas
@@ -646,8 +651,8 @@ export default function Dashboard() {
           <div className="col-span-12 lg:col-span-4"><AlertsCard /></div>
         </div>
 
-        {/* Ações rápidas */}
-        <div className="mb-6 grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-5">
+        {/* QUINTA SEÇÃO - Ações rápidas */}
+        <div className="mb-3 grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-5">
           <QuickActionCard title="Transações" desc="Gerencie receitas e despesas" icon={ExternalLink} onClick={() => navigate('/transacoes')} color="text-emerald-500" hover="group-hover:text-emerald-600" />
           <QuickActionCard title="Metas" desc="Acompanhe seus objetivos" icon={Target} onClick={() => navigate('/metas')} color="text-blue-500" hover="group-hover:text-blue-600" />
           <QuickActionCard title="Relatórios" desc="Análise financeira detalhada" icon={BarChart3} onClick={() => navigate('/relatorios')} color="text-violet-500" hover="group-hover:text-violet-600" />
@@ -655,72 +660,35 @@ export default function Dashboard() {
           <QuickActionCard title="Cadastrar Conta" desc="Adicione bancos e carteiras" icon={CreditCard} onClick={() => navigate('/configuracoes')} color="text-sky-500" hover="group-hover:text-sky-600" />
         </div>
 
-        {/* Callouts */}
-        <div className="grid grid-cols-12 gap-4">
+        {/* SEXTA SEÇÃO - Insights e Recomendações (compacto) */}
+        <div className="mb-3 grid grid-cols-12 gap-3">
           <div className="col-span-12">
-            <div className="group relative overflow-hidden rounded-2xl border border-purple-200/60 bg-gradient-to-br from-purple-50 via-violet-50 to-indigo-50 p-6 shadow-xl transition-all duration-300 hover:shadow-2xl dark:from-purple-900/20 dark:via-violet-900/20 dark:to-indigo-900/20 dark:border-purple-800/30">
-              <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-gradient-to-br from-purple-400/20 to-violet-500/20 blur-2xl transition-all duration-700 group-hover:scale-125"></div>
+            <div className="group relative overflow-hidden rounded-2xl border border-purple-200/60 bg-gradient-to-br from-purple-50 via-violet-50 to-indigo-50 p-4 shadow-xl transition-all duration-300 hover:shadow-2xl dark:from-purple-900/20 dark:via-violet-900/20 dark:to-indigo-900/20 dark:border-purple-800/30">
+              <div className="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-gradient-to-br from-purple-400/20 to-violet-500/20 blur-2xl transition-all duration-700 group-hover:scale-125"></div>
               <div className="relative">
-                <div className="mb-4 flex items-center gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-500 to-violet-600 shadow-lg">
-                    <Clock className="h-6 w-6 text-white" />
+                <div className="mb-3 flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500 to-violet-600 shadow-lg">
+                    <Clock className="h-5 w-5 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">💡 Insight Financeiro</h3>
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400">Baseado na sua performance mensal</p>
+                    <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">💡 Insight Financeiro</h3>
+                    <p className="text-xs text-zinc-600 dark:text-zinc-400">Baseado na sua performance mensal</p>
                   </div>
                 </div>
-                <div className="mb-4 rounded-xl bg-white/60 p-4 backdrop-blur dark:bg-zinc-800/60">
-                  <p className="text-base leading-relaxed text-zinc-800 dark:text-zinc-200">
+                <div className="mb-3 rounded-xl bg-white/60 p-3 backdrop-blur dark:bg-zinc-800/60">
+                  <p className="text-sm leading-relaxed text-zinc-800 dark:text-zinc-200">
                     🎉 <strong>Parabéns!</strong> Você economizou <span className="font-bold text-purple-600 dark:text-purple-400">{money(mockData.economia)}</span> este mês — isso representa um aumento de <strong>15.7%</strong> comparado ao mês anterior!
                   </p>
-                  <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+                  <p className="mt-2 text-xs text-zinc-600 dark:text-zinc-400">
                     💰 <strong>Recomendação:</strong> Considere alocar 70% dessa quantia ({money(mockData.economia * 0.7)}) para sua reserva de emergência e 30% ({money(mockData.economia * 0.3)}) para investimentos de baixo risco.
                   </p>
                 </div>
-                <div className="flex flex-wrap gap-4">
-                  <button onClick={() => navigate('/metas')} className="group/btn inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-purple-500/25 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-purple-500/40 active:scale-95">
-                    <Target className="h-5 w-5 transition-transform group-hover/btn:rotate-12" />
-                    Definir Novas Metas
-                  </button>
-                  <button onClick={() => navigate('/educacao')} className="inline-flex items-center gap-2 rounded-xl border-2 border-purple-300/60 bg-white/80 px-6 py-3 text-sm font-semibold text-purple-700 backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:border-purple-400 hover:bg-purple-50 dark:border-purple-600/40 dark:bg-zinc-800/80 dark:text-purple-300 dark:hover:bg-purple-900/20">
-                    <BookOpen className="h-5 w-5" />
-                    Educação Financeira
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-4 grid grid-cols-12 gap-4">
-          <div className="col-span-12">
-            <div className="group relative overflow-hidden rounded-2xl border border-amber-200/60 bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 p-8 shadow-xl transition-all duration-300 hover:shadow-2xl dark:from-amber-900/20 dark:via-orange-900/20 dark:to-yellow-900/20 dark:border-amber-800/30">
-              <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-gradient-to-br from-amber-400/20 to-orange-500/20 blur-2xl transition-all duration-700 group-hover:scale-125"></div>
-              <div className="relative">
-                <div className="mb-4 flex items-center gap-4">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 shadow-lg">
-                    <Clock className="h-7 w-7 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">💡 Insight Financeiro</h3>
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400">Baseado na sua performance mensal</p>
-                  </div>
-                </div>
-                <div className="mb-6 rounded-xl bg-white/60 p-6 backdrop-blur dark:bg-zinc-800/60">
-                  <p className="text-lg leading-relaxed text-zinc-800 dark:text-zinc-200">
-                    🎉 <strong>Parabéns!</strong> Você economizou <span className="font-bold text-emerald-600 dark:text-emerald-400">{money(mockData.economia)}</span> este mês — isso representa um aumento de <strong>15.7%</strong> comparado ao mês anterior!
-                  </p>
-                  <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
-                    💰 <strong>Recomendação:</strong> Considere alocar 70% dessa quantia ({money(mockData.economia * 0.7)}) para sua reserva de emergência e 30% ({money(mockData.economia * 0.3)}) para investimentos de baixo risco.
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-3">
-                  <button onClick={() => navigate('/metas')} className="group/btn inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-violet-500/25 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-violet-500/40 active:scale-95">
+                <div className="flex flex-wrap gap-2">
+                  <button onClick={() => navigate('/metas')} className="group/btn inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-violet-600 to-purple-600 px-3 py-2 text-xs font-semibold text-white shadow-lg shadow-purple-500/25 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-purple-500/40 active:scale-95">
                     <Target className="h-4 w-4 transition-transform group-hover/btn:rotate-12" />
                     Definir Novas Metas
                   </button>
-                  <button onClick={() => navigate('/educacao')} className="inline-flex items-center gap-2 rounded-xl border-2 border-purple-300/60 bg-white/80 px-4 py-2 text-sm font-semibold text-purple-700 backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:border-purple-400 hover:bg-purple-50 dark:border-purple-600/40 dark:bg-zinc-800/80 dark:text-purple-300 dark:hover:bg-purple-900/20">
+                  <button onClick={() => navigate('/educacao')} className="inline-flex items-center gap-2 rounded-lg border-2 border-purple-300/60 bg-white/80 px-3 py-2 text-xs font-semibold text-purple-700 backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:border-purple-400 hover:bg-purple-50 dark:border-purple-600/40 dark:bg-zinc-800/80 dark:text-purple-300 dark:hover:bg-purple-900/20">
                     <BookOpen className="h-4 w-4" />
                     Educação Financeira
                   </button>
@@ -731,7 +699,7 @@ export default function Dashboard() {
         </div>
 
         {/* Rodapé */}
-        <div className="mt-6 text-center text-xs text-zinc-500 dark:text-zinc-400">
+        <div className="mt-3 text-center text-xs text-zinc-500 dark:text-zinc-400">
           © 2024 MoneyMapp TCC. Todos os direitos reservados.
         </div>
       </div>

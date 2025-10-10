@@ -36,9 +36,11 @@ export default function DashboardLayout() {
         </header>
 
         {/* Conteúdo da página (dashboard) */}
-        <main className="flex-1 h-0 p-6 overflow-y-auto">
-          <div className="h-full bg-white/70 dark:bg-zinc-900/70 rounded-2xl shadow-lg backdrop-blur-sm p-8 border border-white/20 dark:border-zinc-700">
-            <Outlet />
+        <main className="flex-1 overflow-y-auto h-full p-2 md:p-4">
+          <div className="h-full w-full bg-white/70 dark:bg-zinc-900/70 rounded-2xl shadow-lg backdrop-blur-sm p-3 md:p-4 border border-white/20 dark:border-zinc-700">
+            <div className="min-h-full flex flex-col justify-start">
+              <Outlet />
+            </div>
           </div>
         </main>
       </div>
