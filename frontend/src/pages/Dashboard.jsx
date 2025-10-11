@@ -1,6 +1,7 @@
 // src/pages/Dashboard.jsx
 import React, { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import {
   PiggyBank,
   TrendingUp,
@@ -18,6 +19,7 @@ import {
   Banknote,
   ShieldAlert,
   Settings,
+  Sparkles,
 } from 'lucide-react'
 import {
   BarChart,
@@ -78,17 +80,20 @@ const tooltipCurrency = (v) => [`R$ ${Number(v).toLocaleString('pt-BR')}`, '']
 ============================================================================ */
 function SectionCard({ title, right, className = '', children }) {
   return (
-    <section
-      className={`group rounded-2xl border border-zinc-200/60 bg-white/80 backdrop-blur-xl shadow-lg transition-all duration-300 hover:shadow-xl hover:-translate-y-1 dark:border-white/10 dark:bg-zinc-900/80 dark:shadow-2xl ${className}`}
+    <motion.section
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className={`group rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl shadow-lg transition-all duration-300 hover:shadow-xl hover:-translate-y-1 dark:border-white/10 dark:bg-zinc-900/80 dark:shadow-2xl ${className}`}
     >
-      <header className="flex items-center justify-between border-b border-zinc-200/60 px-4 py-3 dark:border-white/10">
+      <header className="flex items-center justify-between border-b border-white/10 px-4 py-3 dark:border-white/10">
         <h3 className="text-base font-semibold text-zinc-900 transition-colors group-hover:text-zinc-800 dark:text-zinc-100 dark:group-hover:text-zinc-50">
           {title}
         </h3>
         {right}
       </header>
       <div className="p-4">{children}</div>
-    </section>
+    </motion.section>
   )
 }
 
@@ -104,76 +109,89 @@ function KpiCard({ title, value, trend = 'up', trendValue = '', icon: Icon, tone
   const scheme = useMemo(
     () => ({
       violet: {
-        bg: 'bg-gradient-to-br from-violet-100 via-violet-50 to-purple-100 dark:from-violet-900/30 dark:via-violet-900/20 dark:to-purple-900/30',
-        fg: 'text-violet-600 dark:text-violet-400',
-        chipBg: 'bg-violet-100/80 dark:bg-violet-900/30',
-        chipFg: 'text-violet-700 dark:text-violet-300',
-        border: 'border-violet-200/50 dark:border-violet-800/50',
+        bg: 'bg-gradient-to-br from-violet-500/20 via-purple-500/10 to-violet-600/20',
+        fg: 'text-violet-300',
+        chipBg: 'bg-violet-500/20 backdrop-blur-sm',
+        chipFg: 'text-violet-200',
+        border: 'border-violet-400/30',
+        iconBg: 'bg-gradient-to-br from-violet-600 to-purple-600',
       },
       blue: {
-        bg: 'bg-gradient-to-br from-blue-100 via-blue-50 to-indigo-100 dark:from-blue-900/30 dark:via-blue-900/20 dark:to-indigo-900/30',
-        fg: 'text-blue-600 dark:text-blue-400',
-        chipBg: 'bg-blue-100/80 dark:bg-blue-900/30',
-        chipFg: 'text-blue-700 dark:text-blue-300',
-        border: 'border-blue-200/50 dark:border-blue-800/50',
+        bg: 'bg-gradient-to-br from-blue-500/20 via-sky-500/10 to-blue-600/20',
+        fg: 'text-blue-300',
+        chipBg: 'bg-blue-500/20 backdrop-blur-sm',
+        chipFg: 'text-blue-200',
+        border: 'border-blue-400/30',
+        iconBg: 'bg-gradient-to-br from-blue-600 to-sky-600',
       },
       purple: {
-        bg: 'bg-gradient-to-br from-purple-100 via-purple-50 to-fuchsia-100 dark:from-purple-900/30 dark:via-purple-900/20 dark:to-fuchsia-900/30',
-        fg: 'text-purple-600 dark:text-purple-400',
-        chipBg: 'bg-purple-100/80 dark:bg-purple-900/30',
-        chipFg: 'text-purple-700 dark:text-purple-300',
-        border: 'border-purple-200/50 dark:border-purple-800/50',
+        bg: 'bg-gradient-to-br from-purple-500/20 via-fuchsia-500/10 to-purple-600/20',
+        fg: 'text-purple-300',
+        chipBg: 'bg-purple-500/20 backdrop-blur-sm',
+        chipFg: 'text-purple-200',
+        border: 'border-purple-400/30',
+        iconBg: 'bg-gradient-to-br from-purple-600 to-fuchsia-600',
       },
       indigo: {
-        bg: 'bg-gradient-to-br from-indigo-100 via-indigo-50 to-slate-100 dark:from-indigo-900/30 dark:via-indigo-900/20 dark:to-slate-900/30',
-        fg: 'text-indigo-600 dark:text-indigo-400',
-        chipBg: 'bg-indigo-100/80 dark:bg-indigo-900/30',
-        chipFg: 'text-indigo-700 dark:text-indigo-300',
-        border: 'border-indigo-200/50 dark:border-indigo-800/50',
+        bg: 'bg-gradient-to-br from-indigo-500/20 via-slate-500/10 to-indigo-600/20',
+        fg: 'text-indigo-300',
+        chipBg: 'bg-indigo-500/20 backdrop-blur-sm',
+        chipFg: 'text-indigo-200',
+        border: 'border-indigo-400/30',
+        iconBg: 'bg-gradient-to-br from-indigo-600 to-slate-600',
       },
     })[tone],
     [tone]
   )
 
   return (
-    <div
-      className={`group rounded-2xl border ${scheme.border} ${scheme.bg} p-3 shadow-lg backdrop-blur transition-all duration-300 hover:shadow-xl hover:-translate-y-1 dark:shadow-2xl min-h-[110px]`}
+    <motion.div
+      initial={{ opacity: 0, y: 20, scale: 0.9 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.5 }}
+      whileHover={{ scale: 1.02, y: -4 }}
+      className={`group rounded-2xl border ${scheme.border} ${scheme.bg} p-4 shadow-lg backdrop-blur-xl transition-all duration-300 hover:shadow-xl dark:shadow-2xl min-h-[120px]`}
     >
       <div className="flex items-start justify-between">
-        <div className="flex items-center gap-2">
-          <div
-            className={`flex h-9 w-9 items-center justify-center rounded-xl shadow-md transition-transform duration-300 group-hover:scale-110 ${scheme.bg}`}
+        <div className="flex items-center gap-3">
+          <motion.div
+            whileHover={{ rotate: 5, scale: 1.1 }}
+            className={`flex h-10 w-10 items-center justify-center rounded-xl shadow-lg ${scheme.iconBg}`}
           >
-            <Icon className={`h-4 w-4 ${scheme.fg}`} />
-          </div>
+            <Icon className="h-5 w-5 text-white" />
+          </motion.div>
           <div>
-            <p className="mb-1 text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+            <p className="mb-1 text-xs font-medium uppercase tracking-wider text-white/60">
               {title}
             </p>
-            <p className="leading-none text-xl font-bold text-zinc-900 dark:text-zinc-100">
+            <p className="leading-none text-xl font-bold text-white">
               {value}
             </p>
           </div>
         </div>
-        <span
+        <motion.span
+          whileHover={{ scale: 1.05 }}
           className={`inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium shadow-sm ${scheme.chipBg} ${scheme.chipFg}`}
         >
           {trend === 'up' ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
           {trendValue}
-        </span>
+        </motion.span>
       </div>
 
-      <div className="mt-2 flex items-center gap-2">
-        <div className="h-1 w-full rounded-full bg-zinc-200 dark:bg-zinc-700">
-          <div
-            className={`h-1 rounded-full transition-all duration-700 ${
-              trend === 'up' ? 'w-3/4 bg-violet-500' : 'w-1/2 bg-purple-500'
+      <div className="mt-3 flex items-center gap-2">
+        <div className="h-1.5 w-full rounded-full bg-white/20">
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: trend === 'up' ? '75%' : '50%' }}
+            transition={{ duration: 1, delay: 0.5 }}
+            className={`h-1.5 rounded-full ${
+              trend === 'up' ? 'bg-gradient-to-r from-green-400 to-emerald-500' : 'bg-gradient-to-r from-orange-400 to-red-500'
             }`}
           />
         </div>
-        <p className="whitespace-nowrap text-xs text-zinc-500 dark:text-zinc-400">vs mês anterior</p>
+        <p className="whitespace-nowrap text-xs text-white/60">vs mês anterior</p>
       </div>
-    </div>
+    </motion.div>
   )
 }
 
@@ -214,23 +232,25 @@ function QuickActionCard({
   desc,
   icon: Icon,
   onClick,
-  color = 'text-zinc-400',
-  hover = 'group-hover:text-emerald-600',
+  color = 'text-white/60',
+  hover = 'group-hover:text-emerald-400',
 }) {
   return (
-    <button
+    <motion.button
+      whileHover={{ scale: 1.02, y: -2 }}
+      whileTap={{ scale: 0.98 }}
       onClick={onClick}
-      className="group rounded-2xl border border-zinc-200/60 bg-white/70 p-5 text-left shadow-sm backdrop-blur transition-all hover:-translate-y-[1px] hover:shadow-md active:scale-[0.99] dark:border-white/10 dark:bg-zinc-900/60"
+      className="group rounded-2xl border border-white/20 bg-white/10 p-5 text-left shadow-lg backdrop-blur-xl transition-all hover:bg-white/20 hover:shadow-xl"
       aria-label={title}
     >
       <div className="flex items-center justify-between">
         <div>
-          <h4 className="font-semibold text-zinc-900 transition-colors dark:text-zinc-100">{title}</h4>
-          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{desc}</p>
+          <h4 className="font-semibold text-white transition-colors">{title}</h4>
+          <p className="mt-1 text-sm text-white/70">{desc}</p>
         </div>
-        <Icon className={`h-6 w-6 ${color} ${hover}`} />
+        <Icon className={`h-6 w-6 transition-colors ${color} ${hover}`} />
       </div>
-    </button>
+    </motion.button>
   )
 }
 
@@ -505,102 +525,145 @@ export default function Dashboard() {
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden">
-      {/* Fundo full-bleed */}
+      {/* Fundo premium */}
       <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute inset-0 bg-gradient-to-br from-violet-50 via-purple-50/30 to-indigo-100/50 dark:from-zinc-950 dark:via-violet-950/20 dark:to-purple-950/30" />
-        <div className="absolute -top-24 -left-24 h-96 w-96 animate-pulse rounded-full bg-gradient-to-r from-violet-400/20 to-purple-500/20 blur-3xl" />
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 via-purple-600 to-violet-700" />
+        <div className="absolute -top-40 -left-40 h-96 w-96 animate-pulse rounded-full bg-gradient-to-r from-violet-400/30 to-purple-500/30 blur-3xl" />
         <div
-          className="absolute -bottom-32 -right-32 h-80 w-80 animate-pulse rounded-full bg-gradient-to-r from-indigo-400/20 to-violet-500/20 blur-3xl"
+          className="absolute -bottom-40 -right-40 h-80 w-80 animate-pulse rounded-full bg-gradient-to-r from-indigo-400/20 to-violet-500/20 blur-3xl"
           style={{ animationDelay: '2s' }}
         />
         <div
-          className="absolute left-1/4 top-1/3 h-64 w-64 animate-pulse rounded-full bg-gradient-to-r from-purple-400/10 to-fuchsia-400/10 blur-2xl"
+          className="absolute left-1/4 top-1/3 h-64 w-64 animate-pulse rounded-full bg-gradient-to-r from-purple-400/15 to-fuchsia-400/15 blur-2xl"
           style={{ animationDelay: '4s' }}
         />
         <div
-          className="absolute inset-0 opacity-[0.03] dark:opacity-[0.06]"
-          style={{
-            backgroundImage:
-              'radial-gradient(circle at 2px 2px, rgba(0,0,0,0.9) 1px, transparent 0)',
-            backgroundSize: '40px 40px',
-          }}
+          className="absolute right-1/4 bottom-1/4 h-80 w-80 animate-pulse rounded-full bg-gradient-to-r from-blue-400/10 to-indigo-400/10 blur-3xl"
+          style={{ animationDelay: '6s' }}
         />
       </div>
 
       {/* Header */}
-      <div className="sticky top-0 z-20 w-full border-b border-zinc-200/60 bg-white/90 backdrop-blur-xl shadow-lg shadow-zinc-100/50 dark:border-white/10 dark:bg-zinc-900/90 dark:shadow-zinc-900/50">
-        <div className="mx-auto flex max-w-[1440px] 2xl:max-w-[1600px] items-center justify-between px-6 py-3 lg:px-8">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-purple-600 shadow-lg">
-              <PiggyBank className="h-5 w-5 text-white" />
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="sticky top-0 z-20 w-full border-b border-white/20 bg-white/10 backdrop-blur-xl shadow-lg"
+      >
+        <div className="mx-auto flex max-w-[1440px] 2xl:max-w-[1600px] items-center justify-between px-6 py-4 lg:px-8">
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="flex items-center gap-3"
+          >
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-purple-600 shadow-lg">
+              <PiggyBank className="h-6 w-6 text-white" />
             </div>
-            <div>
-              <h1 className="bg-gradient-to-r from-zinc-900 to-zinc-700 bg-clip-text text-xl font-bold text-transparent dark:from-zinc-100 dark:to-zinc-300 md:text-2xl">
-                Dashboard Financeiro
-              </h1>
-              <p className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">
-                <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500"></span>
-                Bem-vindo de volta! Suas finanças estão sendo monitoradas.
-              </p>
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-yellow-300" />
+              <div>
+                <h1 className="text-xl font-bold text-white md:text-2xl">
+                  Dashboard Financeiro
+                </h1>
+                <p className="flex items-center gap-2 text-xs text-white/80">
+                  <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400"></span>
+                  Bem-vindo de volta! Suas finanças estão sendo monitoradas.
+                </p>
+              </div>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="flex items-center gap-2">
-            <button
+          <motion.div 
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="flex items-center gap-3"
+          >
+            <motion.button
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => navigate('/transacoes')}
-              className="group inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 px-3 py-2 text-sm font-semibold text-white shadow-lg shadow-violet-500/25 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-violet-500/40 active:scale-95"
+              className="group inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 to-purple-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-violet-500/25 transition-all duration-200 hover:shadow-xl hover:shadow-violet-500/40"
             >
               <PlusCircle className="h-4 w-4 transition-transform group-hover:rotate-90" />
               Nova Transação
-            </button>
-            <button
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => navigate('/configuracoes')}
-              className="inline-flex items-center gap-2 rounded-xl border border-zinc-200/60 bg-white/80 px-3 py-2 text-sm font-medium text-zinc-700 shadow-sm backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:bg-white hover:shadow-md dark:border-white/10 dark:bg-zinc-800/80 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              className="inline-flex items-center gap-2 rounded-2xl border border-white/30 bg-white/10 px-4 py-2.5 text-sm font-medium text-white shadow-sm backdrop-blur transition-all duration-200 hover:bg-white/20"
             >
               <Settings className="h-4 w-4" />
               Configurações
-            </button>
-          </div>
+            </motion.button>
+          </motion.div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Conteúdo */}
       <div className="mx-auto max-w-[1440px] 2xl:max-w-[1600px] px-6 pb-6 lg:px-8">
         {/* SEÇÃO PRINCIPAL - Cards KPI e Filtros na mesma linha, colados no topo */}
-        <div className="mb-6 grid grid-cols-12 gap-6 pt-6">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.6 }}
+          className="mb-8 grid grid-cols-12 gap-6 pt-6"
+        >
           {/* KPIs principais ocupando mais espaço */}
           <div className="col-span-12 lg:col-span-9 xl:col-span-10">
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.8 }}
+              className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4"
+            >
               <KpiCard title="Saldo Total" value={money(mockData.saldo)} trend="up" trendValue="+12,3%" icon={Wallet} tone="violet" />
               <KpiCard title="Receitas do Mês" value={money(mockData.receitas)} trend="up" trendValue="+8,2%" icon={TrendingUp} tone="blue" />
               <KpiCard title="Despesas do Mês" value={money(mockData.despesas)} trend="down" trendValue="-5,1%" icon={TrendingDown} tone="purple" />
               <KpiCard title="Economia" value={money(mockData.economia)} trend="up" trendValue="+15,7%" icon={PiggyBank} tone="indigo" />
-            </div>
+            </motion.div>
           </div>
 
           {/* Filtros compactos à direita */}
-          <div className="col-span-12 lg:col-span-3 xl:col-span-2">
+          <motion.div 
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 1.0 }}
+            className="col-span-12 lg:col-span-3 xl:col-span-2"
+          >
             <FilterPanel year={year} setYear={setYear} month={month} setMonth={setMonth} />
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
         {/* SEGUNDA SEÇÃO - Cards auxiliares logo abaixo com espaçamento harmonioso */}
-        <section className="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <motion.section 
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 1.2 }}
+          className="mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+        >
           <WeatherFinanceCard />
           <FinancialInsightsCard />
           <GoalCard percent={72} />
           <InvestmentCard />
-        </section>
+        </motion.section>
 
         {/* TERCEIRA SEÇÃO - Gráficos compactos */}
-        <div className="mb-6 grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 1.4 }}
+          className="mb-8 grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch"
+        >
           <SectionCard title="Receitas vs Despesas" className="h-full">
             <div className="h-[240px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={mockData.receitasVsDespesas}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="mes" stroke="#6b7280" />
-                  <YAxis stroke="#6b7280" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" />
+                  <XAxis dataKey="mes" stroke="#ffffff80" />
+                  <YAxis stroke="#ffffff80" />
                   <Tooltip formatter={tooltipCurrency} labelFormatter={(l) => `Mês: ${l}`} />
                   <Bar dataKey="receitas" fill="#8b5cf6" radius={[6, 6, 0, 0]} />
                   <Bar dataKey="despesas" fill="#6366f1" radius={[6, 6, 0, 0]} />
@@ -615,7 +678,7 @@ export default function Dashboard() {
                 <PieChart>
                   <Pie data={mockData.categorias} cx="50%" cy="50%" innerRadius={50} outerRadius={90} dataKey="value" paddingAngle={2}>
                     {mockData.categorias.map((c, i) => <Cell key={i} fill={c.color} />)}
-                    <Label value={money(totalCategorias)} position="center" className="text-zinc-800" />
+                    <Label value={money(totalCategorias)} position="center" className="text-white font-bold" />
                   </Pie>
                   <Tooltip formatter={tooltipCurrency} />
                 </PieChart>
@@ -624,7 +687,7 @@ export default function Dashboard() {
           </SectionCard>
 
           <LineChartCard />
-        </div>
+        </motion.div>
 
         {/* QUARTA SEÇÃO - Transações / Contas / Alertas */}
         <div className="mb-6 grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
@@ -646,13 +709,18 @@ export default function Dashboard() {
         </div>
 
         {/* QUINTA SEÇÃO - Ações rápidas */}
-        <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-5">
-          <QuickActionCard title="Transações" desc="Gerencie receitas e despesas" icon={ExternalLink} onClick={() => navigate('/transacoes')} color="text-emerald-500" hover="group-hover:text-emerald-600" />
-          <QuickActionCard title="Metas" desc="Acompanhe seus objetivos" icon={Target} onClick={() => navigate('/metas')} color="text-blue-500" hover="group-hover:text-blue-600" />
-          <QuickActionCard title="Relatórios" desc="Análise financeira detalhada" icon={BarChart3} onClick={() => navigate('/relatorios')} color="text-violet-500" hover="group-hover:text-violet-600" />
-          <QuickActionCard title="Educação" desc="Aprenda sobre finanças" icon={BookOpen} onClick={() => navigate('/educacao')} color="text-amber-500" hover="group-hover:text-amber-600" />
-          <QuickActionCard title="Cadastrar Conta" desc="Adicione bancos e carteiras" icon={CreditCard} onClick={() => navigate('/configuracoes')} color="text-sky-500" hover="group-hover:text-sky-600" />
-        </div>
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 1.8 }}
+          className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-5"
+        >
+          <QuickActionCard title="Transações" desc="Gerencie receitas e despesas" icon={ExternalLink} onClick={() => navigate('/transacoes')} color="text-emerald-400" hover="group-hover:text-emerald-300" />
+          <QuickActionCard title="Metas" desc="Acompanhe seus objetivos" icon={Target} onClick={() => navigate('/metas')} color="text-blue-400" hover="group-hover:text-blue-300" />
+          <QuickActionCard title="Relatórios" desc="Análise financeira detalhada" icon={BarChart3} onClick={() => navigate('/relatorios')} color="text-violet-400" hover="group-hover:text-violet-300" />
+          <QuickActionCard title="Educação" desc="Aprenda sobre finanças" icon={BookOpen} onClick={() => navigate('/educacao')} color="text-amber-400" hover="group-hover:text-amber-300" />
+          <QuickActionCard title="Cadastrar Conta" desc="Adicione bancos e carteiras" icon={CreditCard} onClick={() => navigate('/configuracoes')} color="text-sky-400" hover="group-hover:text-sky-300" />
+        </motion.div>
 
         {/* SEXTA SEÇÃO - Insights e Recomendações (compacto) */}
         <div className="mb-6 relative">
