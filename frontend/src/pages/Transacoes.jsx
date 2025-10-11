@@ -152,200 +152,221 @@ export default function Transacoes() {
   }
 
   return (
-    <div className="p-4 md:p-6 space-y-6 animate-in fade-in duration-500">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Transações</h1>
-          <p className="text-gray-600">Gerencie suas receitas e despesas</p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50/30 via-purple-50/20 to-indigo-50/30 p-4 md:p-6">
+      <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-6">
+          <div className="text-center sm:text-left">
+            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-3 drop-shadow-sm">
+              Transações
+            </h1>
+            <p className="text-lg text-gray-700 font-medium">
+              Gerencie suas receitas e despesas
+            </p>
+          </div>
+          <button 
+            onClick={() => setModalAberto(true)}
+            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-6 py-3 rounded-2xl font-semibold flex items-center gap-3 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 mx-auto sm:mx-0"
+          >
+            <Plus className="w-5 h-5" />
+            Nova Transação
+          </button>
         </div>
-        <button 
-          onClick={() => setModalAberto(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          Nova Transação
-        </button>
-      </div>
 
-      {/* Cards de Resumo */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Receitas do Mês</p>
-              <p className="text-2xl font-bold text-green-600">{formatMoney(resumoMes.receitas)}</p>
+        {/* Cards de Resumo */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="backdrop-blur-lg bg-white/30 rounded-3xl border border-white/50 shadow-xl p-8 hover:bg-white/40 transition-all duration-300 transform hover:scale-[1.02]">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-bold text-gray-700 mb-2">Receitas do Mês</p>
+                <p className="text-3xl font-bold text-green-600 drop-shadow-sm">{formatMoney(resumoMes.receitas)}</p>
+              </div>
+              <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-emerald-500 rounded-2xl flex items-center justify-center shadow-lg">
+                <TrendingUp className="w-8 h-8 text-white" />
+              </div>
             </div>
-            <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-              <TrendingUp className="w-6 h-6 text-green-600" />
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Despesas do Mês</p>
-              <p className="text-2xl font-bold text-red-600">{formatMoney(resumoMes.despesas)}</p>
-            </div>
-            <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
-              <TrendingDown className="w-6 h-6 text-red-600" />
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Saldo do Mês</p>
-              <p className={`text-2xl font-bold ${resumoMes.saldo >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
-                {formatMoney(resumoMes.saldo)}
-              </p>
-            </div>
-            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-              <Calendar className="w-6 h-6 text-blue-600" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Filtros */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Filter className="w-5 h-5 text-gray-600" />
-          <h3 className="font-medium text-gray-900">Filtros</h3>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="relative">
-            <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Buscar transação..."
-              value={filtros.busca}
-              onChange={(e) => setFiltros({...filtros, busca: e.target.value})}
-              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
           </div>
           
-          <select
-            value={filtros.categoria}
-            onChange={(e) => setFiltros({...filtros, categoria: e.target.value})}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="">Todas as categorias</option>
-            {categorias.map(categoria => (
-              <option key={categoria} value={categoria}>{categoria}</option>
-            ))}
-          </select>
-          
-          <select
-            value={filtros.tipo}
-            onChange={(e) => setFiltros({...filtros, tipo: e.target.value})}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="">Todos os tipos</option>
-            <option value="receita">Receitas</option>
-            <option value="despesa">Despesas</option>
-          </select>
-          
-          <select
-            value={filtros.status}
-            onChange={(e) => setFiltros({...filtros, status: e.target.value})}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="">Todos os status</option>
-            <option value="confirmado">Confirmado</option>
-            <option value="pendente">Pendente</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Lista de Transações */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-100">
-          <h3 className="font-medium text-gray-900">Lista de Transações ({transacoesFiltradas.length})</h3>
-        </div>
-        
-        <div className="divide-y divide-gray-100">
-          {transacoesFiltradas.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">
-              Nenhuma transação encontrada com os filtros aplicados.
+          <div className="backdrop-blur-lg bg-white/30 rounded-3xl border border-white/50 shadow-xl p-8 hover:bg-white/40 transition-all duration-300 transform hover:scale-[1.02]">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-bold text-gray-700 mb-2">Despesas do Mês</p>
+                <p className="text-3xl font-bold text-red-600 drop-shadow-sm">{formatMoney(resumoMes.despesas)}</p>
+              </div>
+              <div className="w-16 h-16 bg-gradient-to-br from-red-400 to-rose-500 rounded-2xl flex items-center justify-center shadow-lg">
+                <TrendingDown className="w-8 h-8 text-white" />
+              </div>
             </div>
-          ) : (
-            transacoesFiltradas.map((transacao) => (
-              <div key={transacao.id} className="p-6 hover:bg-gray-50 transition-colors">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                      transacao.tipo === 'receita' ? 'bg-green-100' : 'bg-red-100'
-                    }`}>
-                      {transacao.tipo === 'receita' ? (
-                        <ArrowUpRight className="w-6 h-6 text-green-600" />
-                      ) : (
-                        <ArrowDownRight className="w-6 h-6 text-red-600" />
-                      )}
-                    </div>
-                    
-                    <div className="ml-4">
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium text-gray-900">{transacao.descricao}</p>
-                        <span className={`px-2 py-1 text-xs rounded-full ${
-                          transacao.status === 'confirmado' 
-                            ? 'bg-green-100 text-green-700' 
-                            : 'bg-yellow-100 text-yellow-700'
-                        }`}>
-                          {transacao.status === 'confirmado' ? 'Confirmado' : 'Pendente'}
-                        </span>
+          </div>
+          
+          <div className="backdrop-blur-lg bg-white/30 rounded-3xl border border-white/50 shadow-xl p-8 hover:bg-white/40 transition-all duration-300 transform hover:scale-[1.02]">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-bold text-gray-700 mb-2">Saldo do Mês</p>
+                <p className={`text-3xl font-bold drop-shadow-sm ${resumoMes.saldo >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                  {formatMoney(resumoMes.saldo)}
+                </p>
+              </div>
+              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg ${
+                resumoMes.saldo >= 0 
+                  ? 'bg-gradient-to-br from-blue-400 to-indigo-500' 
+                  : 'bg-gradient-to-br from-red-400 to-rose-500'
+              }`}>
+                <Calendar className="w-8 h-8 text-white" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Filtros */}
+        <div className="backdrop-blur-lg bg-white/25 rounded-3xl border border-white/40 shadow-lg p-8">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+              <Filter className="w-5 h-5 text-white" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-800">Filtros</h3>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="relative">
+              <Search className="w-5 h-5 text-gray-500 absolute left-4 top-1/2 transform -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Buscar transação..."
+                value={filtros.busca}
+                onChange={(e) => setFiltros({...filtros, busca: e.target.value})}
+                className="w-full pl-12 pr-4 py-3 border border-white/30 bg-white/40 backdrop-blur-sm rounded-2xl text-gray-800 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 shadow-sm"
+              />
+            </div>
+            
+            <select
+              value={filtros.categoria}
+              onChange={(e) => setFiltros({...filtros, categoria: e.target.value})}
+              className="w-full px-4 py-3 border border-white/30 bg-white/40 backdrop-blur-sm rounded-2xl text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 shadow-sm"
+            >
+              <option value="">Todas as categorias</option>
+              {categorias.map(categoria => (
+                <option key={categoria} value={categoria}>{categoria}</option>
+              ))}
+            </select>
+            
+            <select
+              value={filtros.tipo}
+              onChange={(e) => setFiltros({...filtros, tipo: e.target.value})}
+              className="w-full px-4 py-3 border border-white/30 bg-white/40 backdrop-blur-sm rounded-2xl text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 shadow-sm"
+            >
+              <option value="">Todos os tipos</option>
+              <option value="receita">Receitas</option>
+              <option value="despesa">Despesas</option>
+            </select>
+            
+            <select
+              value={filtros.status}
+              onChange={(e) => setFiltros({...filtros, status: e.target.value})}
+              className="w-full px-4 py-3 border border-white/30 bg-white/40 backdrop-blur-sm rounded-2xl text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 shadow-sm"
+            >
+              <option value="">Todos os status</option>
+              <option value="confirmado">Confirmado</option>
+              <option value="pendente">Pendente</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Lista de Transações */}
+        <div className="backdrop-blur-lg bg-white/25 rounded-3xl border border-white/40 shadow-lg overflow-hidden">
+          <div className="px-8 py-6 border-b border-white/30 bg-gradient-to-r from-blue-50/50 to-purple-50/50">
+            <h3 className="text-xl font-bold text-gray-800">Lista de Transações ({transacoesFiltradas.length})</h3>
+          </div>
+          
+          <div className="divide-y divide-white/20">
+            {transacoesFiltradas.length === 0 ? (
+              <div className="p-12 text-center">
+                <div className="w-20 h-20 bg-gray-200/50 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Search className="w-8 h-8 text-gray-400" />
+                </div>
+                <p className="text-gray-600 font-medium text-lg">
+                  Nenhuma transação encontrada com os filtros aplicados.
+                </p>
+              </div>
+            ) : (
+              transacoesFiltradas.map((transacao) => (
+                <div key={transacao.id} className="p-6 hover:bg-white/20 transition-all duration-300 transform hover:scale-[1.01] cursor-pointer">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg ${
+                        transacao.tipo === 'receita' 
+                          ? 'bg-gradient-to-br from-green-400 to-emerald-500' 
+                          : 'bg-gradient-to-br from-red-400 to-rose-500'
+                      }`}>
+                        {transacao.tipo === 'receita' ? (
+                          <ArrowUpRight className="w-7 h-7 text-white" />
+                        ) : (
+                          <ArrowDownRight className="w-7 h-7 text-white" />
+                        )}
                       </div>
-                      <p className="text-sm text-gray-500">
-                        {transacao.categoria} • {formatDate(transacao.data)}
-                      </p>
+                      
+                      <div className="ml-5">
+                        <div className="flex items-center gap-3 mb-1">
+                          <p className="font-bold text-gray-800 text-lg">{transacao.descricao}</p>
+                          <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
+                            transacao.status === 'confirmado' 
+                              ? 'bg-green-100/80 text-green-700 border border-green-200/50' 
+                              : 'bg-yellow-100/80 text-yellow-700 border border-yellow-200/50'
+                          }`}>
+                            {transacao.status === 'confirmado' ? 'Confirmado' : 'Pendente'}
+                          </span>
+                        </div>
+                        <p className="text-gray-600 font-medium">
+                          {transacao.categoria} • {formatDate(transacao.data)}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-4">
-                    <span className={`text-lg font-semibold ${
-                      transacao.tipo === 'receita' ? 'text-green-600' : 'text-red-600'
-                    }`}>
-                      {transacao.tipo === 'receita' ? '+' : '-'}{formatMoney(transacao.valor)}
-                    </span>
                     
-                    <div className="flex items-center gap-2">
-                      <button className="p-2 text-gray-400 hover:text-blue-600 transition-colors">
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button className="p-2 text-gray-400 hover:text-red-600 transition-colors">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                    <div className="flex items-center gap-6">
+                      <span className={`text-xl font-bold ${
+                        transacao.tipo === 'receita' ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {transacao.tipo === 'receita' ? '+' : '-'}{formatMoney(transacao.valor)}
+                      </span>
+                      
+                      <div className="flex items-center gap-2">
+                        <button className="p-3 text-gray-500 hover:text-blue-600 hover:bg-blue-50/50 rounded-xl transition-all duration-300 transform hover:scale-110">
+                          <Edit className="w-5 h-5" />
+                        </button>
+                        <button className="p-3 text-gray-500 hover:text-red-600 hover:bg-red-50/50 rounded-xl transition-all duration-300 transform hover:scale-110">
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-
-      {/* Modal seria implementado aqui - versão demonstrativa */}
-      {modalAberto && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-md w-full p-6">
-            <h3 className="text-lg font-semibold mb-4">Nova Transação</h3>
-            <p className="text-gray-600 mb-4">Esta é uma versão de demonstração. Em produção, aqui seria exibido um formulário completo para adicionar/editar transações.</p>
-            <button 
-              onClick={() => setModalAberto(false)}
-              className="w-full bg-gray-200 text-gray-800 py-2 rounded-lg hover:bg-gray-300 transition-colors"
-            >
-              Fechar
-            </button>
+              ))
+            )}
           </div>
         </div>
-      )}
 
-      {/* Copyright */}
-      <div className="mt-8 text-right text-sm text-gray-500">
-        © 2024 MoneyMapp TCC. Todos os direitos reservados.
+        {/* Modal seria implementado aqui - versão demonstrativa */}
+        {modalAberto && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
+            <div className="backdrop-blur-lg bg-white/30 rounded-3xl border border-white/50 shadow-2xl max-w-md w-full p-8 transform animate-in slide-in-from-bottom-4 duration-300">
+              <h3 className="text-2xl font-bold text-gray-800 mb-6">Nova Transação</h3>
+              <p className="text-gray-700 font-medium mb-8 leading-relaxed">
+                Esta é uma versão de demonstração. Em produção, aqui seria exibido um formulário completo para adicionar/editar transações.
+              </p>
+              <button 
+                onClick={() => setModalAberto(false)}
+                className="w-full bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 text-white py-3 rounded-2xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Copyright */}
+        <div className="text-center text-sm text-gray-600 font-medium backdrop-blur-sm bg-white/20 rounded-2xl p-4 border border-white/30">
+          © 2024 MoneyMapp TCC. Todos os direitos reservados.
+        </div>
       </div>
     </div>
   )

@@ -79,77 +79,115 @@ function MetaCard({ meta }) {
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
+    <div className={`backdrop-blur-lg rounded-2xl border shadow-lg p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl h-full flex flex-col ${
+      meta.status === 'concluido' 
+        ? 'bg-green-50/40 border-green-200/50 hover:bg-green-50/60' 
+        : 'bg-white/30 border-white/50 hover:bg-white/40'
+    }`}>
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
-          <div className="flex items-center gap-2 mb-2">
-            <h3 className="text-lg font-semibold text-gray-900">{meta.titulo}</h3>
+          <div className="flex items-center gap-2 mb-1">
+            <h3 className="text-lg font-bold text-gray-900">{meta.titulo}</h3>
             {meta.status === 'concluido' ? (
               <CheckCircle className="w-5 h-5 text-green-500" />
             ) : (
               <Circle className="w-5 h-5 text-gray-400" />
             )}
           </div>
-          <p className="text-sm text-gray-500">{meta.categoria}</p>
+          <p className="text-xs font-semibold text-gray-600">{meta.categoria}</p>
         </div>
-        <div className={`w-12 h-12 bg-gradient-to-br ${corClasses[meta.cor]} rounded-xl flex items-center justify-center`}>
+        <div className={`w-12 h-12 bg-gradient-to-br ${corClasses[meta.cor]} rounded-xl flex items-center justify-center shadow-md`}>
           <Target className="w-6 h-6 text-white" />
         </div>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-4 flex-1">
         {/* Progresso */}
         <div>
           <div className="flex justify-between items-center mb-2">
-            <span className="text-sm font-medium text-gray-700">Progresso</span>
-            <span className="text-sm font-semibold text-gray-900">{progresso.toFixed(1)}%</span>
+            <span className="text-xs font-bold text-gray-700">Progresso</span>
+            <span className="text-sm font-bold text-gray-900">{progresso.toFixed(1)}%</span>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-3">
+          <div className="w-full bg-white/40 backdrop-blur-sm rounded-full h-3 shadow-inner">
             <div 
-              className={`h-3 bg-gradient-to-r ${corClasses[meta.cor]} rounded-full transition-all duration-300`}
+              className={`h-3 bg-gradient-to-r ${corClasses[meta.cor]} rounded-full transition-[width] duration-700 ease-out shadow-sm`}
               style={{ width: `${progresso}%` }}
             ></div>
           </div>
         </div>
 
         {/* Valores */}
-        <div className="flex justify-between items-center py-2 border-t border-gray-100">
+        <div className="flex justify-between items-center py-3 border-t border-white/30">
           <div>
-            <p className="text-xs text-gray-500">Valor Atual</p>
-            <p className="text-lg font-bold text-gray-900">{formatMoney(meta.valorAtual)}</p>
+            <p className="text-xs font-bold text-gray-600 mb-1">Atual</p>
+            <p className="text-sm font-bold text-gray-900">{formatMoney(meta.valorAtual)}</p>
           </div>
           <div className="text-right">
-            <p className="text-xs text-gray-500">Meta</p>
-            <p className="text-lg font-bold text-gray-900">{formatMoney(meta.valorMeta)}</p>
+            <p className="text-xs font-bold text-gray-600 mb-1">Meta</p>
+            <p className="text-sm font-bold text-gray-900">{formatMoney(meta.valorMeta)}</p>
           </div>
         </div>
 
         {/* Prazo */}
-        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-          <div className="flex items-center text-sm text-gray-600">
+        <div className="flex items-center justify-between pt-3 border-t border-white/30">
+          <div className="flex items-center text-xs font-semibold text-gray-700">
             <Calendar className="w-4 h-4 mr-1" />
-            <span>Prazo: {formatDate(meta.prazo)}</span>
+            <span>{formatDate(meta.prazo)}</span>
           </div>
           {meta.status === 'ativo' && (
-            <span className={`text-xs px-2 py-1 rounded-full ${
-              diasRestantes > 30 ? 'bg-green-100 text-green-700' :
-              diasRestantes > 7 ? 'bg-yellow-100 text-yellow-700' :
-              'bg-red-100 text-red-700'
+            <span className={`text-xs px-2 py-1 rounded-full font-bold backdrop-blur-sm ${
+              diasRestantes > 30 ? 'bg-green-100/80 text-green-700 border border-green-200/50' :
+              diasRestantes > 7 ? 'bg-yellow-100/80 text-yellow-700 border border-yellow-200/50' :
+              'bg-red-100/80 text-red-700 border border-red-200/50'
             }`}>
-              {diasRestantes > 0 ? `${diasRestantes} dias` : 'Vencido'}
+              {diasRestantes > 0 ? `${diasRestantes}d` : 'Vencido'}
             </span>
           )}
         </div>
+      </div>
 
-        {/* Ações */}
-        <div className="flex gap-2 pt-2">
-          <button className="flex-1 bg-blue-50 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors">
-            Adicionar Valor
+      {/* Ações */}
+      <div className="flex gap-2 pt-3 mt-auto">
+        <button className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white py-2 px-3 rounded-xl text-xs font-semibold shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-300">
+          Adicionar
+        </button>
+        <button className="px-3 py-2 bg-white/40 backdrop-blur-sm text-gray-600 hover:text-gray-800 hover:bg-white/60 rounded-xl transition-all duration-300 transform hover:scale-110 shadow-sm hover:shadow-md">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function DicaCard({ metasConcluidas, progressoGeral }) {
+  return (
+    <div className="backdrop-blur-lg rounded-2xl border shadow-lg p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl h-full flex flex-col bg-white/70 border-white/50 hover:bg-white/80">
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            <h3 className="text-lg font-semibold text-zinc-800">Dica para suas Metas</h3>
+          </div>
+          <p className="text-xs font-semibold text-gray-600">Estratégias</p>
+        </div>
+        <div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center shadow-md">
+          <TrendingUp className="w-6 h-6" />
+        </div>
+      </div>
+
+      <div className="flex-1 flex flex-col">
+        <p className="text-zinc-600 text-sm leading-relaxed mb-6 flex-1">
+          Parabéns! Você já conquistou <strong>{metasConcluidas} meta(s)</strong> e está com {progressoGeral}% de progresso geral. 
+          Para acelerar seus objetivos, considere definir um valor mensal fixo para cada meta ativa.
+        </p>
+        
+        <div className="flex flex-col gap-2 mt-auto">
+          <button className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white py-1.5 px-3 rounded-lg text-xs font-semibold shadow-sm hover:shadow-lg transform hover:scale-105 transition-all duration-300">
+            Definir Aportes Automáticos
           </button>
-          <button className="px-3 py-2 text-gray-400 hover:text-gray-600 transition-colors">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-            </svg>
+          <button className="w-full bg-white text-green-700 border border-green-200 hover:bg-gray-50 py-1.5 px-3 rounded-lg text-xs font-semibold shadow-sm hover:shadow-lg transform hover:scale-105 transition-all duration-300">
+            Ver Dicas de Economia
           </button>
         </div>
       </div>
@@ -172,122 +210,103 @@ export default function Metas() {
   const totalMetas = mockMetas.reduce((acc, meta) => acc + meta.valorMeta, 0)
   const progressoGeral = ((totalEconomizado / totalMetas) * 100)
 
+  // Reorganizar metas para o layout desejado: Entrada do Carro ao lado de Investimento Inicial
+  const metasOrganizadas = [
+    ...metasAtivas.slice(0, 2), // Reserva de Emergência, Viagem para Europa
+    mockMetas.find(m => m.id === 3), // Entrada do Carro (concluída)
+    ...metasAtivas.slice(2) // Curso de Especialização, Investimento Inicial
+  ].filter(Boolean)
+
   return (
-    <div className="p-4 md:p-6 space-y-6 animate-in fade-in duration-500">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Metas Financeiras</h1>
-          <p className="text-gray-600">Defina e acompanhe seus objetivos financeiros</p>
-        </div>
-        <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors">
-          <Plus className="w-4 h-4" />
-          Nova Meta
-        </button>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-sky-100 via-indigo-100 to-purple-100">
+      <div className="max-w-[1600px] mx-auto px-4 py-6">
+        <div className="space-y-4 animate-in fade-in duration-500">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
+            <div className="text-center sm:text-left">
+              <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2 drop-shadow-sm">
+                Metas Financeiras
+              </h1>
+              <p className="text-gray-700 font-medium">
+                Defina e acompanhe seus objetivos financeiros
+              </p>
+            </div>
+            <button className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-5 py-2.5 rounded-xl font-semibold flex items-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 mx-auto sm:mx-0">
+              <Plus className="w-4 h-4" />
+              Nova Meta
+            </button>
+          </div>
 
-      {/* Estatísticas Gerais */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Metas Ativas</p>
-              <p className="text-3xl font-bold text-blue-600">{metasAtivas.length}</p>
+          {/* Estatísticas Gerais */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+            <div className="backdrop-blur-lg bg-white/30 rounded-2xl border border-white/50 shadow-lg p-6 hover:bg-white/40 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-bold text-zinc-700 mb-1">Metas Ativas</p>
+                  <p className="text-2xl lg:text-3xl font-bold text-blue-600 drop-shadow-sm">{metasAtivas.length}</p>
+                </div>
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center shadow-md">
+                  <Target className="w-6 h-6 text-white" />
+                </div>
+              </div>
             </div>
-            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-              <Target className="w-6 h-6 text-blue-600" />
+            
+            <div className="backdrop-blur-lg bg-white/30 rounded-2xl border border-white/50 shadow-lg p-6 hover:bg-white/40 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-bold text-zinc-700 mb-1">Total Economizado</p>
+                  <p className="text-xl lg:text-2xl font-bold text-green-600 drop-shadow-sm">{formatMoney(totalEconomizado)}</p>
+                </div>
+                <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-emerald-500 rounded-xl flex items-center justify-center shadow-md">
+                  <DollarSign className="w-6 h-6 text-white" />
+                </div>
+              </div>
+            </div>
+            
+            <div className="backdrop-blur-lg bg-white/30 rounded-2xl border border-white/50 shadow-lg p-6 hover:bg-white/40 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-bold text-zinc-700 mb-1">Progresso Geral</p>
+                  <p className="text-2xl lg:text-3xl font-bold text-purple-600 drop-shadow-sm">{progressoGeral.toFixed(1)}%</p>
+                </div>
+                <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-violet-500 rounded-xl flex items-center justify-center shadow-md">
+                  <Percent className="w-6 h-6 text-white" />
+                </div>
+              </div>
+            </div>
+            
+            <div className="backdrop-blur-lg bg-white/30 rounded-2xl border border-white/50 shadow-lg p-6 hover:bg-white/40 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-bold text-zinc-700 mb-1">Metas Concluídas</p>
+                  <p className="text-2xl lg:text-3xl font-bold text-green-600 drop-shadow-sm">{metasConcluidas.length}</p>
+                </div>
+                <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-emerald-500 rounded-xl flex items-center justify-center shadow-md">
+                  <CheckCircle className="w-6 h-6 text-white" />
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-        
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Economizado</p>
-              <p className="text-2xl font-bold text-green-600">{formatMoney(totalEconomizado)}</p>
-            </div>
-            <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-              <DollarSign className="w-6 h-6 text-green-600" />
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Progresso Geral</p>
-              <p className="text-2xl font-bold text-purple-600">{progressoGeral.toFixed(1)}%</p>
-            </div>
-            <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-              <Percent className="w-6 h-6 text-purple-600" />
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Metas Concluídas</p>
-              <p className="text-3xl font-bold text-green-600">{metasConcluidas.length}</p>
-            </div>
-            <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-              <CheckCircle className="w-6 h-6 text-green-600" />
-            </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Metas Ativas */}
-      {metasAtivas.length > 0 && (
-        <div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Metas em Progresso</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {metasAtivas.map((meta) => (
-              <MetaCard key={meta.id} meta={meta} />
-            ))}
+          {/* Todas as Metas + Dica em Grid Uniforme */}
+          <div className="mb-4">
+            <h2 className="text-xl font-semibold text-zinc-700 mb-3">Suas Metas</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {metasOrganizadas.map((meta) => (
+                <MetaCard key={meta.id} meta={meta} />
+              ))}
+              <DicaCard 
+                metasConcluidas={metasConcluidas.length} 
+                progressoGeral={progressoGeral.toFixed(1)} 
+              />
+            </div>
+          </div>
+
+          {/* Copyright */}
+          <div className="text-center text-sm text-gray-600 font-medium backdrop-blur-sm bg-white/20 rounded-xl p-3 border border-white/30">
+            © 2024 MoneyMapp TCC. Todos os direitos reservados.
           </div>
         </div>
-      )}
-
-      {/* Metas Concluídas */}
-      {metasConcluidas.length > 0 && (
-        <div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Metas Concluídas</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {metasConcluidas.map((meta) => (
-              <MetaCard key={meta.id} meta={meta} />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Dicas */}
-      <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl border border-green-200 p-6">
-        <div className="flex items-center mb-4">
-          <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center mr-3">
-            <TrendingUp className="w-5 h-5 text-green-600" />
-          </div>
-          <h3 className="text-lg font-semibold text-gray-900">Dica para suas Metas</h3>
-        </div>
-        
-        <p className="text-gray-700 mb-4">
-          Parabéns! Você já conquistou <strong>{metasConcluidas.length} meta(s)</strong> e está com {progressoGeral.toFixed(1)}% de progresso geral. 
-          Para acelerar seus objetivos, considere definir um valor mensal fixo para cada meta ativa.
-        </p>
-        
-        <div className="flex gap-3">
-          <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium">
-            Definir Aportes Automáticos
-          </button>
-          <button className="px-4 py-2 bg-white text-green-600 border border-green-200 rounded-lg hover:bg-green-50 transition-colors text-sm font-medium">
-            Ver Dicas de Economia
-          </button>
-        </div>
-      </div>
-
-      {/* Copyright */}
-      <div className="mt-8 text-right text-sm text-gray-500">
-        © 2024 MoneyMapp TCC. Todos os direitos reservados.
       </div>
     </div>
   )

@@ -567,10 +567,10 @@ export default function Dashboard() {
       {/* Conteúdo */}
       <div className="mx-auto max-w-[1440px] 2xl:max-w-[1600px] px-6 pb-6 lg:px-8">
         {/* SEÇÃO PRINCIPAL - Cards KPI e Filtros na mesma linha, colados no topo */}
-        <div className="mb-3 grid grid-cols-12 gap-3 pt-3">
+        <div className="mb-6 grid grid-cols-12 gap-6 pt-6">
           {/* KPIs principais ocupando mais espaço */}
           <div className="col-span-12 lg:col-span-9 xl:col-span-10">
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
               <KpiCard title="Saldo Total" value={money(mockData.saldo)} trend="up" trendValue="+12,3%" icon={Wallet} tone="violet" />
               <KpiCard title="Receitas do Mês" value={money(mockData.receitas)} trend="up" trendValue="+8,2%" icon={TrendingUp} tone="blue" />
               <KpiCard title="Despesas do Mês" value={money(mockData.despesas)} trend="down" trendValue="-5,1%" icon={TrendingDown} tone="purple" />
@@ -584,75 +584,69 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* SEGUNDA SEÇÃO - Cards auxiliares logo abaixo, sem muito espaçamento */}
-        <div className="mb-3 grid grid-cols-12 gap-3">
-          <div className="col-span-12 md:col-span-6 lg:col-span-3"><WeatherFinanceCard /></div>
-          <div className="col-span-12 md:col-span-6 lg:col-span-3"><FinancialInsightsCard /></div>
-          <div className="col-span-12 md:col-span-6 lg:col-span-3"><GoalCard percent={72} /></div>
-          <div className="col-span-12 md:col-span-6 lg:col-span-3"><InvestmentCard /></div>
-        </div>
+        {/* SEGUNDA SEÇÃO - Cards auxiliares logo abaixo com espaçamento harmonioso */}
+        <section className="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <WeatherFinanceCard />
+          <FinancialInsightsCard />
+          <GoalCard percent={72} />
+          <InvestmentCard />
+        </section>
 
         {/* TERCEIRA SEÇÃO - Gráficos compactos */}
-        <div className="mb-3 grid grid-cols-12 gap-3 items-stretch">
-          <div className="col-span-12 lg:col-span-4">
-            <SectionCard title="Receitas vs Despesas" className="h-full">
-              <div className="h-[240px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={mockData.receitasVsDespesas}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis dataKey="mes" stroke="#6b7280" />
-                    <YAxis stroke="#6b7280" />
-                    <Tooltip formatter={tooltipCurrency} labelFormatter={(l) => `Mês: ${l}`} />
-                    <Bar dataKey="receitas" fill="#8b5cf6" radius={[6, 6, 0, 0]} />
-                    <Bar dataKey="despesas" fill="#6366f1" radius={[6, 6, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </SectionCard>
-          </div>
+        <div className="mb-6 grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+          <SectionCard title="Receitas vs Despesas" className="h-full">
+            <div className="h-[240px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={mockData.receitasVsDespesas}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis dataKey="mes" stroke="#6b7280" />
+                  <YAxis stroke="#6b7280" />
+                  <Tooltip formatter={tooltipCurrency} labelFormatter={(l) => `Mês: ${l}`} />
+                  <Bar dataKey="receitas" fill="#8b5cf6" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="despesas" fill="#6366f1" radius={[6, 6, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </SectionCard>
 
-          <div className="col-span-12 lg:col-span-4">
-            <SectionCard title="Gastos por Categoria" className="h-full">
-              <div className="h-[240px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={mockData.categorias} cx="50%" cy="50%" innerRadius={50} outerRadius={90} dataKey="value" paddingAngle={2}>
-                      {mockData.categorias.map((c, i) => <Cell key={i} fill={c.color} />)}
-                      <Label value={money(totalCategorias)} position="center" className="text-zinc-800" />
-                    </Pie>
-                    <Tooltip formatter={tooltipCurrency} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            </SectionCard>
-          </div>
+          <SectionCard title="Gastos por Categoria" className="h-full">
+            <div className="h-[240px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={mockData.categorias} cx="50%" cy="50%" innerRadius={50} outerRadius={90} dataKey="value" paddingAngle={2}>
+                    {mockData.categorias.map((c, i) => <Cell key={i} fill={c.color} />)}
+                    <Label value={money(totalCategorias)} position="center" className="text-zinc-800" />
+                  </Pie>
+                  <Tooltip formatter={tooltipCurrency} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </SectionCard>
 
-          <div className="col-span-12 lg:col-span-4"><LineChartCard /></div>
+          <LineChartCard />
         </div>
 
         {/* QUARTA SEÇÃO - Transações / Contas / Alertas */}
-        <div className="mb-3 grid grid-cols-12 gap-3 items-stretch">
-          <div className="col-span-12 lg:col-span-4">
-            <SectionCard
-              title="Transações Recentes"
-              className="h-full"
-              right={
-                <button onClick={() => navigate('/transacoes')} className="rounded-lg px-3 py-1.5 text-sm text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800">
-                  Ver todas
-                </button>
-              }
-            >
-              <div className="max-h-[200px] divide-y divide-zinc-200/60 overflow-y-auto dark:divide-white/10">
-                {mockData.transacoesRecentes.slice(0, 3).map((t) => <TransactionRow key={t.id} t={t} />)}
-              </div>
-            </SectionCard>
-          </div>
-          <div className="col-span-12 lg:col-span-4"><AccountsCard /></div>
-          <div className="col-span-12 lg:col-span-4"><AlertsCard /></div>
+        <div className="mb-6 grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+          <SectionCard
+            title="Transações Recentes"
+            className="h-full"
+            right={
+              <button onClick={() => navigate('/transacoes')} className="rounded-lg px-3 py-1.5 text-sm text-zinc-600 transition hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800">
+                Ver todas
+              </button>
+            }
+          >
+            <div className="max-h-[200px] divide-y divide-zinc-200/60 overflow-y-auto dark:divide-white/10">
+              {mockData.transacoesRecentes.slice(0, 3).map((t) => <TransactionRow key={t.id} t={t} />)}
+            </div>
+          </SectionCard>
+          <AccountsCard />
+          <AlertsCard />
         </div>
 
         {/* QUINTA SEÇÃO - Ações rápidas */}
-        <div className="mb-3 grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-5">
+        <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-5">
           <QuickActionCard title="Transações" desc="Gerencie receitas e despesas" icon={ExternalLink} onClick={() => navigate('/transacoes')} color="text-emerald-500" hover="group-hover:text-emerald-600" />
           <QuickActionCard title="Metas" desc="Acompanhe seus objetivos" icon={Target} onClick={() => navigate('/metas')} color="text-blue-500" hover="group-hover:text-blue-600" />
           <QuickActionCard title="Relatórios" desc="Análise financeira detalhada" icon={BarChart3} onClick={() => navigate('/relatorios')} color="text-violet-500" hover="group-hover:text-violet-600" />
@@ -661,45 +655,43 @@ export default function Dashboard() {
         </div>
 
         {/* SEXTA SEÇÃO - Insights e Recomendações (compacto) */}
-        <div className="mb-3 grid grid-cols-12 gap-3">
-          <div className="col-span-12">
-            <div className="group relative overflow-hidden rounded-2xl border border-purple-200/60 bg-gradient-to-br from-purple-50 via-violet-50 to-indigo-50 p-4 shadow-xl transition-all duration-300 hover:shadow-2xl dark:from-purple-900/20 dark:via-violet-900/20 dark:to-indigo-900/20 dark:border-purple-800/30">
-              <div className="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-gradient-to-br from-purple-400/20 to-violet-500/20 blur-2xl transition-all duration-700 group-hover:scale-125"></div>
-              <div className="relative">
-                <div className="mb-3 flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500 to-violet-600 shadow-lg">
-                    <Clock className="h-5 w-5 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">💡 Insight Financeiro</h3>
-                    <p className="text-xs text-zinc-600 dark:text-zinc-400">Baseado na sua performance mensal</p>
-                  </div>
+        <div className="mb-6 relative">
+          <div className="group relative overflow-hidden rounded-2xl border border-purple-200/60 bg-gradient-to-br from-purple-50 via-violet-50 to-indigo-50 p-6 shadow-xl transition-all duration-300 hover:shadow-2xl dark:from-purple-900/20 dark:via-violet-900/20 dark:to-indigo-900/20 dark:border-purple-800/30">
+            <div className="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-gradient-to-br from-purple-400/20 to-violet-500/20 blur-2xl transition-all duration-700 group-hover:scale-125"></div>
+            <div className="relative">
+              <div className="mb-3 flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500 to-violet-600 shadow-lg">
+                  <Clock className="h-5 w-5 text-white" />
                 </div>
-                <div className="mb-3 rounded-xl bg-white/60 p-3 backdrop-blur dark:bg-zinc-800/60">
-                  <p className="text-sm leading-relaxed text-zinc-800 dark:text-zinc-200">
-                    🎉 <strong>Parabéns!</strong> Você economizou <span className="font-bold text-purple-600 dark:text-purple-400">{money(mockData.economia)}</span> este mês — isso representa um aumento de <strong>15.7%</strong> comparado ao mês anterior!
-                  </p>
-                  <p className="mt-2 text-xs text-zinc-600 dark:text-zinc-400">
-                    💰 <strong>Recomendação:</strong> Considere alocar 70% dessa quantia ({money(mockData.economia * 0.7)}) para sua reserva de emergência e 30% ({money(mockData.economia * 0.3)}) para investimentos de baixo risco.
-                  </p>
+                <div>
+                  <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">💡 Insight Financeiro</h3>
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400">Baseado na sua performance mensal</p>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  <button onClick={() => navigate('/metas')} className="group/btn inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-violet-600 to-purple-600 px-3 py-2 text-xs font-semibold text-white shadow-lg shadow-purple-500/25 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-purple-500/40 active:scale-95">
-                    <Target className="h-4 w-4 transition-transform group-hover/btn:rotate-12" />
-                    Definir Novas Metas
-                  </button>
-                  <button onClick={() => navigate('/educacao')} className="inline-flex items-center gap-2 rounded-lg border-2 border-purple-300/60 bg-white/80 px-3 py-2 text-xs font-semibold text-purple-700 backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:border-purple-400 hover:bg-purple-50 dark:border-purple-600/40 dark:bg-zinc-800/80 dark:text-purple-300 dark:hover:bg-purple-900/20">
-                    <BookOpen className="h-4 w-4" />
-                    Educação Financeira
-                  </button>
-                </div>
+              </div>
+              <div className="mb-3 rounded-xl bg-white/60 p-3 backdrop-blur dark:bg-zinc-800/60">
+                <p className="text-sm leading-relaxed text-zinc-800 dark:text-zinc-200">
+                  🎉 <strong>Parabéns!</strong> Você economizou <span className="font-bold text-purple-600 dark:text-purple-400">{money(mockData.economia)}</span> este mês — isso representa um aumento de <strong>15.7%</strong> comparado ao mês anterior!
+                </p>
+                <p className="mt-2 text-xs text-zinc-600 dark:text-zinc-400">
+                  💰 <strong>Recomendação:</strong> Considere alocar 70% dessa quantia ({money(mockData.economia * 0.7)}) para sua reserva de emergência e 30% ({money(mockData.economia * 0.3)}) para investimentos de baixo risco.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button onClick={() => navigate('/metas')} className="group/btn inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-violet-600 to-purple-600 px-3 py-2 text-xs font-semibold text-white shadow-lg shadow-purple-500/25 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-purple-500/40 active:scale-95">
+                  <Target className="h-4 w-4 transition-transform group-hover/btn:rotate-12" />
+                  Definir Novas Metas
+                </button>
+                <button onClick={() => navigate('/educacao')} className="inline-flex items-center gap-2 rounded-lg border-2 border-purple-300/60 bg-white/80 px-3 py-2 text-xs font-semibold text-purple-700 backdrop-blur transition-all duration-200 hover:-translate-y-0.5 hover:border-purple-400 hover:bg-purple-50 dark:border-purple-600/40 dark:bg-zinc-800/80 dark:text-purple-300 dark:hover:bg-purple-900/20">
+                  <BookOpen className="h-4 w-4" />
+                  Educação Financeira
+                </button>
               </div>
             </div>
           </div>
         </div>
 
         {/* Rodapé */}
-        <div className="mt-3 text-center text-xs text-zinc-500 dark:text-zinc-400">
+        <div className="pt-6 text-center text-xs text-zinc-500 dark:text-zinc-400">
           © 2024 MoneyMapp TCC. Todos os direitos reservados.
         </div>
       </div>
