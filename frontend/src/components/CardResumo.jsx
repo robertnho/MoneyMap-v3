@@ -10,10 +10,10 @@ export default function CardResumo({ titulo, valor, subtexto, cor = 'emerald' })
   const corTexto = map[cor] || map.emerald
 
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg">
-      <div className="text-sm text-gray-600">{titulo}</div>
+    <div className="rounded-2xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg">
+      <div className="text-sm text-gray-600 dark:text-gray-400">{titulo}</div>
       <div className={`mt-1 text-2xl font-bold ${corTexto}`}>{valor}</div>
-      {subtexto && <div className="mt-1 text-xs text-gray-500">{subtexto}</div>}
+      {subtexto && <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">{subtexto}</div>}
     </div>
   )
 }

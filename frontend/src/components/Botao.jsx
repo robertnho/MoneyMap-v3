@@ -3,8 +3,8 @@ import React from 'react'
 export default function Botao({ children, variante = 'primario', carregando = false, ...props }) {
   const base = 'inline-flex items-center justify-center gap-2 px-4 py-2 rounded text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed'
   const estilos = variante === 'ghost'
-    ? 'border border-gray-300 hover:bg-gray-50'
-    : 'bg-emerald-600 text-white hover:bg-emerald-700'
+    ? 'border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+    : 'bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600'
   return (
     <button className={`${base} ${estilos}`} disabled={carregando || props.disabled} {...props}>
       {carregando && (

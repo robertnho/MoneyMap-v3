@@ -1,11 +1,28 @@
 @import "tailwindcss";
+@config "../tailwind.config.js";
+
 /* seu CSS abaixo pode continuar igual */
 :root {
-  --cor-primaria: #10b981;
-  --cor-secundaria: #0ea5e9;
+  --cor-primario: #10b981;
+  --cor-secundario: #0ea5e9;
+  --cor-neutro: #111827;
   --app-background: #f8fafc;
   --app-surface: #ffffff;
   --app-foreground: #0f172a;
+  --sb-track: 0 0% 98%;
+  --sb-thumb: 0 0% 80%;
+}
+
+html.dark {
+  --app-background: #020617;
+  --app-surface: #0f172a;
+  --app-foreground: #f8fafc;
+  --sb-track: 240 6% 10%;
+  --sb-thumb: 240 4% 28%;
+}
+
+* {
+  scrollbar-color: hsl(var(--sb-thumb)) hsl(var(--sb-track));
 }
 
 html, body, #root { 

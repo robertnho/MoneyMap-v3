@@ -27,8 +27,8 @@ export default function GraficoPizza({
   chaveNome = 'nome',
 }) {
   return (
-    <div className="h-80 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-      <ResponsiveContainer width="100%" height="100%">
+    <div className="h-80 rounded-2xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 shadow-sm">
+      <ResponsiveContainer width="100%" height="100%">"
         <PieChart>
           <Pie
             data={dados}
