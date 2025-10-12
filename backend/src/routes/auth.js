@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { hashPassword, verifyPassword } from '../lib/password.js'
 import { normalizeEmail } from '../lib/strings.js'
 import { signToken } from '../lib/jwt.js'
+import { requireAuth } from '../middleware/auth.js'
 
 const prisma = new PrismaClient()
 const router = Router()
@@ -21,6 +22,11 @@ const RegisterSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8).max(72),
   avatarUrl: z.string().url().optional(),
+})
+
+const ChangePasswordSchema = z.object({
+  oldPassword: z.string().min(1),
+  newPassword: z.string().min(8).max(72),
 })
 
 // Registro
@@ -68,6 +74,41 @@ router.post('/login', async (req, res) => {
     if (e instanceof z.ZodError) return res.status(422).json({ error: 'Dados inválidos', issues: e.flatten() })
     console.error(e)
     res.status(500).json({ error: 'Falha no login' })
+  }
+})
+
+// Troca de senha
+router.post('/change-password', requireAuth, async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = ChangePasswordSchema.parse(req.body)
+    if (oldPassword === newPassword) {
+      return res.status(422).json({ error: 'A nova senha deve ser diferente da atual.' })
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: { id: true, passwordHash: true },
+    })
+
+    if (!user) {
+      return res.status(404).json({ error: 'Usuário não encontrado' })
+    }
+
+    const valid = await verifyPassword(oldPassword, user.passwordHash)
+    if (!valid) {
+      return res.status(400).json({ error: 'Senha atual incorreta' })
+    }
+
+    const passwordHash = await hashPassword(newPassword)
+    await prisma.user.update({ where: { id: user.id }, data: { passwordHash } })
+
+    return res.status(204).send()
+  } catch (e) {
+    if (e instanceof z.ZodError) {
+      return res.status(422).json({ error: 'Dados inválidos', issues: e.flatten() })
+    }
+    console.error('Change password error:', e)
+    return res.status(500).json({ error: 'Falha ao alterar a senha' })
   }
 })
 

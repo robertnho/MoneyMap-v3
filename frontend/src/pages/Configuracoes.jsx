@@ -6,16 +6,12 @@ import {
   Settings,
   User,
   Shield,
-  Bell,
   Palette,
   Globe,
   Lock,
   Download,
   Moon,
   Sun,
-  Mail,
-  Smartphone,
-  Eye,
   Database,
   CheckCircle,
   Camera,
@@ -30,7 +26,6 @@ const SECTIONS = [
   { id: 'Perfil', label: 'Perfil', icon: User },
   { id: 'Segurança', label: 'Segurança', icon: Shield },
   { id: 'Preferências', label: 'Preferências', icon: Palette },
-  { id: 'Notificações', label: 'Notificações', icon: Bell },
   { id: 'Dados', label: 'Dados', icon: Database },
   { id: 'Contas', label: 'Contas', icon: Wallet }
 ]
@@ -102,16 +97,19 @@ export default function Configuracoes() {
     e.preventDefault()
     if (!pwd.atual || !pwd.nova || !pwd.confirma) return setToast('Preencha todos os campos.')
     if (pwd.nova !== pwd.confirma) return setToast('A confirmação não confere.')
+    if (pwd.nova.length < 8) return setToast('A nova senha deve ter ao menos 8 caracteres.')
     setPwdLoading(true)
     try {
-      await api.instancia.post('/auth/change-password', {
+      await api.auth.changePassword({
         oldPassword: pwd.atual,
         newPassword: pwd.nova,
       })
       setToast('Senha alterada com sucesso.')
       setPwd({ atual: '', nova: '', confirma: '' })
-    } catch {
-      setToast('Alterar senha não disponível (adicione /auth/change-password no backend).')
+    } catch (error) {
+      console.error('change password error', error)
+      const msg = error?.response?.data?.error ?? 'Não foi possível alterar a senha.'
+      setToast(msg)
     } finally {
       setPwdLoading(false)
     }
@@ -120,28 +118,12 @@ export default function Configuracoes() {
   // --------- PREFERÊNCIAS ----------
   const [pref, setPref] = useState(() => ({
     temaEscuro: localStorage.getItem('pref_tema') === 'dark',
-    modoDemo: localStorage.getItem('demoMode') === 'true',
   }))
   function togglePref(k) {
     setPref(p => {
       const v = !p[k]
       const nx = { ...p, [k]: v }
       if (k === 'temaEscuro') localStorage.setItem('pref_tema', v ? 'dark' : 'light')
-      if (k === 'modoDemo') localStorage.setItem('demoMode', v ? 'true' : 'false')
-      return nx
-    })
-  }
-
-  // --------- NOTIFICAÇÕES ----------
-  const [notif, setNotif] = useState(() => ({
-    email: localStorage.getItem('pref_notif_email') !== 'false',
-    push: localStorage.getItem('pref_notif_push') === 'true',
-  }))
-  function toggleNotif(k) {
-    setNotif(p => {
-      const v = !p[k]
-      const nx = { ...p, [k]: v }
-      localStorage.setItem(`pref_notif_${k}`, String(v))
       return nx
     })
   }
@@ -151,7 +133,6 @@ export default function Configuracoes() {
     const data = {
       usuario: usuario ?? null,
       preferencias: pref,
-      notificacoes: notif,
       geradoEm: new Date().toISOString(),
     }
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
@@ -525,73 +506,8 @@ export default function Configuracoes() {
                     </div>
 
                     {/* Modo Demo */}
-                    <div className="rounded-2xl border border-zinc-200/60 bg-white/50 backdrop-blur-sm p-6 shadow-md hover:shadow-xl transition-all duration-300 dark:border-white/10 dark:bg-zinc-800/50">
-                      <div className="flex items-center gap-3 mb-4">
-                        <Eye className="h-5 w-5 text-purple-600" />
-                        <h3 className="font-semibold text-zinc-800 dark:text-white">👁️ Demonstração</h3>
-                      </div>
-                      <CustomSwitch
-                        checked={pref.modoDemo}
-                        onChange={() => togglePref('modoDemo')}
-                        label="Modo demonstração"
-                        description="Exibir dados fictícios para testes"
-                      />
-                    </div>
-
                     {/* Privacidade */}
-                    <div className="rounded-2xl border border-zinc-200/60 bg-white/50 backdrop-blur-sm p-6 shadow-md hover:shadow-xl transition-all duration-300 dark:border-white/10 dark:bg-zinc-800/50">
-                      <div className="flex items-center gap-3 mb-4">
-                        <Lock className="h-5 w-5 text-red-600" />
-                        <h3 className="font-semibold text-zinc-800 dark:text-white">🔒 Privacidade</h3>
-                      </div>
-                      <div className="space-y-3">
-                        <button className="w-full text-left px-4 py-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors">
-                          Redefinir senha
-                        </button>
-                        <button className="w-full text-left px-4 py-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors">
-                          Excluir conta
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
 
-              {tab === 'Notificações' && (
-                <div className="space-y-6">
-                  <div className="flex items-center gap-3 mb-6">
-                    <Bell className="h-6 w-6 text-violet-600 dark:text-violet-400" />
-                    <h2 className="text-2xl font-bold text-zinc-800 dark:text-white">Notificações</h2>
-                  </div>
-
-                  <div className="space-y-4">
-                    {/* Email */}
-                    <div className="rounded-2xl border border-zinc-200/60 bg-white/50 backdrop-blur-sm p-6 shadow-md hover:shadow-xl transition-all duration-300 dark:border-white/10 dark:bg-zinc-800/50">
-                      <div className="flex items-center gap-3 mb-4">
-                        <Mail className="h-5 w-5 text-blue-600" />
-                        <h3 className="font-semibold text-zinc-800 dark:text-white">📧 E-mail</h3>
-                      </div>
-                      <CustomSwitch
-                        checked={notif.email}
-                        onChange={() => toggleNotif('email')}
-                        label="Receber por e-mail"
-                        description="Notificações sobre transações, metas e relatórios"
-                      />
-                    </div>
-
-                    {/* Push */}
-                    <div className="rounded-2xl border border-zinc-200/60 bg-white/50 backdrop-blur-sm p-6 shadow-md hover:shadow-xl transition-all duration-300 dark:border-white/10 dark:bg-zinc-800/50">
-                      <div className="flex items-center gap-3 mb-4">
-                        <Smartphone className="h-5 w-5 text-purple-600" />
-                        <h3 className="font-semibold text-zinc-800 dark:text-white">📱 Push</h3>
-                      </div>
-                      <CustomSwitch
-                        checked={notif.push}
-                        onChange={() => toggleNotif('push')}
-                        label="Notificações push"
-                        description="Alertas instantâneos no navegador"
-                      />
-                    </div>
                   </div>
                 </div>
               )}

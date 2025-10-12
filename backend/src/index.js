@@ -76,6 +76,7 @@ app.get('/docs', (req, res) => {
     auth: {
       register: { method: 'POST', path: '/auth/register' },
       login: { method: 'POST', path: '/auth/login' },
+      changePassword: { method: 'POST', path: '/auth/change-password' },
     },
     accounts: {
       list: { method: 'GET', path: '/accounts' },

@@ -10,6 +10,7 @@ const api = {
   auth: {
     login: (payload) => instancia.post('/auth/login', payload),
     register: (payload) => instancia.post('/auth/register', payload),
+    changePassword: (payload) => instancia.post('/auth/change-password', payload),
   },
   transacoes: {
     listar: (filtros = {}) => instancia.get('/transacoes', { params: filtros }),
