@@ -9,6 +9,7 @@ import { PrismaClient } from '@prisma/client'
 import morgan from 'morgan'
 
 import authRouter from './routes/auth.js'
+import accountsRouter from './routes/accounts.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -76,11 +77,18 @@ app.get('/docs', (req, res) => {
       register: { method: 'POST', path: '/auth/register' },
       login: { method: 'POST', path: '/auth/login' },
     },
+    accounts: {
+      list: { method: 'GET', path: '/accounts' },
+      create: { method: 'POST', path: '/accounts' },
+      update: { method: 'PUT', path: '/accounts/:id' },
+      remove: { method: 'DELETE', path: '/accounts/:id' },
+    },
   })
 })
 
 // ===== ROTAS =====
 app.use('/auth', authRouter)
+app.use('/accounts', accountsRouter)
 
 // ===== SERVE SPA (produção) ou REDIRECIONA PARA O VITE (dev) =====
 const STATIC_DIR = process.env.STATIC_DIR

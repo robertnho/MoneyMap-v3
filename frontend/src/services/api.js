@@ -28,6 +28,12 @@ const api = {
     categorias: (mes) => instancia.get('/relatorios/categorias', { params: { mes } }),
     mensal: (periodo) => instancia.get('/relatorios/mensal', { params: { periodo } }),
   },
+  accounts: {
+    list: () => instancia.get('/accounts'),
+    create: (payload) => instancia.post('/accounts', payload),
+    update: (id, payload) => instancia.put(`/accounts/${id}`, payload),
+    remove: (id) => instancia.delete(`/accounts/${id}`),
+  },
 }
 
 export default api

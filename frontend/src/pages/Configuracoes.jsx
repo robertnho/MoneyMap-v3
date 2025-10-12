@@ -1,24 +1,28 @@
 // frontend/src/pages/Configuracoes.jsx
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../context/AuthContext.jsx'
 import api from '../services/api'
-import { 
-  Settings, 
-  User, 
-  Shield, 
-  Bell, 
-  Palette, 
-  Globe, 
-  Lock, 
-  Download, 
-  Moon, 
-  Sun, 
-  Mail, 
+import {
+  Settings,
+  User,
+  Shield,
+  Bell,
+  Palette,
+  Globe,
+  Lock,
+  Download,
+  Moon,
+  Sun,
+  Mail,
   Smartphone,
   Eye,
   Database,
   CheckCircle,
-  Camera
+  Camera,
+  Wallet,
+  Star,
+  Pencil,
+  Trash2
 } from 'lucide-react'
 
 const SECTIONS = [
@@ -26,7 +30,8 @@ const SECTIONS = [
   { id: 'Segurança', label: 'Segurança', icon: Shield },
   { id: 'Preferências', label: 'Preferências', icon: Palette },
   { id: 'Notificações', label: 'Notificações', icon: Bell },
-  { id: 'Dados', label: 'Dados', icon: Database }
+  { id: 'Dados', label: 'Dados', icon: Database },
+  { id: 'Contas', label: 'Contas', icon: Wallet }
 ]
 
 // Componente para Switch customizado
@@ -156,6 +161,114 @@ export default function Configuracoes() {
     a.click()
     URL.revokeObjectURL(url)
   }
+
+  // --------- CONTAS ----------
+  const [accounts, setAccounts] = useState([])
+  const [accountsLoading, setAccountsLoading] = useState(false)
+  const [accountsFetched, setAccountsFetched] = useState(false)
+  const [accountForm, setAccountForm] = useState({ id: null, name: '', color: '#6366f1', isDefault: false })
+  const [accountSaving, setAccountSaving] = useState(false)
+  const [accountActionId, setAccountActionId] = useState(null)
+
+  const resetAccountForm = useCallback(() => {
+    setAccountForm({ id: null, name: '', color: '#6366f1', isDefault: false })
+  }, [])
+
+  const fetchAccounts = useCallback(async (force = false) => {
+    if (accountsLoading && !force) return
+    try {
+      setAccountsLoading(true)
+      const { data } = await api.accounts.list()
+      setAccounts(data?.accounts ?? [])
+      setAccountsFetched(true)
+    } catch (error) {
+      console.error('fetch accounts error', error)
+      setToast('Falha ao carregar contas.')
+    } finally {
+      setAccountsLoading(false)
+    }
+  }, [accountsLoading])
+
+  useEffect(() => {
+    if (tab === 'Contas' && !accountsFetched) {
+      fetchAccounts()
+    }
+  }, [tab, accountsFetched, fetchAccounts])
+
+  const handleAccountSubmit = useCallback(async (event) => {
+    event.preventDefault()
+    const name = accountForm.name.trim()
+    if (!name) {
+      setToast('Informe um nome para a conta.')
+      return
+    }
+
+    const payload = { name, color: accountForm.color, isDefault: accountForm.isDefault }
+    setAccountSaving(true)
+
+    try {
+      if (accountForm.id) {
+        await api.accounts.update(accountForm.id, payload)
+        setToast('Conta atualizada com sucesso.')
+      } else {
+        await api.accounts.create(payload)
+        setToast('Conta criada com sucesso.')
+      }
+      await fetchAccounts(true)
+      resetAccountForm()
+    } catch (error) {
+      console.error('account submit error', error)
+      const msg = error?.response?.data?.error ?? 'Não foi possível salvar a conta.'
+      setToast(msg)
+    } finally {
+      setAccountSaving(false)
+    }
+  }, [accountForm, fetchAccounts, resetAccountForm])
+
+  const startEditAccount = useCallback((account) => {
+    setAccountForm({
+      id: account.id,
+      name: account.name,
+      color: account.color || '#6366f1',
+      isDefault: !!account.isDefault,
+    })
+  }, [])
+
+  const handleDeleteAccount = useCallback(async (account) => {
+    if (!window.confirm(`Excluir conta "${account.name}"?`)) return
+
+    try {
+      setAccountActionId(account.id)
+      await api.accounts.remove(account.id)
+      setToast('Conta removida.')
+      await fetchAccounts(true)
+      if (accountForm.id === account.id) resetAccountForm()
+    } catch (error) {
+      console.error('delete account error', error)
+      setToast('Falha ao remover conta.')
+    } finally {
+      setAccountActionId(null)
+    }
+  }, [accountForm.id, fetchAccounts, resetAccountForm])
+
+  const handleSetDefaultAccount = useCallback(async (account) => {
+    try {
+      setAccountActionId(account.id)
+      await api.accounts.update(account.id, { isDefault: true })
+      setToast(`"${account.name}" definida como padrão.`)
+      await fetchAccounts(true)
+      if (accountForm.id === account.id) {
+        setAccountForm(prev => ({ ...prev, isDefault: true }))
+      } else {
+        resetAccountForm()
+      }
+    } catch (error) {
+      console.error('default account error', error)
+      setToast('Não foi possível definir a conta como padrão.')
+    } finally {
+      setAccountActionId(null)
+    }
+  }, [accountForm.id, fetchAccounts, resetAccountForm])
 
   // --------- FEEDBACK ----------
   const [toast, setToast] = useState('')
@@ -496,6 +609,138 @@ export default function Configuracoes() {
                     <p className="text-sm text-blue-800 dark:text-blue-200">
                       <strong>Privacidade:</strong> Seus dados são processados localmente e você tem controle total sobre eles.
                     </p>
+                  </div>
+                </div>
+              )}
+
+              {tab === 'Contas' && (
+                <div className="space-y-6">
+                  <div className="flex items-center gap-3 mb-6">
+                    <Wallet className="h-6 w-6 text-violet-600 dark:text-violet-400" />
+                    <h2 className="text-2xl font-bold text-zinc-800 dark:text-white">Contas bancárias</h2>
+                  </div>
+
+                  <form onSubmit={handleAccountSubmit} className="rounded-2xl border border-zinc-200/60 bg-white/70 backdrop-blur-sm p-6 shadow-md space-y-6 dark:border-white/10 dark:bg-zinc-800/60">
+                    <div>
+                      <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Nome da conta</label>
+                      <input
+                        type="text"
+                        value={accountForm.name}
+                        onChange={(e) => setAccountForm(prev => ({ ...prev, name: e.target.value }))}
+                        placeholder="Ex.: Conta corrente Nubank"
+                        className="w-full rounded-xl border border-zinc-300 dark:border-zinc-600 px-4 py-3 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-violet-500/40 focus:border-violet-500 transition-colors"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Cor</label>
+                      <div className="flex items-center gap-4">
+                        <input
+                          type="color"
+                          value={accountForm.color}
+                          onChange={(e) => setAccountForm(prev => ({ ...prev, color: e.target.value }))}
+                          className="h-12 w-16 rounded-xl border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 cursor-pointer"
+                        />
+                        <span className="font-mono text-sm text-zinc-600 dark:text-zinc-300">{accountForm.color}</span>
+                      </div>
+                    </div>
+
+                    <CustomSwitch
+                      checked={accountForm.isDefault}
+                      onChange={() => setAccountForm(prev => ({ ...prev, isDefault: !prev.isDefault }))}
+                      label="Definir como conta padrão"
+                      description="Essa conta será utilizada por padrão em novos lançamentos."
+                    />
+
+                    <div className="flex flex-wrap justify-end gap-3 pt-2">
+                      {accountForm.id && (
+                        <button
+                          type="button"
+                          onClick={resetAccountForm}
+                          className="px-5 py-3 rounded-xl border border-zinc-300 text-zinc-600 hover:bg-zinc-100 transition-colors dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-700/60"
+                        >
+                          Cancelar
+                        </button>
+                      )}
+                      <button
+                        type="submit"
+                        disabled={accountSaving}
+                        className="px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-sky-400 text-white font-medium shadow-lg hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                      >
+                        {accountSaving ? 'Salvando…' : accountForm.id ? 'Atualizar conta' : 'Criar conta'}
+                      </button>
+                    </div>
+                  </form>
+
+                  <div className="rounded-2xl border border-zinc-200/60 bg-white/70 backdrop-blur-sm shadow-md p-6 space-y-4 dark:border-white/10 dark:bg-zinc-800/60">
+                    <h3 className="text-lg font-semibold text-zinc-800 dark:text-zinc-100">Minhas contas</h3>
+
+                    {accountsLoading ? (
+                      <div className="py-10 text-center text-zinc-500 dark:text-zinc-400">Carregando contas…</div>
+                    ) : accounts.length === 0 ? (
+                      <div className="py-10 text-center text-zinc-500 dark:text-zinc-400">
+                        Nenhuma conta cadastrada ainda. Crie a primeira usando o formulário acima.
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {accounts.map((account) => {
+                          const acting = accountActionId === account.id
+                          return (
+                            <div
+                              key={account.id}
+                              className="flex flex-col gap-4 rounded-xl border border-zinc-200/60 bg-white/80 p-4 shadow-sm md:flex-row md:items-center md:justify-between dark:border-zinc-700 dark:bg-zinc-900/70"
+                            >
+                              <div className="flex items-center gap-4">
+                                <div
+                                  className="h-10 w-10 rounded-full border border-white shadow-inner"
+                                  style={{ backgroundColor: account.color || '#6366f1' }}
+                                />
+                                <div>
+                                  <p className="font-semibold text-zinc-800 dark:text-zinc-100">{account.name}</p>
+                                  <div className="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
+                                    <span className="font-mono">{account.color}</span>
+                                    {account.isDefault && (
+                                      <span className="inline-flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700 dark:bg-violet-500/20 dark:text-violet-200">
+                                        <Star className="h-3 w-3 fill-current" />
+                                        Padrão
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="flex flex-wrap gap-2 justify-end">
+                                {!account.isDefault && (
+                                  <button
+                                    onClick={() => handleSetDefaultAccount(account)}
+                                    disabled={acting}
+                                    className="inline-flex items-center gap-2 rounded-xl border border-violet-200 px-4 py-2 text-sm font-medium text-violet-600 hover:bg-violet-50 transition dark:border-violet-500/40 dark:text-violet-300 dark:hover:bg-violet-500/10 disabled:opacity-50"
+                                  >
+                                    <Star className="h-4 w-4" />
+                                    Padrão
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => startEditAccount(account)}
+                                  className="inline-flex items-center gap-2 rounded-xl border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-100 transition dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                  Editar
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteAccount(account)}
+                                  disabled={acting}
+                                  className="inline-flex items-center gap-2 rounded-xl border border-rose-200 px-4 py-2 text-sm font-medium text-rose-600 hover:bg-rose-50 transition dark:border-rose-500/40 dark:text-rose-300 dark:hover:bg-rose-500/10 disabled:opacity-50"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                  Excluir
+                                </button>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
