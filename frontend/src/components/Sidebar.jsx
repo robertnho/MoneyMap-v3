@@ -53,8 +53,8 @@ export default function Sidebar({ aberto, onFechar }) {
         {/* logo */}
         <div className="p-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center">
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0">
-              <PiggyBank className="w-6 h-6 text-white" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-white via-blue-50/60 to-blue-100/60 shadow-[0_12px_35px_-20px_rgba(37,99,235,0.55)] ring-1 ring-blue-100 dark:from-slate-800 dark:via-slate-800 dark:to-slate-700/80 dark:ring-slate-600 flex-shrink-0">
+              <PiggyBank className="w-6 h-6 text-slate-700 dark:text-slate-200" />
             </div>
             <div className={`ml-3 overflow-hidden transition-all ${expanded ? 'opacity-100 max-w-[999px]' : 'opacity-0 max-w-0'}`}>
               <h3 className="text-lg font-bold text-gray-900 dark:text-white whitespace-nowrap">MoneyMapp</h3>
@@ -131,8 +131,8 @@ export default function Sidebar({ aberto, onFechar }) {
       >
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
-              <PiggyBank className="w-5 h-5 text-white" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-white via-blue-50/60 to-blue-100/60 shadow-[0_12px_35px_-20px_rgba(37,99,235,0.55)] ring-1 ring-blue-100 dark:from-slate-800 dark:via-slate-800 dark:to-slate-700/80 dark:ring-slate-600">
+              <PiggyBank className="w-5 h-5 text-slate-700 dark:text-slate-200" />
             </div>
             <div className="ml-3">
               <h3 className="text-lg font-bold text-gray-900 dark:text-white">MoneyMapp</h3>

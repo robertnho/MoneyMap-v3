@@ -1,5 +1,6 @@
 import React from 'react'
 import { NavLink, Link, useNavigate } from 'react-router-dom'
+import { PiggyBank } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
 
 export default function Navbar() {
@@ -18,8 +19,14 @@ export default function Navbar() {
   return (
     <header className="bg-white border-b border-gray-200">
       <div className="max-w-7xl mx-auto flex items-center justify-between py-3 px-4">
-        <Link to={token ? '/dashboard' : '/home'} className="text-emerald-600 font-bold text-xl">
-          MoneyMapp TCC
+        <Link
+          to={token ? '/dashboard' : '/home'}
+          className="inline-flex items-center gap-3 text-slate-900 dark:text-slate-100"
+        >
+          <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-white via-blue-50/60 to-blue-100/60 shadow-[0_10px_30px_-18px_rgba(37,99,235,0.55)] ring-1 ring-blue-100 dark:from-slate-800 dark:via-slate-800 dark:to-slate-700/80 dark:ring-slate-600">
+            <PiggyBank className="h-5 w-5 text-slate-700 dark:text-slate-200" />
+          </span>
+          <span className="text-lg font-semibold tracking-tight">MoneyMapp TCC</span>
         </Link>
 
         {token ? (

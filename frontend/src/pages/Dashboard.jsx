@@ -553,8 +553,8 @@ export default function Dashboard() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="flex items-center gap-3"
           >
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-white to-slate-100 shadow-inner ring-1 ring-slate-200">
-              <PiggyBank className="h-6 w-6 text-slate-700" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-white via-blue-50/60 to-blue-100/60 shadow-[0_12px_35px_-20px_rgba(37,99,235,0.55)] ring-1 ring-blue-100 dark:from-slate-800 dark:via-slate-800 dark:to-slate-700/80 dark:ring-slate-600">
+              <PiggyBank className="h-6 w-6 text-slate-700 dark:text-slate-200" />
             </div>
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-amber-500" />
