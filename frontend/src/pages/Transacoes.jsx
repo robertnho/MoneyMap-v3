@@ -1,0 +1,805 @@
+import React, { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { useTheme } from '../contexts/ThemeContext.jsx'
+import api from '../services/api.js'
+import { 
+  Plus, 
+  Filter, 
+  Search, 
+  ArrowUpRight, 
+  ArrowDownRight, 
+  Edit, 
+  Trash2,
+  Calendar,
+  TrendingUp,
+  TrendingDown
+} from 'lucide-react'
+
+const CATEGORIAS_SUGERIDAS = [
+  { value: 'Alimentação', labelKey: 'categories.alimentacao' },
+  { value: 'Transporte', labelKey: 'categories.transporte' },
+  { value: 'Moradia', labelKey: 'categories.moradia' },
+  { value: 'Saúde', labelKey: 'categories.saude' },
+  { value: 'Educação', labelKey: 'categories.educacao' },
+  { value: 'Lazer', labelKey: 'categories.lazer' },
+  { value: 'Trabalho', labelKey: 'categories.trabalho' },
+  { value: 'Investimentos', labelKey: 'categories.investimentos' },
+  { value: 'Vendas', labelKey: 'categories.vendas' },
+  { value: 'Outros', labelKey: 'categories.outros' },
+]
+
+export default function Transacoes() {
+  const { t, i18n } = useTranslation()
+  const { isDark } = useTheme()
+  const [transacoes, setTransacoes] = useState([])
+  const [carregando, setCarregando] = useState(true)
+  const [erro, setErro] = useState('')
+  const [accounts, setAccounts] = useState([])
+  const [filtros, setFiltros] = useState({
+    busca: '',
+    categoria: '',
+    tipo: '',
+    status: ''
+  })
+  const [modalAberto, setModalAberto] = useState(false)
+  const hojeISO = useMemo(() => new Date().toISOString().slice(0, 10), [])
+  const [form, setForm] = useState({
+    accountId: '',
+    descricao: '',
+    categoria: '',
+    valor: '',
+    tipo: 'despesa',
+    status: 'confirmado',
+    data: hojeISO,
+    observacao: '',
+  })
+  const [salvando, setSalvando] = useState(false)
+  const [erroForm, setErroForm] = useState('')
+  const [mensagemSucesso, setMensagemSucesso] = useState('')
+  const [modoEdicao, setModoEdicao] = useState(false)
+  const [transacaoEmEdicao, setTransacaoEmEdicao] = useState(null)
+  const [excluindoId, setExcluindoId] = useState(null)
+
+  const tipoOptions = useMemo(
+    () => [
+      { value: '', label: t('transactions.type.all') },
+      { value: 'receita', label: t('transactions.type.receita') },
+      { value: 'despesa', label: t('transactions.type.despesa') },
+    ],
+    [t]
+  )
+
+  const statusOptions = useMemo(
+    () => [
+      { value: '', label: t('transactions.status.all') },
+      { value: 'confirmado', label: t('transactions.status.confirmado') },
+      { value: 'pendente', label: t('transactions.status.pendente') },
+    ],
+    [t]
+  )
+
+  const locale = useMemo(() => {
+    const lang = i18n.language || 'pt'
+    if (lang.startsWith('en')) return 'en-US'
+    if (lang.startsWith('es')) return 'es-ES'
+    return 'pt-BR'
+  }, [i18n.language])
+
+  const loadErrorMessage = useMemo(() => t('transactions.error.load'), [t])
+
+  // Categorias dinâmicas baseadas nas transações existentes
+  const categoriasDisponiveis = useMemo(() => {
+    const dinamicas = transacoes.map((t) => t.categoria).filter(Boolean)
+    const sugestoes = CATEGORIAS_SUGERIDAS.map((item) => item.value)
+    const merged = new Set([...sugestoes, ...dinamicas])
+    return Array.from(merged).sort((a, b) => a.localeCompare(b, locale))
+  }, [transacoes, locale])
+
+  // Conta padrão para o formulário
+  const defaultAccountId = useMemo(() => {
+    if (!accounts.length) return ''
+    const preferencial = accounts.find((conta) => conta.isDefault)
+    return String((preferencial ?? accounts[0]).id)
+  }, [accounts])
+
+  // Atualizar accountId quando contas carregarem
+  useEffect(() => {
+    if (defaultAccountId) {
+      setForm((prev) => ({
+        ...prev,
+        accountId: prev.accountId || defaultAccountId,
+      }))
+    }
+  }, [defaultAccountId])
+
+  // Carregar dados da API
+  useEffect(() => {
+    let ativo = true
+
+    async function carregar() {
+      setCarregando(true)
+      setErro('')
+      try {
+        const [contasResp, transResp] = await Promise.all([
+          api.accounts.list(),
+          api.transacoes.listar(),
+        ])
+
+        if (!ativo) return
+
+        const contas = contasResp?.data?.accounts ?? []
+        const lista = transResp?.data?.transactions ?? []
+
+        setAccounts(contas)
+        setTransacoes(lista)
+
+      } catch (err) {
+        if (!ativo) return
+        console.error('Erro ao carregar dados:', err)
+        const message = err?.response?.data?.error ?? loadErrorMessage
+        setErro(message)
+      } finally {
+        if (ativo) {
+          setCarregando(false)
+        }
+      }
+    }
+
+    carregar()
+
+    return () => {
+      ativo = false
+    }
+  }, [loadErrorMessage])
+
+  // Filtros com useMemo
+  const transacoesFiltradas = useMemo(() => {
+    const termo = filtros.busca.trim().toLowerCase()
+
+    return transacoes.filter((transacao) => {
+      const matchBusca =
+        !termo ||
+        transacao.descricao?.toLowerCase().includes(termo) ||
+        transacao.categoria?.toLowerCase().includes(termo)
+
+      const matchCategoria = !filtros.categoria || transacao.categoria === filtros.categoria
+      const matchTipo = !filtros.tipo || transacao.tipo === filtros.tipo
+      const matchStatus = !filtros.status || transacao.status === filtros.status
+
+      return matchBusca && matchCategoria && matchTipo && matchStatus
+    })
+  }, [transacoes, filtros])
+
+  // Resumo do mês
+  const resumoMes = useMemo(() => {
+    const receitas = transacoes
+      .filter((t) => t.tipo === 'receita')
+      .reduce((acc, t) => acc + (Number(t.valor) || 0), 0)
+
+    const despesas = transacoes
+      .filter((t) => t.tipo === 'despesa')
+      .reduce((acc, t) => acc + (Number(t.valor) || 0), 0)
+
+    return {
+      receitas,
+      despesas,
+      saldo: receitas - despesas,
+    }
+  }, [transacoes])
+
+  // Funções do modal
+  const abrirModalNovaTransacao = () => {
+    setErroForm('')
+    setMensagemSucesso('')
+    setModoEdicao(false)
+    setTransacaoEmEdicao(null)
+    setForm({
+      accountId: defaultAccountId,
+      descricao: '',
+      categoria: '',
+      valor: '',
+      tipo: 'despesa',
+      status: 'confirmado',
+      data: new Date().toISOString().slice(0, 10),
+      observacao: '',
+    })
+    setModalAberto(true)
+  }
+
+  const abrirModalEditarTransacao = (transacao) => {
+    setErroForm('')
+    setMensagemSucesso('')
+    setModoEdicao(true)
+    setTransacaoEmEdicao(transacao)
+    setForm({
+      accountId: String(transacao.accountId ?? ''),
+      descricao: transacao.descricao ?? '',
+      categoria: transacao.categoria ?? '',
+      valor: String(transacao.valor ?? '').replace('.', ','),
+      tipo: transacao.tipo ?? 'despesa',
+      status: transacao.status ?? 'confirmado',
+      data: transacao.data ?? hojeISO,
+      observacao: transacao.observacao ?? '',
+    })
+    setModalAberto(true)
+  }
+
+  const fecharModal = () => {
+    if (salvando) return
+    setModalAberto(false)
+    setModoEdicao(false)
+    setTransacaoEmEdicao(null)
+  }
+
+  const onInputChange = (event) => {
+    const { name, value } = event.target
+    setForm((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const handleSubmitNovaTransacao = async (event) => {
+    event.preventDefault()
+    if (salvando) return
+
+    setErroForm('')
+
+    const accountIdNumber = Number(form.accountId)
+    const valorNumber = Number(String(form.valor).replace(/\./g, '').replace(',', '.'))
+
+    if (!modoEdicao && !accountIdNumber) {
+      setErroForm(t('transactions.error.noAccount'))
+      return
+    }
+
+    if (!form.descricao.trim()) {
+      setErroForm(t('transactions.error.noDescription'))
+      return
+    }
+
+    if (!Number.isFinite(valorNumber) || valorNumber <= 0) {
+      setErroForm(t('transactions.error.invalidValue'))
+      return
+    }
+
+    setSalvando(true)
+
+    try {
+      const payloadBase = {
+        descricao: form.descricao.trim(),
+        categoria: form.categoria.trim() || 'Outros',
+        valor: valorNumber,
+        tipo: form.tipo,
+        status: form.status,
+        data: form.data || new Date().toISOString().slice(0, 10),
+      }
+
+      const observacaoTrim = form.observacao?.trim()
+      if (observacaoTrim) {
+        payloadBase.observacao = observacaoTrim
+      }
+
+      if (modoEdicao && transacaoEmEdicao) {
+        const { data } = await api.transacoes.atualizar(transacaoEmEdicao.id, payloadBase)
+        const atualizada = data?.transaction
+        if (atualizada) {
+          setTransacoes((prev) => prev.map((item) => (item.id === atualizada.id ? atualizada : item)))
+        } else {
+          const refresh = await api.transacoes.listar()
+          setTransacoes(refresh?.data?.transactions ?? [])
+        }
+
+        setMensagemSucesso(t('transactions.success.update'))
+      } else {
+        const payload = {
+          ...payloadBase,
+          accountId: accountIdNumber,
+        }
+
+        const { data } = await api.transacoes.criar(payload)
+        const nova = data?.transaction
+
+        if (nova) {
+          setTransacoes((prev) => [nova, ...prev])
+        } else {
+          const refresh = await api.transacoes.listar()
+          setTransacoes(refresh?.data?.transactions ?? [])
+        }
+
+        setMensagemSucesso(t('transactions.success.create'))
+      }
+
+      setModalAberto(false)
+      setModoEdicao(false)
+      setTransacaoEmEdicao(null)
+      setForm((prev) => ({
+        ...prev,
+        descricao: '',
+        categoria: '',
+        valor: '',
+        observacao: '',
+        data: new Date().toISOString().slice(0, 10),
+      }))
+    } catch (err) {
+      const fallback = modoEdicao ? t('transactions.error.update') : t('transactions.error.create')
+      const message = err?.response?.data?.error ?? fallback
+      setErroForm(message)
+    } finally {
+      setSalvando(false)
+    }
+  }
+
+  const handleExcluirTransacao = async (transacao) => {
+    if (!transacao?.id || excluindoId) return
+
+    const confirmar = window.confirm(t('transactions.confirm.delete'))
+    if (!confirmar) return
+
+    setExcluindoId(transacao.id)
+    setErro('')
+
+    try {
+      await api.transacoes.remover(transacao.id)
+      setTransacoes((prev) => prev.filter((item) => item.id !== transacao.id))
+      setMensagemSucesso(t('transactions.success.delete'))
+    } catch (err) {
+      console.error('Erro ao apagar transação:', err)
+      const message = err?.response?.data?.error ?? t('transactions.error.delete')
+      setErro(message)
+    } finally {
+      setExcluindoId(null)
+    }
+  }
+  const formatMoney = (value) => {
+    return new Intl.NumberFormat(locale, {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(value)
+  }
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '-'
+    const parsed = new Date(dateString)
+    if (Number.isNaN(parsed.getTime())) return '-'
+    return parsed.toLocaleDateString(locale)
+  }
+
+  const getCategoryLabel = (value) => {
+    if (!value) return '-'
+    const found = CATEGORIAS_SUGERIDAS.find((item) => item.value.toLowerCase() === value.toLowerCase())
+    return found ? t(found.labelKey) : value
+  }
+
+  const getStatusLabel = (status) => {
+    if (status === 'confirmado') return t('transactions.status.badge.confirmado')
+    if (status === 'pendente') return t('transactions.status.badge.pendente')
+    return status
+  }
+
+  return (
+    <div className={`min-h-screen p-4 md:p-6 transition-colors duration-300 ${
+      isDark
+        ? 'bg-slate-950 text-slate-100'
+        : 'bg-gradient-to-br from-slate-100 via-sky-100/50 to-indigo-100/40 text-slate-900'
+    }`}>
+      <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
+        {/* Header */}
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="text-center sm:text-left">
+            <h1 className="mb-3 text-4xl font-bold drop-shadow-sm transition-colors duration-300 md:text-5xl text-slate-900 dark:text-slate-100">
+              {t('transactions.title')}
+            </h1>
+            <p className="text-lg font-medium transition-colors duration-300 text-slate-700 dark:text-slate-300">
+              {t('transactions.subtitle')}
+            </p>
+          </div>
+          <button 
+            onClick={abrirModalNovaTransacao}
+            className="mx-auto flex items-center gap-3 rounded-2xl bg-slate-900 px-6 py-3 font-semibold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:bg-slate-800 hover:shadow-xl sm:mx-0 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200 dark:hover:shadow-slate-100/40"
+          >
+            <Plus className="h-5 w-5" />
+            {t('Nova Transação')}
+              {t('transactions.new')}
+          </button>
+        </div>
+
+        {/* Mensagens de Sucesso/Erro */}
+        {mensagemSucesso && (
+          <div className="rounded-2xl border border-green-200 bg-green-50 p-4 text-green-800 dark:border-green-800 dark:bg-green-900/20 dark:text-green-200">
+            {mensagemSucesso}
+          </div>
+        )}
+
+        {erro && (
+          <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-red-800 dark:border-red-800 dark:bg-red-900/20 dark:text-red-200">
+            {erro}
+          </div>
+        )}
+
+        {/* Cards de Resumo */}
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+          <div className="rounded-3xl border border-white/50 bg-white/30 p-8 shadow-xl backdrop-blur-lg transition-all duration-300 hover:scale-[1.02] hover:bg-white/40 dark:border-slate-700 dark:bg-slate-900/70 dark:hover:bg-slate-900/75">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="mb-2 text-sm font-bold text-gray-700 dark:text-slate-300">{t('transactions.card.receitasMes')}</p>
+                <p className="text-3xl font-bold text-emerald-600 drop-shadow-sm dark:text-emerald-400">{formatMoney(resumoMes.receitas)}</p>
+              </div>
+              <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-emerald-500 rounded-2xl flex items-center justify-center shadow-lg">
+                <TrendingUp className="w-8 h-8 text-white" />
+              </div>
+            </div>
+          </div>
+          
+          <div className="rounded-3xl border border-white/50 bg-white/30 p-8 shadow-xl backdrop-blur-lg transition-all duration-300 hover:scale-[1.02] hover:bg-white/40 dark:border-slate-700 dark:bg-slate-900/70 dark:hover:bg-slate-900/75">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="mb-2 text-sm font-bold text-gray-700 dark:text-slate-300">{t('transactions.card.despesasMes')}</p>
+                <p className="text-3xl font-bold text-rose-600 drop-shadow-sm dark:text-rose-400">{formatMoney(resumoMes.despesas)}</p>
+              </div>
+              <div className="w-16 h-16 bg-gradient-to-br from-red-400 to-rose-500 rounded-2xl flex items-center justify-center shadow-lg">
+                <TrendingDown className="w-8 h-8 text-white" />
+              </div>
+            </div>
+          </div>
+          
+          <div className="rounded-3xl border border-white/50 bg-white/30 p-8 shadow-xl backdrop-blur-lg transition-all duration-300 hover:scale-[1.02] hover:bg-white/40 dark:border-slate-700 dark:bg-slate-900/70 dark:hover:bg-slate-900/75">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="mb-2 text-sm font-bold text-gray-700 dark:text-slate-300">{t('transactions.card.saldoMes')}</p>
+                <p className={`text-3xl font-bold drop-shadow-sm ${
+                  resumoMes.saldo >= 0
+                    ? 'text-blue-600 dark:text-emerald-400'
+                    : 'text-red-600 dark:text-rose-400'
+                }`}>
+                  {formatMoney(resumoMes.saldo)}
+                </p>
+              </div>
+              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg ${
+                resumoMes.saldo >= 0 
+                  ? 'bg-gradient-to-br from-blue-400 to-indigo-500' 
+                  : 'bg-gradient-to-br from-red-400 to-rose-500'
+              }`}>
+                <Calendar className="w-8 h-8 text-white" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Filtros */}
+        <div className="rounded-3xl border border-white/40 bg-white/25 p-8 shadow-lg backdrop-blur-lg dark:border-slate-700 dark:bg-slate-900/70">
+          <div className="mb-6 flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-purple-600">
+              <Filter className="w-5 h-5 text-white" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">{t('transactions.filters')}</h3>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 transform text-gray-500 dark:text-slate-400" />
+              <input
+                type="text"
+                placeholder={t('transactions.search.placeholder')}
+                value={filtros.busca}
+                onChange={(e) => setFiltros({...filtros, busca: e.target.value})}
+                className="w-full rounded-2xl border border-white/30 bg-white/40 py-3 pl-12 pr-4 text-gray-800 shadow-sm transition-all duration-300 placeholder:text-gray-600 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:ring-blue-400"
+              />
+            </div>
+            
+            <select
+              value={filtros.categoria}
+              onChange={(e) => setFiltros({...filtros, categoria: e.target.value})}
+              className="w-full rounded-2xl border border-white/30 bg-white/40 px-4 py-3 text-gray-800 shadow-sm transition-all duration-300 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-100 dark:focus:ring-blue-400"
+            >
+              <option value="">{t('transactions.category.all')}</option>
+              {categoriasDisponiveis.map((categoria) => (
+                <option key={categoria} value={categoria}>{getCategoryLabel(categoria)}</option>
+              ))}
+            </select>
+            
+            <select
+              value={filtros.tipo}
+              onChange={(e) => setFiltros({...filtros, tipo: e.target.value})}
+              className="w-full rounded-2xl border border-white/30 bg-white/40 px-4 py-3 text-gray-800 shadow-sm transition-all duration-300 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-100 dark:focus:ring-blue-400"
+            >
+              {tipoOptions.map((option) => (
+                <option key={option.value || '__all-tipo'} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+            
+            <select
+              value={filtros.status}
+              onChange={(e) => setFiltros({...filtros, status: e.target.value})}
+              className="w-full rounded-2xl border border-white/30 bg-white/40 px-4 py-3 text-gray-800 shadow-sm transition-all duration-300 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-100 dark:focus:ring-blue-400"
+            >
+              {statusOptions.map((option) => (
+                <option key={option.value || '__all-status'} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Lista de Transações */}
+        <div className="overflow-hidden rounded-3xl border border-white/40 bg-white/25 shadow-lg backdrop-blur-lg dark:border-slate-700 dark:bg-slate-900/70">
+          <div className="border-b border-white/30 bg-gradient-to-r from-blue-50/60 to-purple-50/60 px-8 py-6 dark:border-slate-700 dark:bg-slate-900/70">
+            <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">{`${t('transactions.list.title')} (${transacoesFiltradas.length})`}</h3>
+          </div>
+          
+          <div className="divide-y divide-white/20 dark:divide-slate-800/60">
+            {carregando ? (
+              <div className="py-12 text-center">
+                <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
+                <p className="mt-4 text-sm text-gray-600 dark:text-slate-400">{t('transactions.loading')}</p>
+              </div>
+            ) : transacoesFiltradas.length === 0 ? (
+              <div className="p-12 text-center">
+                <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                  {filtros.busca || filtros.categoria || filtros.tipo || filtros.status ? (
+                    <Search className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                  ) : (
+                    <Calendar className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                  )}
+                </div>
+                <p className="text-lg font-semibold text-gray-800 dark:text-slate-200 mb-2">
+                  {filtros.busca || filtros.categoria || filtros.tipo || filtros.status
+                    ? t('transactions.empty.filtered.title')
+                    : t('transactions.empty.default.title')}
+                </p>
+                <p className="text-sm text-gray-600 dark:text-slate-400">
+                  {filtros.busca || filtros.categoria || filtros.tipo || filtros.status
+                    ? t('transactions.empty.filtered.text')
+                    : t('transactions.empty.default.text')}
+                </p>
+              </div>
+            ) : (
+              transacoesFiltradas.map((transacao) => (
+                <div key={transacao.id} className="cursor-pointer p-6 transition-all duration-300 transform hover:scale-[1.01] hover:bg-white/20 dark:hover:bg-slate-800/60">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg ${
+                        transacao.tipo === 'receita' 
+                          ? 'bg-gradient-to-br from-green-400 to-emerald-500' 
+                          : 'bg-gradient-to-br from-red-400 to-rose-500'
+                      }`}>
+                        {transacao.tipo === 'receita' ? (
+                          <ArrowUpRight className="w-7 h-7 text-white" />
+                        ) : (
+                          <ArrowDownRight className="w-7 h-7 text-white" />
+                        )}
+                      </div>
+                      
+                      <div className="ml-5">
+                        <div className="flex items-center gap-3 mb-1">
+                          <p className="text-lg font-bold text-gray-800 dark:text-slate-100">{transacao.descricao}</p>
+                          <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
+                            transacao.status === 'confirmado' 
+                              ? 'border border-green-200/50 bg-green-100/80 text-green-700 dark:border-emerald-500/40 dark:bg-emerald-500/15 dark:text-emerald-300' 
+                              : 'border border-yellow-200/50 bg-yellow-100/80 text-yellow-700 dark:border-amber-500/40 dark:bg-amber-500/15 dark:text-amber-300'
+                          }`}>
+                            {transacao.status === 'confirmado' ? 'Confirmado' : 'Pendente'}
+                          </span>
+                        </div>
+                        <p className="font-medium text-gray-600 dark:text-slate-300">
+                          {getCategoryLabel(transacao.categoria)} • {formatDate(transacao.data)}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-6">
+                      <span className={`text-xl font-bold ${
+                        transacao.tipo === 'receita' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-rose-400'
+                      }`}>
+                        {transacao.tipo === 'receita' ? '+' : '-'}{formatMoney(transacao.valor)}
+                      </span>
+                      
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => abrirModalEditarTransacao(transacao)}
+                          className="rounded-xl p-3 text-gray-500 transition-all duration-300 transform hover:scale-110 hover:bg-blue-50/50 hover:text-blue-600 dark:text-slate-400 dark:hover:bg-slate-800/70 dark:hover:text-slate-200"
+                        >
+                          <Edit className="h-5 w-5" />
+                        </button>
+                        <button
+                          onClick={() => handleExcluirTransacao(transacao)}
+                          disabled={excluindoId === transacao.id}
+                          className="rounded-xl p-3 text-gray-500 transition-all duration-300 transform hover:scale-110 hover:bg-red-50/50 hover:text-red-600 disabled:opacity-50 dark:text-slate-400 dark:hover:bg-slate-800/70 dark:hover:text-rose-300"
+                        >
+                          <Trash2 className="h-5 w-5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Modal */}
+        {modalAberto && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <div className="w-full max-w-2xl rounded-2xl border border-white/30 bg-white p-6 shadow-xl dark:border-slate-700 dark:bg-slate-900">
+              <h2 className="mb-6 text-2xl font-bold text-gray-800 dark:text-slate-200">
+                {modoEdicao ? t('transactions.modal.edit.title') : t('transactions.modal.create.title')}
+              </h2>
+
+              {erroForm && (
+                <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-900/20 dark:text-red-200">
+                  {erroForm}
+                </div>
+              )}
+
+              <form onSubmit={handleSubmitNovaTransacao} className="space-y-4">
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-slate-300">
+                    {t('transactions.form.account')}
+                  </label>
+                  <select
+                    name="accountId"
+                    value={form.accountId}
+                    onChange={onInputChange}
+                    required={!modoEdicao}
+                    disabled={salvando || modoEdicao}
+                    className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2 text-gray-800 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
+                  >
+                    <option value="">{t('transactions.form.selectAccount')}</option>
+                    {accounts.map((account) => (
+                      <option key={account.id} value={account.id}>
+                        {account.name} {account.isDefault && `(${t('settings.accounts.badge.default')})`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-slate-300">
+                      {t('transactions.form.tipo')}
+                    </label>
+                    <select
+                      name="tipo"
+                      value={form.tipo}
+                      onChange={onInputChange}
+                      required
+                      disabled={salvando}
+                      className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2 text-gray-800 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
+                    >
+                      <option value="despesa">{t('transactions.type.despesa')}</option>
+                      <option value="receita">{t('transactions.type.receita')}</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-slate-300">
+                      {t('transactions.form.status')}
+                    </label>
+                    <select
+                      name="status"
+                      value={form.status}
+                      onChange={onInputChange}
+                      required
+                      disabled={salvando}
+                      className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2 text-gray-800 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
+                    >
+                      <option value="confirmado">{t('transactions.status.confirmado')}</option>
+                      <option value="pendente">{t('transactions.status.pendente')}</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-slate-300">
+                    {t('transactions.form.descricao')}
+                  </label>
+                  <input
+                    type="text"
+                    name="descricao"
+                    value={form.descricao}
+                    onChange={onInputChange}
+                    placeholder={t('transactions.form.descricao.placeholder')}
+                    required
+                    disabled={salvando}
+                    maxLength={180}
+                    className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2 text-gray-800 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
+                  />
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-slate-300">
+                      {t('transactions.form.categoria')}
+                    </label>
+                    <select
+                      name="categoria"
+                      value={form.categoria}
+                      onChange={onInputChange}
+                      disabled={salvando}
+                      className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2 text-gray-800 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
+                    >
+                      <option value="">{t('transactions.form.categoria.placeholder')}</option>
+                      {categoriasDisponiveis.map((cat) => (
+                        <option key={cat} value={cat}>{getCategoryLabel(cat)}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-slate-300">
+                      {t('transactions.form.valor')}
+                    </label>
+                    <input
+                      type="text"
+                      name="valor"
+                      value={form.valor}
+                      onChange={onInputChange}
+                      placeholder="0,00"
+                      required
+                      disabled={salvando}
+                      className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2 text-gray-800 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-slate-300">
+                    {t('transactions.form.data')}
+                  </label>
+                  <input
+                    type="date"
+                    name="data"
+                    value={form.data}
+                    onChange={onInputChange}
+                    required
+                    disabled={salvando}
+                    className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2 text-gray-800 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-slate-300">
+                    {t('transactions.form.observacao')}
+                  </label>
+                  <textarea
+                    name="observacao"
+                    value={form.observacao}
+                    onChange={onInputChange}
+                    placeholder={t('transactions.form.observacao.placeholder')}
+                    disabled={salvando}
+                    maxLength={500}
+                    rows={3}
+                    className="w-full resize-none rounded-xl border border-gray-300 bg-white px-4 py-2 text-gray-800 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
+                  />
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={fecharModal}
+                    disabled={salvando}
+                    className="flex-1 rounded-xl border border-gray-300 bg-white px-4 py-2 font-semibold text-gray-700 transition-all duration-300 hover:bg-gray-50 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                  >
+                    {t('transactions.form.cancel')}
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={salvando}
+                    className="flex-1 rounded-xl bg-blue-600 px-4 py-2 font-semibold text-white transition-all duration-300 hover:bg-blue-700 disabled:opacity-50 dark:bg-blue-500 dark:hover:bg-blue-600"
+                  >
+                    {salvando
+                      ? t('transactions.form.saving')
+                      : modoEdicao
+                        ? t('transactions.form.update')
+                        : t('transactions.form.save')}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Copyright */}
+        <div className="rounded-2xl border border-white/30 bg-white/20 p-4 text-center text-sm font-medium text-gray-600 backdrop-blur-sm dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300">
+          {t('transactions.footer', { year: new Date().getFullYear() })}
+        </div>
+      </div>
+    </div>
+  )
+}
