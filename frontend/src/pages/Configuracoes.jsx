@@ -1,5 +1,5 @@
 // frontend/src/pages/Configuracoes.jsx
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useTheme } from '../contexts/ThemeContext.jsx'
@@ -22,7 +22,10 @@ import {
   Star,
   StarOff,
   Pencil,
-  Trash2
+  Trash2,
+  Upload,
+  Image,
+  RotateCcw
 } from 'lucide-react'
 
 const SECTIONS = [
@@ -32,6 +35,42 @@ const SECTIONS = [
   { id: 'Dados', labelKey: 'settings.sections.dados', icon: Database },
   { id: 'Contas', labelKey: 'settings.sections.contas', icon: Wallet }
 ]
+
+const DEFAULT_AVATAR_COLOR = { r: 99, g: 102, b: 241 }
+const MAX_AVATAR_SIZE = 5 * 1024 * 1024
+
+function buildPresetAvatar(id, emoji, startColor, endColor) {
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'>
+    <defs>
+      <linearGradient id='g' x1='0' y1='0' x2='1' y2='1'>
+        <stop offset='0%' stop-color='${startColor}' />
+        <stop offset='100%' stop-color='${endColor}' />
+      </linearGradient>
+    </defs>
+    <rect width='160' height='160' rx='80' fill='url(#g)' />
+    <text x='50%' y='50%' dominant-baseline='central' text-anchor='middle' font-family="'Segoe UI', sans-serif" font-size='72' fill='rgba(255,255,255,0.9)'>${emoji}</text>
+  </svg>`
+  return {
+    id,
+    src: `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`,
+  }
+}
+
+const PRESET_AVATARS = [
+  buildPresetAvatar('aurora', '🌌', '#6366f1', '#a855f7'),
+  buildPresetAvatar('sunrise', '🌅', '#f97316', '#ef4444'),
+  buildPresetAvatar('ocean', '🌊', '#22d3ee', '#0ea5e9'),
+  buildPresetAvatar('gaming', '🎮', '#22c55e', '#a3e635')
+]
+
+const clampRgb = (value) => Math.max(0, Math.min(255, Number(value) || 0))
+
+const rgbToCss = ({ r, g, b }) => `rgb(${r}, ${g}, ${b})`
+
+function getContrastColor({ r, g, b }) {
+  const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255
+  return luminance > 0.6 ? '#1f2937' : '#f8fafc'
+}
 
 // Componente para Switch customizado
 function CustomSwitch({ checked, onChange, label, description }) {
@@ -76,9 +115,11 @@ function Toast({ message, onClose }) {
 
 export default function Configuracoes() {
   const { t } = useTranslation()
-  const { usuario } = useAuth() // ← sem token (não há mais sincronizar)
+  const { usuario, atualizarUsuario } = useAuth() // ← sem token (não há mais sincronizar)
   const { language, setLanguage, languages } = useLanguage()
   const [tab, setTab] = useState('Perfil')
+  const [toast, setToast] = useState('')
+  const fileInputRef = useRef(null)
 
   // --------- PERFIL ----------
   const [formPerfil, setFormPerfil] = useState({ name: '', email: '' })
@@ -89,10 +130,102 @@ export default function Configuracoes() {
     })
   }, [usuario])
 
+  const [avatarConfig, setAvatarConfig] = useState({
+    mode: 'initial',
+    src: '',
+    color: DEFAULT_AVATAR_COLOR,
+  })
+  const [avatarDirty, setAvatarDirty] = useState(false)
+
+  useEffect(() => {
+    const userColor = usuario?.avatarConfig?.color ?? DEFAULT_AVATAR_COLOR
+    const mergedColor = {
+      r: clampRgb(userColor.r ?? DEFAULT_AVATAR_COLOR.r),
+      g: clampRgb(userColor.g ?? DEFAULT_AVATAR_COLOR.g),
+      b: clampRgb(userColor.b ?? DEFAULT_AVATAR_COLOR.b),
+    }
+
+    const userMode = usuario?.avatarConfig?.mode ?? (usuario?.avatarUrl ? 'upload' : 'initial')
+    const userSrc = usuario?.avatarConfig?.src ?? usuario?.avatarUrl ?? ''
+
+    setAvatarConfig({ mode: userMode, src: userSrc, color: mergedColor })
+    setAvatarDirty(false)
+  }, [usuario])
+
   const inicial = useMemo(
     () => (formPerfil.name?.trim()?.[0]?.toUpperCase() ?? 'U'),
     [formPerfil.name]
   )
+
+  const hasAvatarImage = avatarConfig.mode !== 'initial' && !!avatarConfig.src
+  const avatarBackground = rgbToCss(avatarConfig.color)
+  const avatarTextColor = getContrastColor(avatarConfig.color)
+
+  const handleAvatarUpload = useCallback(
+    (event) => {
+      const file = event.target.files?.[0]
+      if (!file) return
+
+      if (!['image/png', 'image/jpeg'].includes(file.type)) {
+        setToast(t('settings.profile.avatar.typeError'))
+        event.target.value = ''
+        return
+      }
+
+      if (file.size > MAX_AVATAR_SIZE) {
+        setToast(t('settings.profile.avatar.sizeError'))
+        event.target.value = ''
+        return
+      }
+
+      const reader = new FileReader()
+      reader.onload = () => {
+        const result = typeof reader.result === 'string' ? reader.result : ''
+        setAvatarConfig((prev) => ({ ...prev, mode: 'upload', src: result }))
+        setAvatarDirty(true)
+      }
+      reader.readAsDataURL(file)
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    },
+    [t, setToast, fileInputRef]
+  )
+
+  const handleSelectPreset = useCallback((preset) => {
+    setAvatarConfig((prev) => ({ ...prev, mode: 'preset', src: preset.src }))
+    setAvatarDirty(true)
+  }, [])
+
+  const handleRemoveAvatar = useCallback(() => {
+    setAvatarConfig((prev) => ({ ...prev, mode: 'initial', src: '' }))
+    setAvatarDirty(true)
+  }, [])
+
+  const handleColorChange = useCallback((channel, value) => {
+    setAvatarConfig((prev) => ({
+      ...prev,
+      color: { ...prev.color, [channel]: clampRgb(value) },
+    }))
+    setAvatarDirty(true)
+  }, [])
+
+  const handleResetColor = useCallback(() => {
+    setAvatarConfig((prev) => ({ ...prev, color: { ...DEFAULT_AVATAR_COLOR } }))
+    setAvatarDirty(true)
+  }, [])
+
+  const handleSaveAvatar = useCallback(() => {
+    if (!atualizarUsuario) return
+    const payload = {
+      avatarUrl: avatarConfig.mode === 'initial' ? undefined : avatarConfig.src,
+      avatarConfig: avatarConfig,
+    }
+    atualizarUsuario(payload)
+    setToast(t('settings.profile.avatar.saved'))
+    setAvatarDirty(false)
+  }, [atualizarUsuario, avatarConfig, t, setToast])
 
   // --------- SEGURANÇA ----------
   const [pwd, setPwd] = useState({ atual: '', nova: '', confirma: '' })
@@ -267,7 +400,6 @@ export default function Configuracoes() {
   }, [accountForm.id, fetchAccounts, t])
 
   // --------- FEEDBACK ----------
-  const [toast, setToast] = useState('')
   useEffect(() => {
     if (!toast) return
     const id = setTimeout(() => setToast(''), 2500)
@@ -354,17 +486,181 @@ export default function Configuracoes() {
                   {/* Avatar e info */}
                   <div className="flex flex-col sm:flex-row items-center gap-6 p-6 rounded-2xl bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20">
                     <div className="relative group">
-                      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-violet-600 to-purple-600 text-white flex items-center justify-center text-2xl font-bold shadow-lg transition-transform duration-300 group-hover:scale-105">
-                        {inicial}
+                      <div
+                        className="p-1.5 rounded-full shadow-lg shadow-violet-500/20 dark:shadow-violet-900/30 transition-transform duration-300 group-hover:scale-105"
+                        style={{ background: avatarBackground }}
+                      >
+                        <div className="w-24 h-24 rounded-full overflow-hidden flex items-center justify-center bg-white/10">
+                          {hasAvatarImage ? (
+                            <img src={avatarConfig.src} alt={t('settings.profile.avatar.altPreview', { defaultValue: 'Foto de perfil' })} className="h-full w-full object-cover" />
+                          ) : (
+                            <span className="text-4xl font-bold" style={{ color: avatarTextColor }}>
+                              {inicial}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <button className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-white dark:bg-zinc-800 border-2 border-violet-500 flex items-center justify-center shadow-lg hover:scale-110 transition-transform">
-                        <Camera className="h-3 w-3 text-violet-600" />
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        title={t('settings.profile.avatar.upload')}
+                        className="absolute -bottom-1 -right-1 w-9 h-9 rounded-full bg-white dark:bg-zinc-800 border-2 border-violet-500 flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
+                      >
+                        <Camera className="h-4 w-4 text-violet-600" />
                       </button>
                     </div>
                     <div className="text-center sm:text-left">
                       <h3 className="text-xl font-bold text-zinc-800 dark:text-white">{formPerfil.name || t('settings.profile.defaultName')}</h3>
                       <p className="text-zinc-600 dark:text-zinc-400">{formPerfil.email}</p>
                       <p className="text-sm text-zinc-500 dark:text-zinc-500 mt-1">{t('settings.profile.memberSince')}</p>
+                    </div>
+                  </div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg"
+                    className="hidden"
+                    onChange={handleAvatarUpload}
+                  />
+
+                  <div className="rounded-2xl border border-zinc-200/60 bg-white/80 dark:border-white/10 dark:bg-zinc-900/70 p-6 space-y-6">
+                    <div className="flex items-start gap-3">
+                      <Image className="h-5 w-5 text-violet-600 dark:text-violet-400 mt-1" />
+                      <div>
+                        <h3 className="text-lg font-semibold text-zinc-800 dark:text-white">{t('settings.profile.avatar.title')}</h3>
+                        <p className="text-sm text-zinc-500 dark:text-zinc-400">{t('settings.profile.avatar.subtitle')}</p>
+                      </div>
+                    </div>
+
+                    <div className="grid gap-6 lg:grid-cols-[minmax(0,260px),1fr]">
+                      <div className="flex flex-col items-center gap-4">
+                        <div
+                          className="p-2 rounded-full shadow-lg shadow-violet-500/20 dark:shadow-black/40"
+                          style={{ background: avatarBackground }}
+                        >
+                          <div className="w-32 h-32 rounded-full overflow-hidden flex items-center justify-center bg-white/10">
+                            {hasAvatarImage ? (
+                              <img src={avatarConfig.src} alt={t('settings.profile.avatar.altPreview', { defaultValue: 'Foto de perfil' })} className="h-full w-full object-cover" />
+                            ) : (
+                              <span className="text-5xl font-bold" style={{ color: avatarTextColor }}>
+                                {inicial}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-2 text-sm text-zinc-500 dark:text-zinc-400 text-center">
+                          <span>{t('settings.profile.avatar.previewHint')}</span>
+                          <button
+                            type="button"
+                            onClick={handleRemoveAvatar}
+                            className="inline-flex items-center justify-center gap-2 rounded-full border border-zinc-300 px-4 py-1.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                          >
+                            <StarOff className="h-4 w-4" />
+                            {t('settings.profile.avatar.revert')}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="space-y-6">
+                        <div className="space-y-3">
+                          <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-200 flex items-center gap-2">
+                            <Upload className="h-4 w-4 text-violet-600" />
+                            {t('settings.profile.avatar.upload')}
+                          </label>
+                          <div className="flex flex-wrap gap-3">
+                            <button
+                              type="button"
+                              onClick={() => fileInputRef.current?.click()}
+                              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-500 to-purple-500 px-4 py-2 text-sm font-medium text-white shadow-lg transition-transform hover:-translate-y-0.5 hover:shadow-xl"
+                            >
+                              <Camera className="h-4 w-4" />
+                              {t('settings.profile.avatar.uploadButton')}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleRemoveAvatar}
+                              className="inline-flex items-center gap-2 rounded-xl border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              {t('settings.profile.avatar.remove')}
+                            </button>
+                          </div>
+                          <p className="text-xs text-zinc-500 dark:text-zinc-400">{t('settings.profile.avatar.helper')}</p>
+                        </div>
+
+                        <div className="space-y-3">
+                          <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-200 flex items-center gap-2">
+                            <Image className="h-4 w-4 text-violet-600" />
+                            {t('settings.profile.avatar.defaults')}
+                          </label>
+                          <div className="grid grid-cols-4 gap-3 sm:grid-cols-6 md:grid-cols-8">
+                            {PRESET_AVATARS.map((preset) => (
+                              <button
+                                key={preset.id}
+                                type="button"
+                                onClick={() => handleSelectPreset(preset)}
+                                className={`relative h-14 w-14 overflow-hidden rounded-full border-2 transition-transform hover:-translate-y-0.5 hover:shadow-lg ${
+                                  avatarConfig.mode === 'preset' && avatarConfig.src === preset.src
+                                    ? 'border-violet-500 shadow-violet-500/30'
+                                    : 'border-transparent'
+                                }`}
+                              >
+                                <img src={preset.src} alt={t('settings.profile.avatar.defaultAlt')} className="h-full w-full object-cover" />
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-semibold text-zinc-700 dark:text-zinc-200">{t('settings.profile.avatar.colorTitle')}</span>
+                            <span className="text-xs text-zinc-500 dark:text-zinc-400">{t('settings.profile.avatar.colorSubtitle')}</span>
+                          </div>
+                          {[ ['r', 'settings.profile.avatar.rgb.red'], ['g', 'settings.profile.avatar.rgb.green'], ['b', 'settings.profile.avatar.rgb.blue'] ].map(([channel, labelKey]) => (
+                            <div key={channel} className="space-y-1">
+                              <div className="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
+                                <span>{t(labelKey)}</span>
+                                <span>{avatarConfig.color[channel]}</span>
+                              </div>
+                              <input
+                                type="range"
+                                min="0"
+                                max="255"
+                                value={avatarConfig.color[channel]}
+                                onChange={(event) => handleColorChange(channel, event.target.value)}
+                                className="w-full accent-violet-500"
+                              />
+                            </div>
+                          ))}
+                          <div className="flex items-center justify-between">
+                            <button
+                              type="button"
+                              onClick={handleResetColor}
+                              className="inline-flex items-center gap-2 rounded-full border border-zinc-300 px-4 py-1.5 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                            >
+                              <RotateCcw className="h-3.5 w-3.5" />
+                              {t('settings.profile.avatar.resetColor')}
+                            </button>
+                            <div className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">{avatarBackground}</div>
+                          </div>
+                        </div>
+
+                        <div className="flex justify-end">
+                          <button
+                            type="button"
+                            disabled={!avatarDirty}
+                            onClick={handleSaveAvatar}
+                            className={`inline-flex items-center gap-2 rounded-xl px-5 py-2 text-sm font-semibold transition-all shadow-lg ${
+                              avatarDirty
+                                ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:-translate-y-0.5 hover:shadow-emerald-500/40'
+                                : 'bg-zinc-300 text-zinc-500 cursor-not-allowed dark:bg-zinc-700 dark:text-zinc-400 shadow-none'
+                            }`}
+                          >
+                            <CheckCircle className="h-4 w-4" />
+                            {t('settings.profile.avatar.save')}
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
 

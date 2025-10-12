@@ -396,8 +396,7 @@ export default function Transacoes() {
             className="mx-auto flex items-center gap-3 rounded-2xl bg-slate-900 px-6 py-3 font-semibold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:bg-slate-800 hover:shadow-xl sm:mx-0 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200 dark:hover:shadow-slate-100/40"
           >
             <Plus className="h-5 w-5" />
-            {t('Nova Transação')}
-              {t('transactions.new')}
+            {t('transactions.new')}
           </button>
         </div>
 
@@ -574,7 +573,7 @@ export default function Transacoes() {
                               ? 'border border-green-200/50 bg-green-100/80 text-green-700 dark:border-emerald-500/40 dark:bg-emerald-500/15 dark:text-emerald-300' 
                               : 'border border-yellow-200/50 bg-yellow-100/80 text-yellow-700 dark:border-amber-500/40 dark:bg-amber-500/15 dark:text-amber-300'
                           }`}>
-                            {transacao.status === 'confirmado' ? 'Confirmado' : 'Pendente'}
+                            {getStatusLabel(transacao.status)}
                           </span>
                         </div>
                         <p className="font-medium text-gray-600 dark:text-slate-300">
