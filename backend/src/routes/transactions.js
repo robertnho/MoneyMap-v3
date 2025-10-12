@@ -146,7 +146,8 @@ router.post('/', requireAuth, async (req, res) => {
 
     const transaction = await prisma.transaction.create({
       data: {
-        accountId: account.id,
+        account: { connect: { id: account.id } },
+        user: { connect: { id: req.user.id } },
         descricao: payload.descricao,
         categoria: payload.categoria,
         valor: payload.valor,

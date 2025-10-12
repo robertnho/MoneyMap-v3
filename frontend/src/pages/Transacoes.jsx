@@ -66,6 +66,9 @@ export default function Transacoes() {
   const [salvando, setSalvando] = useState(false)
   const [erroForm, setErroForm] = useState('')
   const [mensagemSucesso, setMensagemSucesso] = useState('')
+  const [modoEdicao, setModoEdicao] = useState(false)
+  const [transacaoEmEdicao, setTransacaoEmEdicao] = useState(null)
+  const [excluindoId, setExcluindoId] = useState(null)
 
   // Categorias dinâmicas baseadas nas transações existentes
   const categoriasDisponiveis = useMemo(() => {
@@ -170,6 +173,8 @@ export default function Transacoes() {
   const abrirModalNovaTransacao = () => {
     setErroForm('')
     setMensagemSucesso('')
+    setModoEdicao(false)
+    setTransacaoEmEdicao(null)
     setForm({
       accountId: defaultAccountId,
       descricao: '',
@@ -183,9 +188,29 @@ export default function Transacoes() {
     setModalAberto(true)
   }
 
+  const abrirModalEditarTransacao = (transacao) => {
+    setErroForm('')
+    setMensagemSucesso('')
+    setModoEdicao(true)
+    setTransacaoEmEdicao(transacao)
+    setForm({
+      accountId: String(transacao.accountId ?? ''),
+      descricao: transacao.descricao ?? '',
+      categoria: transacao.categoria ?? '',
+      valor: String(transacao.valor ?? '').replace('.', ','),
+      tipo: transacao.tipo ?? 'despesa',
+      status: transacao.status ?? 'confirmado',
+      data: transacao.data ?? hojeISO,
+      observacao: transacao.observacao ?? '',
+    })
+    setModalAberto(true)
+  }
+
   const fecharModal = () => {
     if (salvando) return
     setModalAberto(false)
+    setModoEdicao(false)
+    setTransacaoEmEdicao(null)
   }
 
   const onInputChange = (event) => {
@@ -202,7 +227,7 @@ export default function Transacoes() {
     const accountIdNumber = Number(form.accountId)
     const valorNumber = Number(String(form.valor).replace(/\./g, '').replace(',', '.'))
 
-    if (!accountIdNumber) {
+    if (!modoEdicao && !accountIdNumber) {
       setErroForm('Selecione uma conta.')
       return
     }
@@ -220,29 +245,53 @@ export default function Transacoes() {
     setSalvando(true)
 
     try {
-      const payload = {
-        accountId: accountIdNumber,
+      const payloadBase = {
         descricao: form.descricao.trim(),
         categoria: form.categoria.trim() || 'Outros',
         valor: valorNumber,
         tipo: form.tipo,
         status: form.status,
         data: form.data || new Date().toISOString().slice(0, 10),
-        observacao: form.observacao?.trim() || undefined,
       }
 
-      const { data } = await api.transacoes.criar(payload)
-      const nova = data?.transaction
+      const observacaoTrim = form.observacao?.trim()
+      if (observacaoTrim) {
+        payloadBase.observacao = observacaoTrim
+      }
 
-      if (nova) {
-        setTransacoes((prev) => [nova, ...prev])
+      if (modoEdicao && transacaoEmEdicao) {
+        const { data } = await api.transacoes.atualizar(transacaoEmEdicao.id, payloadBase)
+        const atualizada = data?.transaction
+        if (atualizada) {
+          setTransacoes((prev) => prev.map((item) => (item.id === atualizada.id ? atualizada : item)))
+        } else {
+          const refresh = await api.transacoes.listar()
+          setTransacoes(refresh?.data?.transactions ?? [])
+        }
+
+        setMensagemSucesso('Transação atualizada com sucesso!')
       } else {
-        const refresh = await api.transacoes.listar()
-        setTransacoes(refresh?.data?.transactions ?? [])
+        const payload = {
+          ...payloadBase,
+          accountId: accountIdNumber,
+        }
+
+        const { data } = await api.transacoes.criar(payload)
+        const nova = data?.transaction
+
+        if (nova) {
+          setTransacoes((prev) => [nova, ...prev])
+        } else {
+          const refresh = await api.transacoes.listar()
+          setTransacoes(refresh?.data?.transactions ?? [])
+        }
+
+        setMensagemSucesso('Transação registrada com sucesso!')
       }
 
-      setMensagemSucesso('Transação registrada com sucesso!')
       setModalAberto(false)
+      setModoEdicao(false)
+      setTransacaoEmEdicao(null)
       setForm((prev) => ({
         ...prev,
         descricao: '',
@@ -252,10 +301,33 @@ export default function Transacoes() {
         data: new Date().toISOString().slice(0, 10),
       }))
     } catch (err) {
-      const message = err?.response?.data?.error ?? 'Não foi possível registrar a transação'
+      const fallback = modoEdicao ? 'Não foi possível atualizar a transação' : 'Não foi possível registrar a transação'
+      const message = err?.response?.data?.error ?? fallback
       setErroForm(message)
     } finally {
       setSalvando(false)
+    }
+  }
+
+  const handleExcluirTransacao = async (transacao) => {
+    if (!transacao?.id || excluindoId) return
+
+    const confirmar = window.confirm('Tem certeza de que deseja excluir esta transação?')
+    if (!confirmar) return
+
+    setExcluindoId(transacao.id)
+    setErro('')
+
+    try {
+      await api.transacoes.remover(transacao.id)
+      setTransacoes((prev) => prev.filter((item) => item.id !== transacao.id))
+      setMensagemSucesso('Transação removida com sucesso!')
+    } catch (err) {
+      console.error('Erro ao apagar transação:', err)
+      const message = err?.response?.data?.error ?? 'Não foi possível remover a transação'
+      setErro(message)
+    } finally {
+      setExcluindoId(null)
     }
   }
 
@@ -489,10 +561,17 @@ export default function Transacoes() {
                       </span>
                       
                       <div className="flex items-center gap-2">
-                        <button className="rounded-xl p-3 text-gray-500 transition-all duration-300 transform hover:scale-110 hover:bg-blue-50/50 hover:text-blue-600 dark:text-slate-400 dark:hover:bg-slate-800/70 dark:hover:text-slate-200">
+                        <button
+                          onClick={() => abrirModalEditarTransacao(transacao)}
+                          className="rounded-xl p-3 text-gray-500 transition-all duration-300 transform hover:scale-110 hover:bg-blue-50/50 hover:text-blue-600 dark:text-slate-400 dark:hover:bg-slate-800/70 dark:hover:text-slate-200"
+                        >
                           <Edit className="h-5 w-5" />
                         </button>
-                        <button className="rounded-xl p-3 text-gray-500 transition-all duration-300 transform hover:scale-110 hover:bg-red-50/50 hover:text-red-600 dark:text-slate-400 dark:hover:bg-slate-800/70 dark:hover:text-rose-300">
+                        <button
+                          onClick={() => handleExcluirTransacao(transacao)}
+                          disabled={excluindoId === transacao.id}
+                          className="rounded-xl p-3 text-gray-500 transition-all duration-300 transform hover:scale-110 hover:bg-red-50/50 hover:text-red-600 disabled:opacity-50 dark:text-slate-400 dark:hover:bg-slate-800/70 dark:hover:text-rose-300"
+                        >
                           <Trash2 className="h-5 w-5" />
                         </button>
                       </div>
@@ -509,7 +588,7 @@ export default function Transacoes() {
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
             <div className="w-full max-w-2xl rounded-2xl border border-white/30 bg-white p-6 shadow-xl dark:border-slate-700 dark:bg-slate-900">
               <h2 className="mb-6 text-2xl font-bold text-gray-800 dark:text-slate-200">
-                Nova Transação
+                {modoEdicao ? 'Editar Transação' : 'Nova Transação'}
               </h2>
 
               {erroForm && (
@@ -527,8 +606,8 @@ export default function Transacoes() {
                     name="accountId"
                     value={form.accountId}
                     onChange={onInputChange}
-                    required
-                    disabled={salvando}
+                    required={!modoEdicao}
+                    disabled={salvando || modoEdicao}
                     className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2 text-gray-800 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
                   >
                     <option value="">Selecione a conta</option>
@@ -674,7 +753,7 @@ export default function Transacoes() {
                     disabled={salvando}
                     className="flex-1 rounded-xl bg-blue-600 px-4 py-2 font-semibold text-white transition-all duration-300 hover:bg-blue-700 disabled:opacity-50 dark:bg-blue-500 dark:hover:bg-blue-600"
                   >
-                    {salvando ? 'Salvando...' : 'Salvar Transação'}
+                    {salvando ? 'Salvando...' : modoEdicao ? 'Atualizar Transação' : 'Salvar Transação'}
                   </button>
                 </div>
               </form>

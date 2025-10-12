@@ -4,6 +4,16 @@ const baseURL = import.meta.env.VITE_API_URL || ''
 
 const instancia = axios.create({ baseURL })
 
+// Garante que o token salvo seja aplicado em recarregamentos antes de qualquer requisição
+try {
+  const storedToken = typeof window !== 'undefined' ? localStorage.getItem('mm_token') : null
+  if (storedToken) {
+    instancia.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`
+  }
+} catch (error) {
+  console.warn('Não foi possível recuperar o token armazenado:', error)
+}
+
 // Wrappers de endpoints
 const api = {
   instancia,
