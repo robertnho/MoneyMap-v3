@@ -2,10 +2,12 @@ import React, { useState } from "react";
 import { Outlet, Link } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import { Menu } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import ThemeToggle from "../components/ThemeToggle.jsx";
 
 export default function DashboardLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { t } = useTranslation();
 
   return (
     <div className="fixed inset-0 flex h-screen w-screen overflow-hidden bg-slate-100 transition-colors duration-300 ease-out dark:bg-slate-950">
@@ -20,7 +22,7 @@ export default function DashboardLayout() {
             <button
               className="md:hidden p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
               onClick={() => setMobileOpen(true)}
-              aria-label="Abrir menu"
+              aria-label={t("layout.dashboard.openMenu")}
             >
               <Menu className="w-5 h-5" />
             </button>
@@ -28,10 +30,10 @@ export default function DashboardLayout() {
               to="/dashboard"
               className="text-lg font-semibold tracking-wide text-slate-900 dark:text-slate-100"
             >
-              MoneyMapp TCC
+              {t("brand.name")}
             </Link>
             <span className="text-sm text-gray-500 dark:text-gray-400">
-              • Área logada
+              {t("layout.dashboard.subtitle")}
             </span>
           </div>
           <ThemeToggle floating={false} className="relative hover:scale-105" />

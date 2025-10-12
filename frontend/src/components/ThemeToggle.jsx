@@ -1,11 +1,14 @@
 import React from 'react'
 import { Sun, Moon } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useTheme } from '../contexts/ThemeContext'
 
 export default function ThemeToggle({ className = '', floating = true }) {
   const { isDark, toggleTheme } = useTheme()
+  const { t } = useTranslation()
 
   const positionClasses = floating ? 'fixed top-4 right-4 z-50' : ''
+  const toggleLabel = isDark ? t('theme.toggle.toLight') : t('theme.toggle.toDark')
 
   return (
     <button
@@ -22,8 +25,8 @@ export default function ThemeToggle({ className = '', floating = true }) {
         hover:scale-110 active:scale-95
         ${className}
       `}
-      title={isDark ? 'Alternar para modo claro' : 'Alternar para modo escuro'}
-      aria-label={isDark ? 'Alternar para modo claro' : 'Alternar para modo escuro'}
+  title={toggleLabel}
+  aria-label={toggleLabel}
     >
       {isDark ? (
         <Sun className="w-5 h-5 text-yellow-500 animate-pulse" />
