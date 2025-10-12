@@ -2,19 +2,20 @@ import React, { useState } from "react";
 import { Outlet, Link } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import { Menu } from "lucide-react";
+import ThemeToggle from "../components/ThemeToggle.jsx";
 
 export default function DashboardLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="fixed inset-0 flex h-screen w-screen bg-gradient-to-br from-sky-200 via-indigo-200 to-blue-300 dark:from-zinc-900 dark:via-zinc-800 dark:to-zinc-900 overflow-hidden">
+    <div className="fixed inset-0 flex h-screen w-screen overflow-hidden bg-slate-100 transition-colors duration-300 ease-out dark:bg-slate-950">
       {/* Sidebar fixa (desktop) + gaveta (mobile) */}
       <Sidebar aberto={mobileOpen} onFechar={() => setMobileOpen(false)} />
 
       {/* Conteúdo principal */}
       <div className="flex flex-col flex-1 h-full md:ml-20">
         {/* Topbar */}
-        <header className="flex-shrink-0 z-20 bg-white/60 dark:bg-gray-800/70 backdrop-blur border-b border-gray-200 dark:border-gray-700 px-6 py-3 flex items-center justify-between shadow-sm">
+        <header className="z-20 flex items-center justify-between px-6 py-3 shadow-sm backdrop-blur-md transition-colors duration-300 border-b border-slate-200/70 bg-white/85 dark:border-slate-700 dark:bg-slate-900/80">
           <div className="flex items-center gap-3">
             <button
               className="md:hidden p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -25,7 +26,7 @@ export default function DashboardLayout() {
             </button>
             <Link
               to="/dashboard"
-              className="font-semibold text-indigo-600 dark:text-indigo-400 text-lg tracking-wide"
+              className="text-lg font-semibold tracking-wide text-slate-900 dark:text-slate-100"
             >
               MoneyMapp TCC
             </Link>
@@ -33,11 +34,12 @@ export default function DashboardLayout() {
               • Área logada
             </span>
           </div>
+          <ThemeToggle floating={false} className="relative hover:scale-105" />
         </header>
 
         {/* Conteúdo da página (dashboard) */}
-        <main className="flex-1 overflow-y-auto h-full p-2 md:p-4">
-          <div className="h-full w-full bg-white/70 dark:bg-zinc-900/70 rounded-2xl shadow-lg backdrop-blur-sm p-3 md:p-4 border border-white/20 dark:border-zinc-700">
+        <main className="flex-1 h-full overflow-y-auto p-2 md:p-4">
+          <div className="h-full w-full rounded-2xl border border-slate-200/70 bg-white/90 p-3 shadow-lg transition-colors duration-300 backdrop-blur-sm md:p-4 dark:border-slate-700 dark:bg-slate-900/70">
             <div className="min-h-full flex flex-col justify-start">
               <Outlet />
             </div>

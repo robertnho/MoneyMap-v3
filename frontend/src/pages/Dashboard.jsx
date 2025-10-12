@@ -520,21 +520,21 @@ export default function Dashboard() {
   )
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-gradient-to-br from-white via-slate-50 to-slate-100">
+    <div className="relative min-h-screen w-full overflow-hidden bg-gradient-to-br from-white via-slate-50 to-slate-100 transition-colors duration-300 ease-out dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       {/* Fundo premium */}
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute inset-0" />
-        <div className="absolute -top-40 -left-40 h-96 w-96 animate-pulse rounded-full bg-gradient-to-r from-white/60 to-slate-200/50 blur-3xl" />
+        <div className="absolute -top-40 -left-40 h-96 w-96 animate-pulse rounded-full bg-gradient-to-r from-white/60 to-slate-200/50 blur-3xl dark:from-slate-900/50 dark:to-slate-800/40" />
         <div
-          className="absolute -bottom-40 -right-40 h-80 w-80 animate-pulse rounded-full bg-gradient-to-r from-white/40 to-slate-300/40 blur-3xl"
+          className="absolute -bottom-40 -right-40 h-80 w-80 animate-pulse rounded-full bg-gradient-to-r from-white/40 to-slate-300/40 blur-3xl dark:from-slate-900/40 dark:to-slate-800/30"
           style={{ animationDelay: '2s' }}
         />
         <div
-          className="absolute left-1/4 top-1/3 h-64 w-64 animate-pulse rounded-full bg-gradient-to-r from-white/30 to-slate-200/30 blur-2xl"
+          className="absolute left-1/4 top-1/3 h-64 w-64 animate-pulse rounded-full bg-gradient-to-r from-white/30 to-slate-200/30 blur-2xl dark:from-slate-900/30 dark:to-slate-800/30"
           style={{ animationDelay: '4s' }}
         />
         <div
-          className="absolute right-1/4 bottom-1/4 h-80 w-80 animate-pulse rounded-full bg-gradient-to-r from-white/20 to-slate-300/20 blur-3xl"
+          className="absolute right-1/4 bottom-1/4 h-80 w-80 animate-pulse rounded-full bg-gradient-to-r from-white/20 to-slate-300/20 blur-3xl dark:from-slate-900/20 dark:to-slate-800/20"
           style={{ animationDelay: '6s' }}
         />
       </div>
@@ -544,7 +544,7 @@ export default function Dashboard() {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-  className="sticky top-0 z-20 w-full border-b border-slate-200/60 bg-white/90 backdrop-blur-xl shadow-sm"
+        className="sticky top-0 z-20 w-full border-b border-slate-200/60 bg-white/90 backdrop-blur-xl shadow-sm transition-colors duration-300 dark:border-slate-800/60 dark:bg-slate-900/85 dark:shadow-slate-950/40"
       >
         <div className="mx-auto flex max-w-[1440px] 2xl:max-w-[1600px] items-center justify-between px-6 py-4 lg:px-8">
           <motion.div 
@@ -553,16 +553,16 @@ export default function Dashboard() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="flex items-center gap-3"
           >
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-white via-blue-50/60 to-blue-100/60 shadow-[0_12px_35px_-20px_rgba(37,99,235,0.55)] ring-1 ring-blue-100 dark:from-slate-800 dark:via-slate-800 dark:to-slate-700/80 dark:ring-slate-600">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-white via-blue-50/60 to-blue-100/60 shadow-[0_12px_35px_-20px_rgba(37,99,235,0.55)] ring-1 ring-blue-100 transition-colors duration-300 dark:from-slate-800 dark:via-slate-800 dark:to-slate-700/80 dark:ring-slate-600 dark:shadow-[0_12px_30px_-18px_rgba(15,23,42,0.8)]">
               <PiggyBank className="h-6 w-6 text-slate-700 dark:text-slate-200" />
             </div>
             <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-amber-500" />
+              <Sparkles className="h-4 w-4 text-amber-500 dark:text-amber-400" />
               <div>
-                <h1 className="text-xl font-bold text-slate-900 md:text-2xl">
+                <h1 className="text-xl font-bold text-slate-900 md:text-2xl dark:text-slate-100">
                   Dashboard Financeiro
                 </h1>
-                <p className="flex items-center gap-2 text-xs text-slate-600">
+                <p className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
                   <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400"></span>
                   Bem-vindo de volta! Suas finanças estão sendo monitoradas.
                 </p>
@@ -580,7 +580,7 @@ export default function Dashboard() {
               whileHover={{ scale: 1.05, y: -2 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => navigate('/transacoes')}
-              className="group inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition-all duration-200 hover:bg-slate-800 hover:shadow-xl hover:shadow-slate-900/30"
+              className="group inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition-all duration-200 hover:bg-slate-800 hover:shadow-xl hover:shadow-slate-900/30 dark:bg-slate-100 dark:text-slate-900 dark:shadow-slate-100/20 dark:hover:bg-slate-200 dark:hover:shadow-slate-100/40"
             >
               <PlusCircle className="h-4 w-4 transition-transform group-hover:rotate-90" />
               Nova Transação
@@ -589,9 +589,9 @@ export default function Dashboard() {
               whileHover={{ scale: 1.05, y: -2 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => navigate('/configuracoes')}
-              className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 shadow-sm transition-all duration-200 hover:border-slate-300 hover:bg-slate-50"
+              className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 shadow-sm transition-all duration-200 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:hover:bg-slate-900"
             >
-              <Settings className="h-4 w-4 text-slate-600" />
+              <Settings className="h-4 w-4 text-slate-600 dark:text-slate-300" />
               Configurações
             </motion.button>
           </motion.div>

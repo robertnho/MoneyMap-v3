@@ -113,7 +113,7 @@ function MetaCard({ meta, isDark }) {
             <span className={`text-xs font-bold ${isDark ? 'text-zinc-400' : 'text-gray-700'}`}>Progresso</span>
             <span className={`text-sm font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{progresso.toFixed(1)}%</span>
           </div>
-          <div className="w-full bg-white/40 backdrop-blur-sm rounded-full h-3 shadow-inner">
+          <div className="w-full h-3 rounded-full bg-white/40 shadow-inner backdrop-blur-sm dark:bg-slate-800/60">
             <div 
               className={`h-3 bg-gradient-to-r ${corClasses[meta.cor]} rounded-full transition-[width] duration-700 ease-out shadow-sm`}
               style={{ width: `${progresso}%` }}
@@ -122,28 +122,28 @@ function MetaCard({ meta, isDark }) {
         </div>
 
         {/* Valores */}
-        <div className="flex justify-between items-center py-3 border-t border-white/30">
+        <div className="flex items-center justify-between border-t border-white/30 py-3 dark:border-white/10">
           <div>
-            <p className="text-xs font-bold text-gray-600 mb-1">Atual</p>
-            <p className="text-sm font-bold text-gray-900">{formatMoney(meta.valorAtual)}</p>
+            <p className="mb-1 text-xs font-bold text-gray-600 dark:text-slate-300">Atual</p>
+            <p className="text-sm font-bold text-gray-900 dark:text-slate-100">{formatMoney(meta.valorAtual)}</p>
           </div>
           <div className="text-right">
-            <p className="text-xs font-bold text-gray-600 mb-1">Meta</p>
-            <p className="text-sm font-bold text-gray-900">{formatMoney(meta.valorMeta)}</p>
+            <p className="mb-1 text-xs font-bold text-gray-600 dark:text-slate-300">Meta</p>
+            <p className="text-sm font-bold text-gray-900 dark:text-slate-100">{formatMoney(meta.valorMeta)}</p>
           </div>
         </div>
 
         {/* Prazo */}
-        <div className="flex items-center justify-between pt-3 border-t border-white/30">
+        <div className="flex items-center justify-between border-t border-white/30 pt-3 dark:border-white/10">
           <div className={`flex items-center text-xs font-semibold ${isDark ? 'text-zinc-400' : 'text-gray-700'}`}>
             <Calendar className="w-4 h-4 mr-1" />
             <span>{formatDate(meta.prazo)}</span>
           </div>
           {meta.status === 'ativo' && (
             <span className={`text-xs px-2 py-1 rounded-full font-bold backdrop-blur-sm ${
-              diasRestantes > 30 ? 'bg-green-100/80 text-green-700 border border-green-200/50' :
-              diasRestantes > 7 ? 'bg-yellow-100/80 text-yellow-700 border border-yellow-200/50' :
-              'bg-red-100/80 text-red-700 border border-red-200/50'
+              diasRestantes > 30 ? 'border border-green-200/50 bg-green-100/80 text-green-700 dark:border-emerald-500/40 dark:bg-emerald-500/15 dark:text-emerald-300' :
+              diasRestantes > 7 ? 'border border-yellow-200/50 bg-yellow-100/80 text-yellow-700 dark:border-amber-500/40 dark:bg-amber-500/15 dark:text-amber-300' :
+              'border border-red-200/50 bg-red-100/80 text-red-700 dark:border-rose-500/40 dark:bg-rose-500/15 dark:text-rose-300'
             }`}>
               {diasRestantes > 0 ? `${diasRestantes}d` : 'Vencido'}
             </span>
@@ -199,7 +199,7 @@ function DicaCard({ metasConcluidas, progressoGeral, isDark }) {
           <button className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white py-1.5 px-3 rounded-lg text-xs font-semibold shadow-sm hover:shadow-lg transform hover:scale-105 transition-all duration-300">
             Definir Aportes Automáticos
           </button>
-          <button className={`w-full py-1.5 px-3 rounded-lg text-xs font-semibold shadow-sm hover:shadow-lg transform hover:scale-105 transition-all duração-300 ${
+          <button className={`w-full py-1.5 px-3 rounded-lg text-xs font-semibold shadow-sm transition-all duration-300 transform hover:scale-105 hover:shadow-lg ${
             isDark ? 'bg-white/10 text-emerald-300 hover:bg-white/20' : 'bg-white text-green-700 border border-green-200 hover:bg-gray-50'
           }`}>
             Ver Dicas de Economia
@@ -234,8 +234,8 @@ export default function Metas() {
   ].filter(Boolean)
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 ${
-      isDark ? 'bg-[#09090b]' : 'bg-gradient-to-br from-sky-100 via-indigo-100 to-purple-100'
+  <div className={`min-h-screen transition-colors duration-300 ${
+      isDark ? 'bg-slate-950 text-slate-100' : 'bg-gradient-to-br from-sky-100 via-indigo-100 to-purple-100 text-slate-900'
     }`}>
       <div className="max-w-[1600px] mx-auto px-4 py-6">
         <div className="space-y-4 animate-in fade-in duration-500">
@@ -247,7 +247,7 @@ export default function Metas() {
               }`}>
                 Metas Financeiras
               </h1>
-              <p className={`font-medium transition-colors duração-300 ${
+              <p className={`font-medium transition-colors duration-300 ${
                 isDark ? 'text-zinc-300' : 'text-gray-700'
               }`}>
                 Defina e acompanhe seus objetivos financeiros
@@ -275,7 +275,7 @@ export default function Metas() {
               </div>
             </div>
             
-            <div className={`backdrop-blur-lg rounded-2xl border shadow-lg p-6 transition-all duração-300 hover:-translate-y-1 hover:shadow-xl ${
+            <div className={`backdrop-blur-lg rounded-2xl border shadow-lg p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${
               isDark ? 'bg-white/10 border-white/10 hover:bg-white/15' : 'bg-white/30 border-white/50 hover:bg-white/40'
             }`}>
               <div className="flex items-center justify-between">
@@ -289,7 +289,7 @@ export default function Metas() {
               </div>
             </div>
             
-            <div className={`backdrop-blur-lg rounded-2xl border shadow-lg p-6 transition-all duração-300 hover:-translate-y-1 hover:shadow-xl ${
+            <div className={`backdrop-blur-lg rounded-2xl border shadow-lg p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${
               isDark ? 'bg-white/10 border-white/10 hover:bg-white/15' : 'bg-white/30 border-white/50 hover:bg-white/40'
             }`}>
               <div className="flex items-center justify-between">
@@ -303,7 +303,7 @@ export default function Metas() {
               </div>
             </div>
             
-            <div className={`backdrop-blur-lg rounded-2xl border shadow-lg p-6 transition-all duração-300 hover:-translate-y-1 hover:shadow-xl ${
+            <div className={`backdrop-blur-lg rounded-2xl border shadow-lg p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${
               isDark ? 'bg-white/10 border-white/10 hover:bg-white/15' : 'bg-white/30 border-white/50 hover:bg-white/40'
             }`}>
               <div className="flex items-center justify-between">

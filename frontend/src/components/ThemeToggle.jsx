@@ -2,14 +2,16 @@ import React from 'react'
 import { Sun, Moon } from 'lucide-react'
 import { useTheme } from '../contexts/ThemeContext'
 
-export default function ThemeToggle({ className = '' }) {
+export default function ThemeToggle({ className = '', floating = true }) {
   const { isDark, toggleTheme } = useTheme()
+
+  const positionClasses = floating ? 'fixed top-4 right-4 z-50' : ''
 
   return (
     <button
       onClick={toggleTheme}
       className={`
-        fixed top-4 right-4 z-50
+        ${positionClasses}
         p-3 rounded-full
         bg-white dark:bg-gray-800 
         border border-gray-200 dark:border-gray-700

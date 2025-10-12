@@ -156,40 +156,36 @@ export default function Transacoes() {
   return (
     <div className={`min-h-screen p-4 md:p-6 transition-colors duration-300 ${
       isDark
-        ? 'bg-[#09090b]'
-        : 'bg-gradient-to-br from-blue-50/30 via-purple-50/20 to-indigo-50/30'
+        ? 'bg-slate-950 text-slate-100'
+        : 'bg-gradient-to-br from-slate-100 via-sky-100/50 to-indigo-100/40 text-slate-900'
     }`}>
       <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-6">
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="text-center sm:text-left">
-            <h1 className={`text-4xl md:text-5xl font-bold mb-3 drop-shadow-sm transition-colors duration-300 ${
-              isDark ? 'text-white' : 'text-gray-900'
-            }`}>
+            <h1 className="mb-3 text-4xl font-bold drop-shadow-sm transition-colors duration-300 md:text-5xl text-slate-900 dark:text-slate-100">
               Transações
             </h1>
-            <p className={`text-lg font-medium transition-colors duration-300 ${
-              isDark ? 'text-zinc-300' : 'text-gray-700'
-            }`}>
+            <p className="text-lg font-medium transition-colors duration-300 text-slate-700 dark:text-slate-300">
               Gerencie suas receitas e despesas
             </p>
           </div>
           <button 
             onClick={() => setModalAberto(true)}
-            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-6 py-3 rounded-2xl font-semibold flex items-center gap-3 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 mx-auto sm:mx-0"
+            className="mx-auto flex items-center gap-3 rounded-2xl bg-slate-900 px-6 py-3 font-semibold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:bg-slate-800 hover:shadow-xl sm:mx-0 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200 dark:hover:shadow-slate-100/40"
           >
-            <Plus className="w-5 h-5" />
+            <Plus className="h-5 w-5" />
             Nova Transação
           </button>
         </div>
 
         {/* Cards de Resumo */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="backdrop-blur-lg bg-white/30 rounded-3xl border border-white/50 shadow-xl p-8 hover:bg-white/40 transition-all duration-300 transform hover:scale-[1.02]">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+          <div className="rounded-3xl border border-white/50 bg-white/30 p-8 shadow-xl backdrop-blur-lg transition-all duration-300 hover:scale-[1.02] hover:bg-white/40 dark:border-slate-700 dark:bg-slate-900/70 dark:hover:bg-slate-900/75">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-bold text-gray-700 mb-2">Receitas do Mês</p>
-                <p className="text-3xl font-bold text-green-600 drop-shadow-sm">{formatMoney(resumoMes.receitas)}</p>
+                <p className="mb-2 text-sm font-bold text-gray-700 dark:text-slate-300">Receitas do Mês</p>
+                <p className="text-3xl font-bold text-emerald-600 drop-shadow-sm dark:text-emerald-400">{formatMoney(resumoMes.receitas)}</p>
               </div>
               <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-emerald-500 rounded-2xl flex items-center justify-center shadow-lg">
                 <TrendingUp className="w-8 h-8 text-white" />
@@ -197,11 +193,11 @@ export default function Transacoes() {
             </div>
           </div>
           
-          <div className="backdrop-blur-lg bg-white/30 rounded-3xl border border-white/50 shadow-xl p-8 hover:bg-white/40 transition-all duration-300 transform hover:scale-[1.02]">
+          <div className="rounded-3xl border border-white/50 bg-white/30 p-8 shadow-xl backdrop-blur-lg transition-all duration-300 hover:scale-[1.02] hover:bg-white/40 dark:border-slate-700 dark:bg-slate-900/70 dark:hover:bg-slate-900/75">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-bold text-gray-700 mb-2">Despesas do Mês</p>
-                <p className="text-3xl font-bold text-red-600 drop-shadow-sm">{formatMoney(resumoMes.despesas)}</p>
+                <p className="mb-2 text-sm font-bold text-gray-700 dark:text-slate-300">Despesas do Mês</p>
+                <p className="text-3xl font-bold text-rose-600 drop-shadow-sm dark:text-rose-400">{formatMoney(resumoMes.despesas)}</p>
               </div>
               <div className="w-16 h-16 bg-gradient-to-br from-red-400 to-rose-500 rounded-2xl flex items-center justify-center shadow-lg">
                 <TrendingDown className="w-8 h-8 text-white" />
@@ -209,11 +205,15 @@ export default function Transacoes() {
             </div>
           </div>
           
-          <div className="backdrop-blur-lg bg-white/30 rounded-3xl border border-white/50 shadow-xl p-8 hover:bg-white/40 transition-all duration-300 transform hover:scale-[1.02]">
+          <div className="rounded-3xl border border-white/50 bg-white/30 p-8 shadow-xl backdrop-blur-lg transition-all duration-300 hover:scale-[1.02] hover:bg-white/40 dark:border-slate-700 dark:bg-slate-900/70 dark:hover:bg-slate-900/75">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-bold text-gray-700 mb-2">Saldo do Mês</p>
-                <p className={`text-3xl font-bold drop-shadow-sm ${resumoMes.saldo >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                <p className="mb-2 text-sm font-bold text-gray-700 dark:text-slate-300">Saldo do Mês</p>
+                <p className={`text-3xl font-bold drop-shadow-sm ${
+                  resumoMes.saldo >= 0
+                    ? 'text-blue-600 dark:text-emerald-400'
+                    : 'text-red-600 dark:text-rose-400'
+                }`}>
                   {formatMoney(resumoMes.saldo)}
                 </p>
               </div>
@@ -229,30 +229,30 @@ export default function Transacoes() {
         </div>
 
         {/* Filtros */}
-        <div className="backdrop-blur-lg bg-white/25 rounded-3xl border border-white/40 shadow-lg p-8">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+        <div className="rounded-3xl border border-white/40 bg-white/25 p-8 shadow-lg backdrop-blur-lg dark:border-slate-700 dark:bg-slate-900/70">
+          <div className="mb-6 flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-purple-600">
               <Filter className="w-5 h-5 text-white" />
             </div>
-            <h3 className="text-xl font-bold text-gray-800">Filtros</h3>
+            <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">Filtros</h3>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div className="relative">
-              <Search className="w-5 h-5 text-gray-500 absolute left-4 top-1/2 transform -translate-y-1/2" />
+              <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 transform text-gray-500 dark:text-slate-400" />
               <input
                 type="text"
                 placeholder="Buscar transação..."
                 value={filtros.busca}
                 onChange={(e) => setFiltros({...filtros, busca: e.target.value})}
-                className="w-full pl-12 pr-4 py-3 border border-white/30 bg-white/40 backdrop-blur-sm rounded-2xl text-gray-800 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 shadow-sm"
+                className="w-full rounded-2xl border border-white/30 bg-white/40 py-3 pl-12 pr-4 text-gray-800 shadow-sm transition-all duration-300 placeholder:text-gray-600 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:ring-blue-400"
               />
             </div>
             
             <select
               value={filtros.categoria}
               onChange={(e) => setFiltros({...filtros, categoria: e.target.value})}
-              className="w-full px-4 py-3 border border-white/30 bg-white/40 backdrop-blur-sm rounded-2xl text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 shadow-sm"
+              className="w-full rounded-2xl border border-white/30 bg-white/40 px-4 py-3 text-gray-800 shadow-sm transition-all duration-300 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-100 dark:focus:ring-blue-400"
             >
               <option value="">Todas as categorias</option>
               {categorias.map(categoria => (
@@ -263,7 +263,7 @@ export default function Transacoes() {
             <select
               value={filtros.tipo}
               onChange={(e) => setFiltros({...filtros, tipo: e.target.value})}
-              className="w-full px-4 py-3 border border-white/30 bg-white/40 backdrop-blur-sm rounded-2xl text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 shadow-sm"
+              className="w-full rounded-2xl border border-white/30 bg-white/40 px-4 py-3 text-gray-800 shadow-sm transition-all duration-300 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-100 dark:focus:ring-blue-400"
             >
               <option value="">Todos os tipos</option>
               <option value="receita">Receitas</option>
@@ -273,7 +273,7 @@ export default function Transacoes() {
             <select
               value={filtros.status}
               onChange={(e) => setFiltros({...filtros, status: e.target.value})}
-              className="w-full px-4 py-3 border border-white/30 bg-white/40 backdrop-blur-sm rounded-2xl text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 shadow-sm"
+              className="w-full rounded-2xl border border-white/30 bg-white/40 px-4 py-3 text-gray-800 shadow-sm transition-all duration-300 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-100 dark:focus:ring-blue-400"
             >
               <option value="">Todos os status</option>
               <option value="confirmado">Confirmado</option>
@@ -283,24 +283,24 @@ export default function Transacoes() {
         </div>
 
         {/* Lista de Transações */}
-        <div className="backdrop-blur-lg bg-white/25 rounded-3xl border border-white/40 shadow-lg overflow-hidden">
-          <div className="px-8 py-6 border-b border-white/30 bg-gradient-to-r from-blue-50/50 to-purple-50/50">
-            <h3 className="text-xl font-bold text-gray-800">Lista de Transações ({transacoesFiltradas.length})</h3>
+        <div className="overflow-hidden rounded-3xl border border-white/40 bg-white/25 shadow-lg backdrop-blur-lg dark:border-slate-700 dark:bg-slate-900/70">
+          <div className="border-b border-white/30 bg-gradient-to-r from-blue-50/60 to-purple-50/60 px-8 py-6 dark:border-slate-700 dark:bg-slate-900/70">
+            <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">Lista de Transações ({transacoesFiltradas.length})</h3>
           </div>
           
-          <div className="divide-y divide-white/20">
+          <div className="divide-y divide-white/20 dark:divide-slate-800/60">
             {transacoesFiltradas.length === 0 ? (
               <div className="p-12 text-center">
                 <div className="w-20 h-20 bg-gray-200/50 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Search className="w-8 h-8 text-gray-400" />
                 </div>
-                <p className="text-gray-600 font-medium text-lg">
+                <p className="text-lg font-medium text-gray-600 dark:text-slate-300">
                   Nenhuma transação encontrada com os filtros aplicados.
                 </p>
               </div>
             ) : (
               transacoesFiltradas.map((transacao) => (
-                <div key={transacao.id} className="p-6 hover:bg-white/20 transition-all duration-300 transform hover:scale-[1.01] cursor-pointer">
+                <div key={transacao.id} className="cursor-pointer p-6 transition-all duration-300 transform hover:scale-[1.01] hover:bg-white/20 dark:hover:bg-slate-800/60">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
                       <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg ${
@@ -317,16 +317,16 @@ export default function Transacoes() {
                       
                       <div className="ml-5">
                         <div className="flex items-center gap-3 mb-1">
-                          <p className="font-bold text-gray-800 text-lg">{transacao.descricao}</p>
+                          <p className="text-lg font-bold text-gray-800 dark:text-slate-100">{transacao.descricao}</p>
                           <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
                             transacao.status === 'confirmado' 
-                              ? 'bg-green-100/80 text-green-700 border border-green-200/50' 
-                              : 'bg-yellow-100/80 text-yellow-700 border border-yellow-200/50'
+                              ? 'border border-green-200/50 bg-green-100/80 text-green-700 dark:border-emerald-500/40 dark:bg-emerald-500/15 dark:text-emerald-300' 
+                              : 'border border-yellow-200/50 bg-yellow-100/80 text-yellow-700 dark:border-amber-500/40 dark:bg-amber-500/15 dark:text-amber-300'
                           }`}>
                             {transacao.status === 'confirmado' ? 'Confirmado' : 'Pendente'}
                           </span>
                         </div>
-                        <p className="text-gray-600 font-medium">
+                        <p className="font-medium text-gray-600 dark:text-slate-300">
                           {transacao.categoria} • {formatDate(transacao.data)}
                         </p>
                       </div>
@@ -334,17 +334,17 @@ export default function Transacoes() {
                     
                     <div className="flex items-center gap-6">
                       <span className={`text-xl font-bold ${
-                        transacao.tipo === 'receita' ? 'text-green-600' : 'text-red-600'
+                        transacao.tipo === 'receita' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-rose-400'
                       }`}>
                         {transacao.tipo === 'receita' ? '+' : '-'}{formatMoney(transacao.valor)}
                       </span>
                       
                       <div className="flex items-center gap-2">
-                        <button className="p-3 text-gray-500 hover:text-blue-600 hover:bg-blue-50/50 rounded-xl transition-all duration-300 transform hover:scale-110">
-                          <Edit className="w-5 h-5" />
+                        <button className="rounded-xl p-3 text-gray-500 transition-all duration-300 transform hover:scale-110 hover:bg-blue-50/50 hover:text-blue-600 dark:text-slate-400 dark:hover:bg-slate-800/70 dark:hover:text-slate-200">
+                          <Edit className="h-5 w-5" />
                         </button>
-                        <button className="p-3 text-gray-500 hover:text-red-600 hover:bg-red-50/50 rounded-xl transition-all duration-300 transform hover:scale-110">
-                          <Trash2 className="w-5 h-5" />
+                        <button className="rounded-xl p-3 text-gray-500 transition-all duration-300 transform hover:scale-110 hover:bg-red-50/50 hover:text-red-600 dark:text-slate-400 dark:hover:bg-slate-800/70 dark:hover:text-rose-300">
+                          <Trash2 className="h-5 w-5" />
                         </button>
                       </div>
                     </div>
@@ -358,14 +358,14 @@ export default function Transacoes() {
         {/* Modal seria implementado aqui - versão demonstrativa */}
         {modalAberto && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
-            <div className="backdrop-blur-lg bg-white/30 rounded-3xl border border-white/50 shadow-2xl max-w-md w-full p-8 transform animate-in slide-in-from-bottom-4 duration-300">
-              <h3 className="text-2xl font-bold text-gray-800 mb-6">Nova Transação</h3>
-              <p className="text-gray-700 font-medium mb-8 leading-relaxed">
+            <div className="max-w-md w-full rounded-3xl border border-white/50 bg-white/30 p-8 shadow-2xl backdrop-blur-lg transform animate-in slide-in-from-bottom-4 duration-300 dark:border-slate-700 dark:bg-slate-900/80">
+              <h3 className="mb-6 text-2xl font-bold text-gray-800 dark:text-slate-100">Nova Transação</h3>
+              <p className="mb-8 font-medium leading-relaxed text-gray-700 dark:text-slate-300">
                 Esta é uma versão de demonstração. Em produção, aqui seria exibido um formulário completo para adicionar/editar transações.
               </p>
               <button 
                 onClick={() => setModalAberto(false)}
-                className="w-full bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 text-white py-3 rounded-2xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
+                className="w-full rounded-2xl bg-slate-900 px-6 py-3 font-semibold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:bg-slate-800 hover:shadow-xl dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200"
               >
                 Fechar
               </button>
@@ -374,7 +374,7 @@ export default function Transacoes() {
         )}
 
         {/* Copyright */}
-        <div className="text-center text-sm text-gray-600 font-medium backdrop-blur-sm bg-white/20 rounded-2xl p-4 border border-white/30">
+        <div className="rounded-2xl border border-white/30 bg-white/20 p-4 text-center text-sm font-medium text-gray-600 backdrop-blur-sm dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300">
           © 2024 MoneyMapp TCC. Todos os direitos reservados.
         </div>
       </div>
