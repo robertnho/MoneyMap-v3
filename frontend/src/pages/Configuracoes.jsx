@@ -21,6 +21,7 @@ import {
   Camera,
   Wallet,
   Star,
+  StarOff,
   Pencil,
   Trash2
 } from 'lucide-react'
@@ -269,6 +270,23 @@ export default function Configuracoes() {
       setAccountActionId(null)
     }
   }, [accountForm.id, fetchAccounts, resetAccountForm])
+
+  const handleUnsetDefaultAccount = useCallback(async (account) => {
+    try {
+      setAccountActionId(account.id)
+      await api.accounts.update(account.id, { isDefault: false })
+      setToast(`"${account.name}" não é mais a conta padrão.`)
+      await fetchAccounts(true)
+      if (accountForm.id === account.id) {
+        setAccountForm(prev => ({ ...prev, isDefault: false }))
+      }
+    } catch (error) {
+      console.error('unset default account error', error)
+      setToast('Não foi possível remover o padrão da conta.')
+    } finally {
+      setAccountActionId(null)
+    }
+  }, [accountForm.id, fetchAccounts])
 
   // --------- FEEDBACK ----------
   const [toast, setToast] = useState('')
@@ -718,6 +736,16 @@ export default function Configuracoes() {
                                   >
                                     <Star className="h-4 w-4" />
                                     Padrão
+                                  </button>
+                                )}
+                                {account.isDefault && (
+                                  <button
+                                    onClick={() => handleUnsetDefaultAccount(account)}
+                                    disabled={acting}
+                                    className="inline-flex items-center gap-2 rounded-xl border border-amber-200 px-4 py-2 text-sm font-medium text-amber-600 hover:bg-amber-50 transition dark:border-amber-500/40 dark:text-amber-300 dark:hover:bg-amber-500/10 disabled:opacity-50"
+                                  >
+                                    <StarOff className="h-4 w-4" />
+                                    Remover padrão
                                   </button>
                                 )}
                                 <button

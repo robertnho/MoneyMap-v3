@@ -97,13 +97,6 @@ router.put('/:id', requireAuth, async (req, res) => {
         updateData.isDefault = true
       } else if (parsed.isDefault === false && existing.isDefault) {
         updateData.isDefault = false
-        const fallback = await tx.account.findFirst({
-          where: { userId: req.user.id, id: { not: accountId } },
-          orderBy: { createdAt: 'asc' },
-        })
-        if (fallback) {
-          await tx.account.update({ where: { id: fallback.id }, data: { isDefault: true } })
-        }
       }
 
       return tx.account.update({ where: { id: accountId }, data: updateData })
