@@ -84,10 +84,10 @@ function SectionCard({ title, right, className = '', children }) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className={`group rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl shadow-lg transition-all duration-300 hover:shadow-xl hover:-translate-y-1 dark:border-white/10 dark:bg-zinc-900/80 dark:shadow-2xl ${className}`}
+      className={`group rounded-2xl border border-white/70 bg-white/90 shadow-lg transition-all duration-300 hover:shadow-xl hover:-translate-y-1 dark:border-white/10 dark:bg-zinc-900/80 dark:shadow-2xl ${className}`}
     >
-      <header className="flex items-center justify-between border-b border-white/10 px-4 py-3 dark:border-white/10">
-        <h3 className="text-base font-semibold text-zinc-900 transition-colors group-hover:text-zinc-800 dark:text-zinc-100 dark:group-hover:text-zinc-50">
+      <header className="flex items-center justify-between border-b border-zinc-200/70 px-4 py-3 dark:border-white/10">
+        <h3 className="text-base font-semibold text-zinc-900 transition-colors group-hover:text-zinc-700 dark:text-zinc-100 dark:group-hover:text-zinc-50">
           {title}
         </h3>
         {right}
@@ -109,36 +109,32 @@ function KpiCard({ title, value, trend = 'up', trendValue = '', icon: Icon, tone
   const scheme = useMemo(
     () => ({
       violet: {
-        bg: 'bg-gradient-to-br from-violet-500/20 via-purple-500/10 to-violet-600/20',
-        fg: 'text-violet-300',
-        chipBg: 'bg-violet-500/20 backdrop-blur-sm',
-        chipFg: 'text-violet-200',
-        border: 'border-violet-400/30',
-        iconBg: 'bg-gradient-to-br from-violet-600 to-purple-600',
+        bg: 'bg-white dark:bg-zinc-900/70',
+        border: 'border-zinc-200 dark:border-white/10',
+        chipBg: 'bg-zinc-900/5 dark:bg-white/10',
+        chipFg: 'text-zinc-700 dark:text-white/80',
+        iconBg: 'bg-zinc-900 dark:bg-white/10',
       },
       blue: {
-        bg: 'bg-gradient-to-br from-blue-500/20 via-sky-500/10 to-blue-600/20',
-        fg: 'text-blue-300',
-        chipBg: 'bg-blue-500/20 backdrop-blur-sm',
-        chipFg: 'text-blue-200',
-        border: 'border-blue-400/30',
-        iconBg: 'bg-gradient-to-br from-blue-600 to-sky-600',
+        bg: 'bg-white dark:bg-zinc-900/70',
+        border: 'border-sky-100 dark:border-sky-500/30',
+        chipBg: 'bg-sky-500/10 dark:bg-sky-500/20',
+        chipFg: 'text-sky-700 dark:text-sky-200',
+        iconBg: 'bg-gradient-to-br from-sky-500 to-blue-600',
       },
       purple: {
-        bg: 'bg-gradient-to-br from-purple-500/20 via-fuchsia-500/10 to-purple-600/20',
-        fg: 'text-purple-300',
-        chipBg: 'bg-purple-500/20 backdrop-blur-sm',
-        chipFg: 'text-purple-200',
-        border: 'border-purple-400/30',
-        iconBg: 'bg-gradient-to-br from-purple-600 to-fuchsia-600',
+        bg: 'bg-white dark:bg-zinc-900/70',
+        border: 'border-rose-100 dark:border-rose-500/30',
+        chipBg: 'bg-rose-500/10 dark:bg-rose-500/20',
+        chipFg: 'text-rose-700 dark:text-rose-200',
+        iconBg: 'bg-gradient-to-br from-rose-500 to-amber-500',
       },
       indigo: {
-        bg: 'bg-gradient-to-br from-indigo-500/20 via-slate-500/10 to-indigo-600/20',
-        fg: 'text-indigo-300',
-        chipBg: 'bg-indigo-500/20 backdrop-blur-sm',
-        chipFg: 'text-indigo-200',
-        border: 'border-indigo-400/30',
-        iconBg: 'bg-gradient-to-br from-indigo-600 to-slate-600',
+        bg: 'bg-white dark:bg-zinc-900/70',
+        border: 'border-emerald-100 dark:border-emerald-500/30',
+        chipBg: 'bg-emerald-500/10 dark:bg-emerald-500/20',
+        chipFg: 'text-emerald-700 dark:text-emerald-200',
+        iconBg: 'bg-gradient-to-br from-emerald-500 to-teal-600',
       },
     })[tone],
     [tone]
@@ -150,7 +146,7 @@ function KpiCard({ title, value, trend = 'up', trendValue = '', icon: Icon, tone
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.5 }}
       whileHover={{ scale: 1.02, y: -4 }}
-      className={`group rounded-2xl border ${scheme.border} ${scheme.bg} p-4 shadow-lg backdrop-blur-xl transition-all duration-300 hover:shadow-xl dark:shadow-2xl min-h-[120px]`}
+      className={`group rounded-2xl border ${scheme.border} ${scheme.bg} p-4 shadow-lg transition-all duration-300 hover:shadow-xl dark:shadow-2xl min-h-[120px]`}
     >
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
@@ -161,10 +157,10 @@ function KpiCard({ title, value, trend = 'up', trendValue = '', icon: Icon, tone
             <Icon className="h-5 w-5 text-white" />
           </motion.div>
           <div>
-            <p className="mb-1 text-xs font-medium uppercase tracking-wider text-white/60">
+            <p className="mb-1 text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-white/60">
               {title}
             </p>
-            <p className="leading-none text-xl font-bold text-white">
+            <p className="leading-none text-xl font-bold text-zinc-900 dark:text-white">
               {value}
             </p>
           </div>
@@ -179,17 +175,17 @@ function KpiCard({ title, value, trend = 'up', trendValue = '', icon: Icon, tone
       </div>
 
       <div className="mt-3 flex items-center gap-2">
-        <div className="h-1.5 w-full rounded-full bg-white/20">
+        <div className="h-1.5 w-full rounded-full bg-zinc-100 dark:bg-white/10">
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: trend === 'up' ? '75%' : '50%' }}
             transition={{ duration: 1, delay: 0.5 }}
             className={`h-1.5 rounded-full ${
-              trend === 'up' ? 'bg-gradient-to-r from-green-400 to-emerald-500' : 'bg-gradient-to-r from-orange-400 to-red-500'
+              trend === 'up' ? 'bg-gradient-to-r from-emerald-400 to-emerald-600' : 'bg-gradient-to-r from-orange-400 to-amber-500'
             }`}
           />
         </div>
-        <p className="whitespace-nowrap text-xs text-white/60">vs mês anterior</p>
+        <p className="whitespace-nowrap text-xs text-zinc-500 dark:text-white/60">vs mês anterior</p>
       </div>
     </motion.div>
   )
@@ -524,21 +520,21 @@ export default function Dashboard() {
   )
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden">
+    <div className="relative min-h-screen w-full overflow-hidden bg-gradient-to-br from-white via-slate-50 to-slate-100">
       {/* Fundo premium */}
       <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 via-purple-600 to-violet-700" />
-        <div className="absolute -top-40 -left-40 h-96 w-96 animate-pulse rounded-full bg-gradient-to-r from-violet-400/30 to-purple-500/30 blur-3xl" />
+        <div className="absolute inset-0" />
+        <div className="absolute -top-40 -left-40 h-96 w-96 animate-pulse rounded-full bg-gradient-to-r from-white/60 to-slate-200/50 blur-3xl" />
         <div
-          className="absolute -bottom-40 -right-40 h-80 w-80 animate-pulse rounded-full bg-gradient-to-r from-indigo-400/20 to-violet-500/20 blur-3xl"
+          className="absolute -bottom-40 -right-40 h-80 w-80 animate-pulse rounded-full bg-gradient-to-r from-white/40 to-slate-300/40 blur-3xl"
           style={{ animationDelay: '2s' }}
         />
         <div
-          className="absolute left-1/4 top-1/3 h-64 w-64 animate-pulse rounded-full bg-gradient-to-r from-purple-400/15 to-fuchsia-400/15 blur-2xl"
+          className="absolute left-1/4 top-1/3 h-64 w-64 animate-pulse rounded-full bg-gradient-to-r from-white/30 to-slate-200/30 blur-2xl"
           style={{ animationDelay: '4s' }}
         />
         <div
-          className="absolute right-1/4 bottom-1/4 h-80 w-80 animate-pulse rounded-full bg-gradient-to-r from-blue-400/10 to-indigo-400/10 blur-3xl"
+          className="absolute right-1/4 bottom-1/4 h-80 w-80 animate-pulse rounded-full bg-gradient-to-r from-white/20 to-slate-300/20 blur-3xl"
           style={{ animationDelay: '6s' }}
         />
       </div>
@@ -548,7 +544,7 @@ export default function Dashboard() {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="sticky top-0 z-20 w-full border-b border-white/20 bg-white/10 backdrop-blur-xl shadow-lg"
+  className="sticky top-0 z-20 w-full border-b border-slate-200/60 bg-white/90 backdrop-blur-xl shadow-sm"
       >
         <div className="mx-auto flex max-w-[1440px] 2xl:max-w-[1600px] items-center justify-between px-6 py-4 lg:px-8">
           <motion.div 
@@ -557,16 +553,16 @@ export default function Dashboard() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="flex items-center gap-3"
           >
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-purple-600 shadow-lg">
-              <PiggyBank className="h-6 w-6 text-white" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-white to-slate-100 shadow-inner ring-1 ring-slate-200">
+              <PiggyBank className="h-6 w-6 text-slate-700" />
             </div>
             <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-yellow-300" />
+              <Sparkles className="h-4 w-4 text-amber-500" />
               <div>
-                <h1 className="text-xl font-bold text-white md:text-2xl">
+                <h1 className="text-xl font-bold text-slate-900 md:text-2xl">
                   Dashboard Financeiro
                 </h1>
-                <p className="flex items-center gap-2 text-xs text-white/80">
+                <p className="flex items-center gap-2 text-xs text-slate-600">
                   <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400"></span>
                   Bem-vindo de volta! Suas finanças estão sendo monitoradas.
                 </p>
@@ -584,7 +580,7 @@ export default function Dashboard() {
               whileHover={{ scale: 1.05, y: -2 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => navigate('/transacoes')}
-              className="group inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 to-purple-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-violet-500/25 transition-all duration-200 hover:shadow-xl hover:shadow-violet-500/40"
+              className="group inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition-all duration-200 hover:bg-slate-800 hover:shadow-xl hover:shadow-slate-900/30"
             >
               <PlusCircle className="h-4 w-4 transition-transform group-hover:rotate-90" />
               Nova Transação
@@ -593,9 +589,9 @@ export default function Dashboard() {
               whileHover={{ scale: 1.05, y: -2 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => navigate('/configuracoes')}
-              className="inline-flex items-center gap-2 rounded-2xl border border-white/30 bg-white/10 px-4 py-2.5 text-sm font-medium text-white shadow-sm backdrop-blur transition-all duration-200 hover:bg-white/20"
+              className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 shadow-sm transition-all duration-200 hover:border-slate-300 hover:bg-slate-50"
             >
-              <Settings className="h-4 w-4" />
+              <Settings className="h-4 w-4 text-slate-600" />
               Configurações
             </motion.button>
           </motion.div>
