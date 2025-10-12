@@ -10,6 +10,7 @@ import morgan from 'morgan'
 
 import authRouter from './routes/auth.js'
 import accountsRouter from './routes/accounts.js'
+import transactionsRouter from './routes/transactions.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -84,12 +85,19 @@ app.get('/docs', (req, res) => {
       update: { method: 'PUT', path: '/accounts/:id' },
       remove: { method: 'DELETE', path: '/accounts/:id' },
     },
+    transacoes: {
+      list: { method: 'GET', path: '/transacoes' },
+      create: { method: 'POST', path: '/transacoes' },
+      update: { method: 'PUT', path: '/transacoes/:id' },
+      remove: { method: 'DELETE', path: '/transacoes/:id' },
+    },
   })
 })
 
 // ===== ROTAS =====
 app.use('/auth', authRouter)
 app.use('/accounts', accountsRouter)
+app.use('/transacoes', transactionsRouter)
 
 // ===== SERVE SPA (produção) ou REDIRECIONA PARA O VITE (dev) =====
 const STATIC_DIR = process.env.STATIC_DIR

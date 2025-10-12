@@ -1,5 +1,6 @@
-import React, { useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useTheme } from '../contexts/ThemeContext.jsx'
+import api from '../services/api.js'
 import { 
   Plus, 
   Filter, 
@@ -13,108 +14,37 @@ import {
   TrendingDown
 } from 'lucide-react'
 
-// Dados mockados para demonstração
-const mockTransacoes = [
-  {
-    id: 1,
-    descricao: 'Salário Mensal',
-    valor: 5500.00,
-    tipo: 'receita',
-    categoria: 'Trabalho',
-    data: '2024-10-01',
-    status: 'confirmado'
-  },
-  {
-    id: 2,
-    descricao: 'Freelance Website',
-    valor: 1200.00,
-    tipo: 'receita',
-    categoria: 'Trabalho',
-    data: '2024-10-02',
-    status: 'confirmado'
-  },
-  {
-    id: 3,
-    descricao: 'Supermercado Extra',
-    valor: 320.50,
-    tipo: 'despesa',
-    categoria: 'Alimentação',
-    data: '2024-10-02',
-    status: 'confirmado'
-  },
-  {
-    id: 4,
-    descricao: 'Combustível Shell',
-    valor: 180.00,
-    tipo: 'despesa',
-    categoria: 'Transporte',
-    data: '2024-10-03',
-    status: 'confirmado'
-  },
-  {
-    id: 5,
-    descricao: 'Aluguel Apartamento',
-    valor: 1200.00,
-    tipo: 'despesa',
-    categoria: 'Moradia',
-    data: '2024-10-05',
-    status: 'confirmado'
-  },
-  {
-    id: 6,
-    descricao: 'Cinema',
-    valor: 35.00,
-    tipo: 'despesa',
-    categoria: 'Lazer',
-    data: '2024-10-06',
-    status: 'confirmado'
-  },
-  {
-    id: 7,
-    descricao: 'Vendas Online',
-    valor: 450.00,
-    tipo: 'receita',
-    categoria: 'Vendas',
-    data: '2024-10-07',
-    status: 'pendente'
-  },
-  {
-    id: 8,
-    descricao: 'Farmácia',
-    valor: 85.30,
-    tipo: 'despesa',
-    categoria: 'Saúde',
-    data: '2024-10-08',
-    status: 'confirmado'
-  },
-  {
-    id: 9,
-    descricao: 'Restaurante',
-    valor: 120.00,
-    tipo: 'despesa',
-    categoria: 'Alimentação',
-    data: '2024-10-09',
-    status: 'confirmado'
-  },
-  {
-    id: 10,
-    descricao: 'Investimento CDB',
-    valor: 1000.00,
-    tipo: 'despesa',
-    categoria: 'Investimentos',
-    data: '2024-10-10',
-    status: 'confirmado'
-  }
+const CATEGORIAS_SUGERIDAS = [
+  'Alimentação',
+  'Transporte',
+  'Moradia',
+  'Saúde',
+  'Educação',
+  'Lazer',
+  'Trabalho',
+  'Investimentos',
+  'Vendas',
+  'Outros'
 ]
 
-const categorias = [
-  'Trabalho', 'Alimentação', 'Transporte', 'Moradia', 'Lazer', 
-  'Saúde', 'Educação', 'Investimentos', 'Vendas', 'Outros'
+const TIPO_OPTIONS = [
+  { value: '', label: 'Todos os tipos' },
+  { value: 'receita', label: 'Receitas' },
+  { value: 'despesa', label: 'Despesas' }
+]
+
+const STATUS_OPTIONS = [
+  { value: '', label: 'Todos os status' },
+  { value: 'confirmado', label: 'Confirmado' },
+  { value: 'pendente', label: 'Pendente' }
 ]
 
 export default function Transacoes() {
   const { isDark } = useTheme()
-  const [transacoes, setTransacoes] = useState(mockTransacoes)
+  const [transacoes, setTransacoes] = useState([])
+  const [carregando, setCarregando] = useState(true)
+  const [erro, setErro] = useState('')
+  const [accounts, setAccounts] = useState([])
   const [filtros, setFiltros] = useState({
     busca: '',
     categoria: '',
@@ -122,25 +52,212 @@ export default function Transacoes() {
     status: ''
   })
   const [modalAberto, setModalAberto] = useState(false)
-  const [transacaoEditando, setTransacaoEditando] = useState(null)
-
-  
-  const transacoesFiltradas = transacoes.filter(transacao => {
-    const matchBusca = !filtros.busca || 
-      transacao.descricao.toLowerCase().includes(filtros.busca.toLowerCase())
-    const matchCategoria = !filtros.categoria || transacao.categoria === filtros.categoria
-    const matchTipo = !filtros.tipo || transacao.tipo === filtros.tipo
-    const matchStatus = !filtros.status || transacao.status === filtros.status
-    
-    return matchBusca && matchCategoria && matchTipo && matchStatus
+  const hojeISO = useMemo(() => new Date().toISOString().slice(0, 10), [])
+  const [form, setForm] = useState({
+    accountId: '',
+    descricao: '',
+    categoria: '',
+    valor: '',
+    tipo: 'despesa',
+    status: 'confirmado',
+    data: hojeISO,
+    observacao: '',
   })
+  const [salvando, setSalvando] = useState(false)
+  const [erroForm, setErroForm] = useState('')
+  const [mensagemSucesso, setMensagemSucesso] = useState('')
 
-  const resumoMes = {
-    receitas: transacoes.filter(t => t.tipo === 'receita').reduce((acc, t) => acc + t.valor, 0),
-    despesas: transacoes.filter(t => t.tipo === 'despesa').reduce((acc, t) => acc + t.valor, 0),
-    saldo: 0
+  // Categorias dinâmicas baseadas nas transações existentes
+  const categoriasDisponiveis = useMemo(() => {
+    const dinamicas = transacoes.map((t) => t.categoria).filter(Boolean)
+    const merged = new Set([...CATEGORIAS_SUGERIDAS, ...dinamicas])
+    return Array.from(merged).sort((a, b) => a.localeCompare(b, 'pt-BR'))
+  }, [transacoes])
+
+  // Conta padrão para o formulário
+  const defaultAccountId = useMemo(() => {
+    if (!accounts.length) return ''
+    const preferencial = accounts.find((conta) => conta.isDefault)
+    return String((preferencial ?? accounts[0]).id)
+  }, [accounts])
+
+  // Atualizar accountId quando contas carregarem
+  useEffect(() => {
+    if (defaultAccountId) {
+      setForm((prev) => ({
+        ...prev,
+        accountId: prev.accountId || defaultAccountId,
+      }))
+    }
+  }, [defaultAccountId])
+
+  // Carregar dados da API
+  useEffect(() => {
+    let ativo = true
+
+    async function carregar() {
+      setCarregando(true)
+      setErro('')
+      try {
+        const [contasResp, transResp] = await Promise.all([
+          api.accounts.list(),
+          api.transacoes.listar(),
+        ])
+
+        if (!ativo) return
+
+        const contas = contasResp?.data?.accounts ?? []
+        const lista = transResp?.data?.transactions ?? []
+
+        setAccounts(contas)
+        setTransacoes(lista)
+
+      } catch (err) {
+        if (!ativo) return
+        console.error('Erro ao carregar dados:', err)
+        const message = err?.response?.data?.error ?? 'Erro ao conectar com o servidor'
+        setErro(message)
+      } finally {
+        if (ativo) {
+          setCarregando(false)
+        }
+      }
+    }
+
+    carregar()
+
+    return () => {
+      ativo = false
+    }
+  }, [])
+
+  // Filtros com useMemo
+  const transacoesFiltradas = useMemo(() => {
+    const termo = filtros.busca.trim().toLowerCase()
+
+    return transacoes.filter((transacao) => {
+      const matchBusca =
+        !termo ||
+        transacao.descricao?.toLowerCase().includes(termo) ||
+        transacao.categoria?.toLowerCase().includes(termo)
+
+      const matchCategoria = !filtros.categoria || transacao.categoria === filtros.categoria
+      const matchTipo = !filtros.tipo || transacao.tipo === filtros.tipo
+      const matchStatus = !filtros.status || transacao.status === filtros.status
+
+      return matchBusca && matchCategoria && matchTipo && matchStatus
+    })
+  }, [transacoes, filtros])
+
+  // Resumo do mês
+  const resumoMes = useMemo(() => {
+    const receitas = transacoes
+      .filter((t) => t.tipo === 'receita')
+      .reduce((acc, t) => acc + (Number(t.valor) || 0), 0)
+
+    const despesas = transacoes
+      .filter((t) => t.tipo === 'despesa')
+      .reduce((acc, t) => acc + (Number(t.valor) || 0), 0)
+
+    return {
+      receitas,
+      despesas,
+      saldo: receitas - despesas,
+    }
+  }, [transacoes])
+
+  // Funções do modal
+  const abrirModalNovaTransacao = () => {
+    setErroForm('')
+    setMensagemSucesso('')
+    setForm({
+      accountId: defaultAccountId,
+      descricao: '',
+      categoria: '',
+      valor: '',
+      tipo: 'despesa',
+      status: 'confirmado',
+      data: new Date().toISOString().slice(0, 10),
+      observacao: '',
+    })
+    setModalAberto(true)
   }
-  resumoMes.saldo = resumoMes.receitas - resumoMes.despesas
+
+  const fecharModal = () => {
+    if (salvando) return
+    setModalAberto(false)
+  }
+
+  const onInputChange = (event) => {
+    const { name, value } = event.target
+    setForm((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const handleSubmitNovaTransacao = async (event) => {
+    event.preventDefault()
+    if (salvando) return
+
+    setErroForm('')
+
+    const accountIdNumber = Number(form.accountId)
+    const valorNumber = Number(String(form.valor).replace(/\./g, '').replace(',', '.'))
+
+    if (!accountIdNumber) {
+      setErroForm('Selecione uma conta.')
+      return
+    }
+
+    if (!form.descricao.trim()) {
+      setErroForm('Informe a descrição da transação.')
+      return
+    }
+
+    if (!Number.isFinite(valorNumber) || valorNumber <= 0) {
+      setErroForm('Informe um valor válido (maior que zero).')
+      return
+    }
+
+    setSalvando(true)
+
+    try {
+      const payload = {
+        accountId: accountIdNumber,
+        descricao: form.descricao.trim(),
+        categoria: form.categoria.trim() || 'Outros',
+        valor: valorNumber,
+        tipo: form.tipo,
+        status: form.status,
+        data: form.data || new Date().toISOString().slice(0, 10),
+        observacao: form.observacao?.trim() || undefined,
+      }
+
+      const { data } = await api.transacoes.criar(payload)
+      const nova = data?.transaction
+
+      if (nova) {
+        setTransacoes((prev) => [nova, ...prev])
+      } else {
+        const refresh = await api.transacoes.listar()
+        setTransacoes(refresh?.data?.transactions ?? [])
+      }
+
+      setMensagemSucesso('Transação registrada com sucesso!')
+      setModalAberto(false)
+      setForm((prev) => ({
+        ...prev,
+        descricao: '',
+        categoria: '',
+        valor: '',
+        observacao: '',
+        data: new Date().toISOString().slice(0, 10),
+      }))
+    } catch (err) {
+      const message = err?.response?.data?.error ?? 'Não foi possível registrar a transação'
+      setErroForm(message)
+    } finally {
+      setSalvando(false)
+    }
+  }
 
   const formatMoney = (value) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -150,7 +267,10 @@ export default function Transacoes() {
   }
 
   const formatDate = (dateString) => {
-    return new Date(dateString + 'T00:00:00').toLocaleDateString('pt-BR')
+    if (!dateString) return '-'
+    const parsed = new Date(dateString)
+    if (Number.isNaN(parsed.getTime())) return '-'
+    return parsed.toLocaleDateString('pt-BR')
   }
 
   return (
@@ -171,13 +291,26 @@ export default function Transacoes() {
             </p>
           </div>
           <button 
-            onClick={() => setModalAberto(true)}
+            onClick={abrirModalNovaTransacao}
             className="mx-auto flex items-center gap-3 rounded-2xl bg-slate-900 px-6 py-3 font-semibold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:bg-slate-800 hover:shadow-xl sm:mx-0 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200 dark:hover:shadow-slate-100/40"
           >
             <Plus className="h-5 w-5" />
             Nova Transação
           </button>
         </div>
+
+        {/* Mensagens de Sucesso/Erro */}
+        {mensagemSucesso && (
+          <div className="rounded-2xl border border-green-200 bg-green-50 p-4 text-green-800 dark:border-green-800 dark:bg-green-900/20 dark:text-green-200">
+            {mensagemSucesso}
+          </div>
+        )}
+
+        {erro && (
+          <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-red-800 dark:border-red-800 dark:bg-red-900/20 dark:text-red-200">
+            {erro}
+          </div>
+        )}
 
         {/* Cards de Resumo */}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
@@ -255,7 +388,7 @@ export default function Transacoes() {
               className="w-full rounded-2xl border border-white/30 bg-white/40 px-4 py-3 text-gray-800 shadow-sm transition-all duration-300 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-100 dark:focus:ring-blue-400"
             >
               <option value="">Todas as categorias</option>
-              {categorias.map(categoria => (
+              {categoriasDisponiveis.map(categoria => (
                 <option key={categoria} value={categoria}>{categoria}</option>
               ))}
             </select>
@@ -265,9 +398,9 @@ export default function Transacoes() {
               onChange={(e) => setFiltros({...filtros, tipo: e.target.value})}
               className="w-full rounded-2xl border border-white/30 bg-white/40 px-4 py-3 text-gray-800 shadow-sm transition-all duration-300 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-100 dark:focus:ring-blue-400"
             >
-              <option value="">Todos os tipos</option>
-              <option value="receita">Receitas</option>
-              <option value="despesa">Despesas</option>
+              {TIPO_OPTIONS.map((option) => (
+                <option key={option.value || '__all-tipo'} value={option.value}>{option.label}</option>
+              ))}
             </select>
             
             <select
@@ -275,9 +408,9 @@ export default function Transacoes() {
               onChange={(e) => setFiltros({...filtros, status: e.target.value})}
               className="w-full rounded-2xl border border-white/30 bg-white/40 px-4 py-3 text-gray-800 shadow-sm transition-all duration-300 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-100 dark:focus:ring-blue-400"
             >
-              <option value="">Todos os status</option>
-              <option value="confirmado">Confirmado</option>
-              <option value="pendente">Pendente</option>
+              {STATUS_OPTIONS.map((option) => (
+                <option key={option.value || '__all-status'} value={option.value}>{option.label}</option>
+              ))}
             </select>
           </div>
         </div>
@@ -289,13 +422,29 @@ export default function Transacoes() {
           </div>
           
           <div className="divide-y divide-white/20 dark:divide-slate-800/60">
-            {transacoesFiltradas.length === 0 ? (
+            {carregando ? (
+              <div className="py-12 text-center">
+                <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
+                <p className="mt-4 text-sm text-gray-600 dark:text-slate-400">Carregando transações...</p>
+              </div>
+            ) : transacoesFiltradas.length === 0 ? (
               <div className="p-12 text-center">
-                <div className="w-20 h-20 bg-gray-200/50 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Search className="w-8 h-8 text-gray-400" />
+                <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                  {filtros.busca || filtros.categoria || filtros.tipo || filtros.status ? (
+                    <Search className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                  ) : (
+                    <Calendar className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                  )}
                 </div>
-                <p className="text-lg font-medium text-gray-600 dark:text-slate-300">
-                  Nenhuma transação encontrada com os filtros aplicados.
+                <p className="text-lg font-semibold text-gray-800 dark:text-slate-200 mb-2">
+                  {filtros.busca || filtros.categoria || filtros.tipo || filtros.status
+                    ? 'Nenhuma transação encontrada'
+                    : 'Nenhuma transação cadastrada'}
+                </p>
+                <p className="text-sm text-gray-600 dark:text-slate-400">
+                  {filtros.busca || filtros.categoria || filtros.tipo || filtros.status
+                    ? 'Tente ajustar os filtros para ver mais resultados.'
+                    : 'Clique em "Nova Transação" para começar a registrar suas movimentações financeiras.'}
                 </p>
               </div>
             ) : (
@@ -357,18 +506,178 @@ export default function Transacoes() {
 
         {/* Modal seria implementado aqui - versão demonstrativa */}
         {modalAberto && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
-            <div className="max-w-md w-full rounded-3xl border border-white/50 bg-white/30 p-8 shadow-2xl backdrop-blur-lg transform animate-in slide-in-from-bottom-4 duration-300 dark:border-slate-700 dark:bg-slate-900/80">
-              <h3 className="mb-6 text-2xl font-bold text-gray-800 dark:text-slate-100">Nova Transação</h3>
-              <p className="mb-8 font-medium leading-relaxed text-gray-700 dark:text-slate-300">
-                Esta é uma versão de demonstração. Em produção, aqui seria exibido um formulário completo para adicionar/editar transações.
-              </p>
-              <button 
-                onClick={() => setModalAberto(false)}
-                className="w-full rounded-2xl bg-slate-900 px-6 py-3 font-semibold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:bg-slate-800 hover:shadow-xl dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200"
-              >
-                Fechar
-              </button>
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <div className="w-full max-w-2xl rounded-2xl border border-white/30 bg-white p-6 shadow-xl dark:border-slate-700 dark:bg-slate-900">
+              <h2 className="mb-6 text-2xl font-bold text-gray-800 dark:text-slate-200">
+                Nova Transação
+              </h2>
+
+              {erroForm && (
+                <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-900/20 dark:text-red-200">
+                  {erroForm}
+                </div>
+              )}
+
+              <form onSubmit={handleSubmitNovaTransacao} className="space-y-4">
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-slate-300">
+                    Conta *
+                  </label>
+                  <select
+                    name="accountId"
+                    value={form.accountId}
+                    onChange={onInputChange}
+                    required
+                    disabled={salvando}
+                    className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2 text-gray-800 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
+                  >
+                    <option value="">Selecione a conta</option>
+                    {accounts.map((account) => (
+                      <option key={account.id} value={account.id}>
+                        {account.name} {account.isDefault && '(Padrão)'}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-slate-300">
+                      Tipo *
+                    </label>
+                    <select
+                      name="tipo"
+                      value={form.tipo}
+                      onChange={onInputChange}
+                      required
+                      disabled={salvando}
+                      className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2 text-gray-800 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
+                    >
+                      <option value="despesa">Despesa</option>
+                      <option value="receita">Receita</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-slate-300">
+                      Status *
+                    </label>
+                    <select
+                      name="status"
+                      value={form.status}
+                      onChange={onInputChange}
+                      required
+                      disabled={salvando}
+                      className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2 text-gray-800 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
+                    >
+                      <option value="confirmado">Confirmado</option>
+                      <option value="pendente">Pendente</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-slate-300">
+                    Descrição *
+                  </label>
+                  <input
+                    type="text"
+                    name="descricao"
+                    value={form.descricao}
+                    onChange={onInputChange}
+                    placeholder="Ex: Supermercado, Salário, etc."
+                    required
+                    disabled={salvando}
+                    maxLength={180}
+                    className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2 text-gray-800 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
+                  />
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-slate-300">
+                      Categoria
+                    </label>
+                    <select
+                      name="categoria"
+                      value={form.categoria}
+                      onChange={onInputChange}
+                      disabled={salvando}
+                      className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2 text-gray-800 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
+                    >
+                      <option value="">Selecione ou deixe em branco</option>
+                      {categoriasDisponiveis.map((cat) => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-slate-300">
+                      Valor *
+                    </label>
+                    <input
+                      type="text"
+                      name="valor"
+                      value={form.valor}
+                      onChange={onInputChange}
+                      placeholder="0,00"
+                      required
+                      disabled={salvando}
+                      className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2 text-gray-800 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-slate-300">
+                    Data *
+                  </label>
+                  <input
+                    type="date"
+                    name="data"
+                    value={form.data}
+                    onChange={onInputChange}
+                    required
+                    disabled={salvando}
+                    className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2 text-gray-800 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-slate-300">
+                    Observação
+                  </label>
+                  <textarea
+                    name="observacao"
+                    value={form.observacao}
+                    onChange={onInputChange}
+                    placeholder="Detalhes adicionais (opcional)"
+                    disabled={salvando}
+                    maxLength={500}
+                    rows={3}
+                    className="w-full resize-none rounded-xl border border-gray-300 bg-white px-4 py-2 text-gray-800 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
+                  />
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={fecharModal}
+                    disabled={salvando}
+                    className="flex-1 rounded-xl border border-gray-300 bg-white px-4 py-2 font-semibold text-gray-700 transition-all duration-300 hover:bg-gray-50 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={salvando}
+                    className="flex-1 rounded-xl bg-blue-600 px-4 py-2 font-semibold text-white transition-all duration-300 hover:bg-blue-700 disabled:opacity-50 dark:bg-blue-500 dark:hover:bg-blue-600"
+                  >
+                    {salvando ? 'Salvando...' : 'Salvar Transação'}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}
