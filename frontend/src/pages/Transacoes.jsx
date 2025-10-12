@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useTheme } from '../contexts/ThemeContext.jsx'
 import { 
   Plus, 
   Filter, 
@@ -112,6 +113,7 @@ const categorias = [
 ]
 
 export default function Transacoes() {
+  const { isDark } = useTheme()
   const [transacoes, setTransacoes] = useState(mockTransacoes)
   const [filtros, setFiltros] = useState({
     busca: '',
@@ -152,15 +154,23 @@ export default function Transacoes() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50/30 via-purple-50/20 to-indigo-50/30 p-4 md:p-6">
+    <div className={`min-h-screen p-4 md:p-6 transition-colors duration-300 ${
+      isDark
+        ? 'bg-[#09090b]'
+        : 'bg-gradient-to-br from-blue-50/30 via-purple-50/20 to-indigo-50/30'
+    }`}>
       <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-6">
           <div className="text-center sm:text-left">
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-3 drop-shadow-sm">
+            <h1 className={`text-4xl md:text-5xl font-bold mb-3 drop-shadow-sm transition-colors duration-300 ${
+              isDark ? 'text-white' : 'text-gray-900'
+            }`}>
               Transações
             </h1>
-            <p className="text-lg text-gray-700 font-medium">
+            <p className={`text-lg font-medium transition-colors duration-300 ${
+              isDark ? 'text-zinc-300' : 'text-gray-700'
+            }`}>
               Gerencie suas receitas e despesas
             </p>
           </div>

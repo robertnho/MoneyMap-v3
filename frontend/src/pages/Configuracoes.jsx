@@ -1,6 +1,7 @@
 // frontend/src/pages/Configuracoes.jsx
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../context/AuthContext.jsx'
+import { useTheme } from '../contexts/ThemeContext.jsx'
 import api from '../services/api'
 import {
   Settings,
@@ -116,23 +117,15 @@ export default function Configuracoes() {
   }
 
   // --------- PREFERÊNCIAS ----------
-  const [pref, setPref] = useState(() => ({
-    temaEscuro: localStorage.getItem('pref_tema') === 'dark',
-  }))
-  function togglePref(k) {
-    setPref(p => {
-      const v = !p[k]
-      const nx = { ...p, [k]: v }
-      if (k === 'temaEscuro') localStorage.setItem('pref_tema', v ? 'dark' : 'light')
-      return nx
-    })
-  }
+  const { isDark, toggleTheme } = useTheme()
 
   // --------- DADOS ----------
   function baixarDados() {
     const data = {
       usuario: usuario ?? null,
-      preferencias: pref,
+      preferencias: {
+        temaEscuro: isDark,
+      },
       geradoEm: new Date().toISOString(),
     }
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
@@ -462,11 +455,6 @@ export default function Configuracoes() {
                     </div>
                   </form>
                   
-                  <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/30">
-                    <p className="text-sm text-amber-800 dark:text-amber-200">
-                      <strong>Nota:</strong> Para funcionar completamente, implemente no backend o endpoint <code className="bg-amber-100 dark:bg-amber-800 px-1 rounded">POST /auth/change-password</code>.
-                    </p>
-                  </div>
                 </div>
               )}
 
@@ -481,12 +469,12 @@ export default function Configuracoes() {
                     {/* Tema */}
                     <div className="rounded-2xl border border-zinc-200/60 bg-white/50 backdrop-blur-sm p-6 shadow-md hover:shadow-xl transition-all duration-300 dark:border-white/10 dark:bg-zinc-800/50">
                       <div className="flex items-center gap-3 mb-4">
-                        {pref.temaEscuro ? <Moon className="h-5 w-5 text-indigo-600" /> : <Sun className="h-5 w-5 text-amber-500" />}
+                        {isDark ? <Moon className="h-5 w-5 text-indigo-600" /> : <Sun className="h-5 w-5 text-amber-500" />}
                         <h3 className="font-semibold text-zinc-800 dark:text-white">🌙 Tema</h3>
                       </div>
                       <CustomSwitch
-                        checked={pref.temaEscuro}
-                        onChange={() => togglePref('temaEscuro')}
+                        checked={isDark}
+                        onChange={toggleTheme}
                         label="Modo escuro"
                         description="Ative para uma experiência visual mais suave"
                       />
