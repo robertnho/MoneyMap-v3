@@ -16,6 +16,12 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   accounts     Account[]
+  categories   Category[]
+  goals        Goal[]
+  budgets      Budget[]
+  debts        Debt[]
+  recurringTransactions RecurringTransaction[]
+  notifications Notification[]
 }
 
 model Account {
@@ -23,11 +29,17 @@ model Account {
   name      String
   color     String   @db.VarChar(20)
   isDefault Boolean  @default(false)
+  initialBalance Decimal @db.Decimal(12, 2) @default(0)
+  archivedAt DateTime?
   userId    Int
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   transactions Transaction[]
+  recurringTransactions RecurringTransaction[]
+
+  @@index([userId, isDefault])
+  @@index([userId, archivedAt])
 
   @@unique([userId, name])
   @@index([userId])
@@ -44,12 +56,96 @@ model Transaction {
   observacao  String?   @db.VarChar(500)
   accountId   Int
   account     Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  categoryId  Int?
+  category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
   @@index([accountId, data])
   @@index([tipo])
   @@index([status])
+  @@index([categoryId])
+}
+
+model Category {
+  id        Int      @id @default(autoincrement())
+  name      String   @db.VarChar(80)
+  color     String?  @db.VarChar(9)
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  transactions Transaction[]
+  recurringTransactions RecurringTransaction[]
+
+  @@unique([userId, name])
+  @@index([userId])
+}
+
+model Goal {
+  id         Int      @id @default(autoincrement())
+  title      String   @db.VarChar(120)
+  description String? @db.VarChar(500)
+  targetAmount Decimal @db.Decimal(12, 2)
+  currentAmount Decimal @db.Decimal(12, 2) @default(0)
+  currency   String   @db.VarChar(3) @default("BRL")
+  dueDate    DateTime?
+  status     GoalStatus @default(active)
+  userId     Int
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contributions GoalContribution[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([userId])
+}
+
+enum GoalStatus {
+  active
+  completed
+  cancelled
+}
+
+model Budget {
+  id           Int      @id @default(autoincrement())
+  name         String   @db.VarChar(120)
+  limitAmount  Decimal  @db.Decimal(12, 2)
+  currentSpent Decimal  @db.Decimal(12, 2) @default(0)
+  period       BudgetPeriod @default(monthly)
+  status       BudgetStatus @default(active)
+  userId       Int
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categoryId   Int?
+  category     Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+  @@index([userId, categoryId])
+}
+
+model GoalContribution {
+  id            Int      @id @default(autoincrement())
+  goalId        Int
+  goal          Goal     @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  amount        Decimal  @db.Decimal(12, 2)
+  description   String?  @db.VarChar(180)
+  contributedAt DateTime @default(now())
+  createdAt     DateTime @default(now())
+
+  @@index([goalId])
+}
+
+enum BudgetPeriod {
+  monthly
+  yearly
+  weekly
+}
+
+enum BudgetStatus {
+  active
+  paused
+  archived
 }
 
 enum TransactionTipo {
@@ -60,4 +156,100 @@ enum TransactionTipo {
 enum TransactionStatus {
   confirmado
   pendente
+}
+
+enum RecurringFrequency {
+  daily
+  weekly
+  monthly
+  yearly
+}
+
+model RecurringTransaction {
+  id             Int                 @id @default(autoincrement())
+  descricao      String              @db.VarChar(180)
+  valor          Decimal             @db.Decimal(12, 2)
+  tipo           TransactionTipo
+  status         TransactionStatus   @default(confirmado)
+  categoria      String              @db.VarChar(80)
+  observacao     String?             @db.VarChar(500)
+  accountId      Int
+  account        Account             @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  categoryId     Int?
+  category       Category?           @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  userId         Int
+  user           User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  frequency      RecurringFrequency
+  interval       Int                 @default(1)
+  startDate      DateTime            @db.Date
+  endDate        DateTime?           @db.Date
+  nextRun        DateTime?           @db.Date
+  lastRun        DateTime?
+  maxExecutions  Int?
+  executedCount  Int                 @default(0)
+  autoAdjustDay  Boolean             @default(true)
+  isActive       Boolean             @default(true)
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  @@index([userId, isActive])
+  @@index([accountId])
+  @@index([nextRun])
+}
+
+enum NotificationType {
+  system
+  transaction
+  recurring
+  budget
+  goal
+  reminder
+}
+
+enum NotificationSeverity {
+  info
+  success
+  warning
+  error
+}
+
+model Notification {
+  id         Int                  @id @default(autoincrement())
+  title      String               @db.VarChar(120)
+  message    String               @db.VarChar(500)
+  type       NotificationType     @default(system)
+  severity   NotificationSeverity @default(info)
+  actionUrl  String?              @db.VarChar(255)
+  metadata   Json?
+  readAt     DateTime?
+  expiresAt  DateTime?
+  userId     Int
+  user       User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime             @default(now())
+  updatedAt  DateTime             @updatedAt
+
+  @@index([userId, readAt])
+  @@index([userId, createdAt])
+}
+
+model Debt {
+  id           Int      @id @default(autoincrement())
+  title        String   @db.VarChar(180)
+  principal    Decimal  @db.Decimal(12, 2)
+  interestRate Decimal  @db.Decimal(5, 4) @default(0) // e.g. 0.0500 = 5%
+  installments Int      @default(1)
+  dueDate      DateTime?
+  status       DebtStatus @default(active)
+  userId       Int
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+}
+
+enum DebtStatus {
+  active
+  paid
+  defaulted
 }

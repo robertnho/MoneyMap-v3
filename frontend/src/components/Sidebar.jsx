@@ -1,8 +1,9 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   CreditCard,
+  ArrowLeftRight,
   Target,
   BarChart3,
   BookOpen,
@@ -10,27 +11,28 @@ import {
   PiggyBank,
   LogOut,
   X,
+  CircleDollarSign,
+  Bell,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
-import { useTranslation } from 'react-i18next';
+
+const itens = [
+  { to: '/dashboard', rotulo: 'Dashboard', icone: LayoutDashboard },
+  { to: '/transacoes', rotulo: 'Transações', icone: CreditCard },
+  { to: '/transferencias', rotulo: 'Transferências', icone: ArrowLeftRight },
+  { to: '/notificacoes', rotulo: 'Notificações', icone: Bell },
+  { to: '/metas', rotulo: 'Metas', icone: Target },
+  { to: '/budgets', rotulo: 'Orçamentos', icone: PiggyBank },
+  { to: '/debts', rotulo: 'Dívidas', icone: CircleDollarSign },
+  { to: '/relatorios', rotulo: 'Relatórios', icone: BarChart3 },
+  { to: '/educacao', rotulo: 'Educação', icone: BookOpen },
+  { to: '/configuracoes', rotulo: 'Configurações', icone: Settings },
+];
 
 export default function Sidebar({ aberto, onFechar }) {
   const [expanded, setExpanded] = useState(false);
   const navigate = useNavigate();
   const { sair } = useAuth();
-  const { t } = useTranslation();
-
-  const itens = useMemo(
-    () => ([
-      { to: '/dashboard', rotulo: t('nav.links.dashboard'), icone: LayoutDashboard },
-      { to: '/transacoes', rotulo: t('nav.links.transactions'), icone: CreditCard },
-      { to: '/metas', rotulo: t('nav.links.goals'), icone: Target },
-      { to: '/relatorios', rotulo: t('nav.links.reports'), icone: BarChart3 },
-      { to: '/educacao', rotulo: t('nav.links.education'), icone: BookOpen },
-      { to: '/configuracoes', rotulo: t('nav.links.settings'), icone: Settings },
-    ]),
-    [t]
-  );
 
   const handleLogout = () => {
     sair?.();
@@ -62,8 +64,8 @@ export default function Sidebar({ aberto, onFechar }) {
               <PiggyBank className="w-6 h-6 text-slate-700 dark:text-slate-200" />
             </div>
             <div className={`ml-3 overflow-hidden transition-all ${expanded ? 'opacity-100 max-w-[999px]' : 'opacity-0 max-w-0'}`}>
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white whitespace-nowrap">{t('brand.short')}</h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">{t('brand.tagline')}</p>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white whitespace-nowrap">MoneyMapp</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">Versão TCC</p>
             </div>
           </div>
         </div>
@@ -113,11 +115,11 @@ export default function Sidebar({ aberto, onFechar }) {
           >
             <LogOut className="w-6 h-6 flex-shrink-0" />
             <span className={`ml-3 font-medium whitespace-nowrap transition-all ${expanded ? 'opacity-100 max-w-[999px]' : 'opacity-0 max-w-0'}`}>
-              {t('sidebar.logout')}
+              Sair
             </span>
             {!expanded && (
               <div className="absolute left-full ml-3 px-3 py-1.5 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-md opacity-0 group-hover/menu:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
-                {t('sidebar.logout')}
+                Sair
                 <div className="absolute right-full top-1/2 -translate-y-1/2 w-0 h-0 border-r-4 border-r-gray-900 dark:border-r-gray-700 border-t-4 border-t-transparent border-b-4 border-b-transparent"></div>
               </div>
             )}
@@ -140,8 +142,8 @@ export default function Sidebar({ aberto, onFechar }) {
               <PiggyBank className="w-5 h-5 text-slate-700 dark:text-slate-200" />
             </div>
             <div className="ml-3">
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white">{t('brand.short')}</h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400">{t('brand.tagline')}</p>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">MoneyMapp</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Versão TCC</p>
             </div>
           </div>
           <button onClick={onFechar} className="p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
@@ -181,7 +183,7 @@ export default function Sidebar({ aberto, onFechar }) {
             className="flex items-center w-full px-4 py-3 text-red-600 dark:text-red-400 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200"
           >
             <LogOut className="w-6 h-6" />
-            <span className="ml-4 font-medium">{t('sidebar.logout')}</span>
+            <span className="ml-4 font-medium">Sair</span>
           </button>
         </div>
       </aside>

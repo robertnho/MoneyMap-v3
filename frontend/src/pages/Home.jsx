@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -21,50 +20,9 @@ import {
   Globe
 } from "lucide-react";
 
-const FEATURE_CARDS = [
-  {
-    icon: PiggyBank,
-    key: "finance",
-    color: "from-blue-500 to-cyan-400",
-    bgColor: "from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30"
-  },
-  {
-    icon: Target,
-    key: "goals",
-    color: "from-emerald-500 to-teal-400",
-    bgColor: "from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30"
-  },
-  {
-    icon: TrendingUp,
-    key: "reports",
-    color: "from-purple-500 to-violet-400",
-    bgColor: "from-purple-50 to-violet-50 dark:from-purple-950/30 dark:to-violet-950/30"
-  },
-  {
-    icon: BookOpen,
-    key: "education",
-    color: "from-orange-500 to-amber-400",
-    bgColor: "from-orange-50 to-amber-50 dark:from-orange-950/30 dark:to-amber-950/30"
-  }
-];
-
-const STAT_CARDS = [
-  { key: "users", icon: Users, color: "from-blue-400 to-cyan-300" },
-  { key: "goals", icon: Trophy, color: "from-emerald-400 to-teal-300" },
-  { key: "savings", icon: PiggyBank, color: "from-purple-400 to-violet-300" }
-];
-
-const TESTIMONIAL_CARDS = [
-  { key: "maria", color: "from-blue-500 to-cyan-400" },
-  { key: "joao", color: "from-emerald-500 to-teal-400" },
-  { key: "ana", color: "from-purple-500 to-violet-400" }
-];
-
 export default function Home() {
   const [loading, setLoading] = useState(false);
-  const { t } = useTranslation();
   const navigate = useNavigate();
-  const currentYear = new Date().getFullYear();
 
   const handleDemoAccess = async () => {
     setLoading(true);
@@ -114,7 +72,7 @@ export default function Home() {
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-purple-600 shadow-lg">
               <PiggyBank className="h-7 w-7 text-white" />
             </div>
-            <span className="text-2xl font-bold text-white">{t("brand.short")}</span>
+            <span className="text-2xl font-bold text-white">MoneyMapp</span>
           </motion.div>
           <div className="flex items-center gap-3">
             <motion.button
@@ -127,10 +85,10 @@ export default function Home() {
               {loading ? (
                 <div className="flex items-center gap-2">
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"></div>
-                  {t("home.header.demoLoading")}
+                  Carregando...
                 </div>
               ) : (
-                t("home.header.demo")
+                'Demonstração'
               )}
             </motion.button>
             <motion.button
@@ -139,7 +97,7 @@ export default function Home() {
               whileTap={{ scale: 0.95 }}
               className="rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 px-6 py-2.5 font-semibold text-white shadow-lg transition-all hover:shadow-xl"
             >
-              {t("home.header.login")}
+              Fazer Login
             </motion.button>
           </div>
         </div>
@@ -161,7 +119,7 @@ export default function Home() {
           >
             <Sparkles className="h-6 w-6 text-yellow-300" />
             <span className="rounded-full bg-white/10 px-4 py-1 text-sm font-medium backdrop-blur-sm">
-              {t("home.hero.badge")}
+              Plataforma Premium de Finanças
             </span>
           </motion.div>
           
@@ -171,7 +129,7 @@ export default function Home() {
             transition={{ duration: 0.8, delay: 0.4 }}
             className="mb-6 bg-gradient-to-r from-white via-white to-blue-100 bg-clip-text text-5xl font-extrabold text-transparent md:text-7xl"
           >
-            {t("brand.name")}
+            MoneyMapp TCC
           </motion.h1>
           
           <motion.h2 
@@ -180,9 +138,9 @@ export default function Home() {
             transition={{ duration: 0.8, delay: 0.6 }}
             className="mb-6 text-2xl font-semibold md:text-4xl"
           >
-            {t("home.hero.subtitle")}{' '}
+            A plataforma de educação financeira que{' '}
             <span className="bg-gradient-to-r from-yellow-300 to-orange-300 bg-clip-text text-transparent">
-              {t("home.hero.subtitleHighlight")}
+              transforma sua vida
             </span>
           </motion.h2>
           
@@ -192,7 +150,8 @@ export default function Home() {
             transition={{ duration: 0.8, delay: 0.8 }}
             className="mx-auto mb-12 max-w-3xl text-lg opacity-90 leading-relaxed"
           >
-            {t("home.hero.description")}
+            Controle suas finanças, defina metas e aprenda a investir com uma experiência
+            simples, moderna e intuitiva — feita especialmente para jovens estudantes e profissionais.
           </motion.p>
           
           <motion.div 
@@ -211,12 +170,12 @@ export default function Home() {
               {loading ? (
                 <>
                   <div className="h-5 w-5 animate-spin rounded-full border-2 border-indigo-600/30 border-t-indigo-600"></div>
-                  {t("home.hero.loading")}
+                  Carregando...
                 </>
               ) : (
                 <>
                   <Zap className="h-5 w-5" />
-                  {t("home.hero.demo")}
+                  Entrar em demonstração
                   <ChevronRight className="h-5 w-5" />
                 </>
               )}
@@ -229,7 +188,7 @@ export default function Home() {
               className="flex items-center gap-2 rounded-2xl border-2 border-white/20 bg-white/10 px-8 py-4 text-lg font-semibold backdrop-blur-sm transition-all hover:bg-white/20"
             >
               <Lock className="h-5 w-5" />
-              {t("home.hero.login")}
+              Fazer login
             </motion.button>
           </motion.div>
         </div>
@@ -247,18 +206,47 @@ export default function Home() {
             className="mb-16 text-center"
           >
             <h3 className="mb-4 text-4xl font-bold text-zinc-800 dark:text-white md:text-5xl">
-              {t("home.features.title")}{' '}
+              O que você encontra no{' '}
               <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                {t("brand.short")}
+                MoneyMapp
               </span>
             </h3>
             <p className="mx-auto max-w-2xl text-lg text-zinc-600 dark:text-zinc-300">
-              {t("home.features.subtitle")}
+              Descubra todas as ferramentas que vão revolucionar sua relação com o dinheiro
             </p>
           </motion.div>
           
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
-            {FEATURE_CARDS.map((feature, i) => (
+            {[
+              { 
+                icon: PiggyBank, 
+                title: "Controle de Finanças", 
+                desc: "Monitore receitas e despesas em tempo real com dashboards intuitivos.",
+                color: "from-blue-500 to-cyan-400",
+                bgColor: "from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30"
+              },
+              { 
+                icon: Target, 
+                title: "Metas Financeiras", 
+                desc: "Defina objetivos claros e acompanhe seu progresso de forma gamificada.",
+                color: "from-emerald-500 to-teal-400",
+                bgColor: "from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30"
+              },
+              { 
+                icon: TrendingUp, 
+                title: "Relatórios Visuais", 
+                desc: "Gráficos e dashboards inteligentes para insights financeiros rápidos.",
+                color: "from-purple-500 to-violet-400",
+                bgColor: "from-purple-50 to-violet-50 dark:from-purple-950/30 dark:to-violet-950/30"
+              },
+              { 
+                icon: BookOpen, 
+                title: "Educação Financeira", 
+                desc: "Aprenda com artigos, dicas e cursos de especialistas em finanças.",
+                color: "from-orange-500 to-amber-400",
+                bgColor: "from-orange-50 to-amber-50 dark:from-orange-950/30 dark:to-amber-950/30"
+              }
+            ].map((feature, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, y: 30 }}
@@ -273,12 +261,8 @@ export default function Home() {
                     <feature.icon className="h-8 w-8 text-white" />
                   </div>
                 </div>
-                <h4 className="mb-3 text-xl font-bold text-zinc-800 dark:text-white">
-                  {t(`home.features.items.${feature.key}.title`)}
-                </h4>
-                <p className="text-zinc-600 dark:text-zinc-300 leading-relaxed">
-                  {t(`home.features.items.${feature.key}.desc`)}
-                </p>
+                <h4 className="mb-3 text-xl font-bold text-zinc-800 dark:text-white">{feature.title}</h4>
+                <p className="text-zinc-600 dark:text-zinc-300 leading-relaxed">{feature.desc}</p>
               </motion.div>
             ))}
           </div>
@@ -297,14 +281,18 @@ export default function Home() {
             viewport={{ once: true }}
             className="mb-16"
           >
-            <h3 className="mb-4 text-4xl font-bold md:text-5xl">{t("home.stats.title")}</h3>
+            <h3 className="mb-4 text-4xl font-bold md:text-5xl">Resultados que importam</h3>
             <p className="mx-auto max-w-2xl text-lg opacity-90">
-              {t("home.stats.subtitle")}
+              Números reais de uma plataforma que realmente funciona
             </p>
           </motion.div>
           
           <div className="grid gap-8 md:grid-cols-3">
-            {STAT_CARDS.map((stat, i) => (
+            {[
+              { number: "+5.000", label: "Usuários impactados", icon: Users, color: "from-blue-400 to-cyan-300" },
+              { number: "92%", label: "Atingiram suas metas", icon: Trophy, color: "from-emerald-400 to-teal-300" },
+              { number: "+R$ 1M", label: "Economizados pelos usuários", icon: PiggyBank, color: "from-purple-400 to-violet-300" }
+            ].map((stat, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, y: 30 }}
@@ -319,8 +307,8 @@ export default function Home() {
                     <stat.icon className="h-6 w-6 text-white" />
                   </div>
                 </div>
-                <h4 className="mb-2 text-5xl font-extrabold">{t(`home.stats.${stat.key}.number`)}</h4>
-                <p className="text-white/80">{t(`home.stats.${stat.key}.label`)}</p>
+                <h4 className="mb-2 text-5xl font-extrabold">{stat.number}</h4>
+                <p className="text-white/80">{stat.label}</p>
               </motion.div>
             ))}
           </div>
@@ -339,18 +327,37 @@ export default function Home() {
             className="mb-16 text-center"
           >
             <h3 className="mb-4 text-4xl font-bold text-zinc-800 dark:text-white md:text-5xl">
-              {t("home.testimonials.title")} {' '}
+              O que nossos{' '}
               <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                {t("home.testimonials.highlight")}
+                usuários dizem
               </span>
             </h3>
             <p className="mx-auto max-w-2xl text-lg text-zinc-600 dark:text-zinc-300">
-              {t("home.testimonials.subtitle")}
+              Histórias reais de transformação financeira
             </p>
           </motion.div>
           
           <div className="grid gap-8 md:grid-cols-3">
-            {TESTIMONIAL_CARDS.map((user, i) => (
+            {[
+              { 
+                name: "Maria Silva", 
+                desc: "Estudante de Administração", 
+                color: "from-blue-500 to-cyan-400", 
+                text: "O MoneyMapp transformou completamente minha forma de economizar e entender meu dinheiro! Consegui economizar R$ 2.000 em 6 meses." 
+              },
+              { 
+                name: "João Santos", 
+                desc: "Desenvolvedor", 
+                color: "from-emerald-500 to-teal-400", 
+                text: "As metas e relatórios visuais me ajudaram a ter clareza total sobre minhas finanças. Nunca foi tão fácil controlar meus gastos!" 
+              },
+              { 
+                name: "Ana Costa", 
+                desc: "Recém-formada", 
+                color: "from-purple-500 to-violet-400", 
+                text: "Consegui juntar para minha primeira casa usando o MoneyMapp! A gamificação das metas foi o diferencial. Simplesmente incrível." 
+              }
+            ].map((user, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, y: 30 }}
@@ -366,15 +373,15 @@ export default function Home() {
                   ))}
                 </div>
                 <p className="mb-6 text-zinc-700 dark:text-zinc-300 italic leading-relaxed">
-                  "{t(`home.testimonials.items.${user.key}.text`)}"
+                  "{user.text}"
                 </p>
                 <div className="flex items-center">
                   <div className={`flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br ${user.color} text-white font-bold shadow-lg transition-transform group-hover:scale-110`}>
-                    {t(`home.testimonials.items.${user.key}.name`).charAt(0)}
+                    {user.name[0]}
                   </div>
                   <div className="ml-4">
-                    <p className="font-bold text-zinc-800 dark:text-white">{t(`home.testimonials.items.${user.key}.name`)}</p>
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400">{t(`home.testimonials.items.${user.key}.role`)}</p>
+                    <p className="font-bold text-zinc-800 dark:text-white">{user.name}</p>
+                    <p className="text-sm text-zinc-600 dark:text-zinc-400">{user.desc}</p>
                   </div>
                 </div>
               </motion.div>
@@ -395,13 +402,14 @@ export default function Home() {
             viewport={{ once: true }}
           >
             <h3 className="mb-6 text-4xl font-bold md:text-5xl">
-              {t("home.cta.title")}{' '}
+              Pronto para{' '}
               <span className="bg-gradient-to-r from-yellow-300 to-orange-300 bg-clip-text text-transparent">
-                {t("home.cta.highlight")}
+                mudar sua vida financeira?
               </span>
             </h3>
             <p className="mb-12 text-lg opacity-90 leading-relaxed">
-              {t("home.cta.description")}
+              Experimente agora o MoneyMapp e descubra como organizar seu dinheiro pode ser 
+              simples, motivador e transformador para o seu futuro.
             </p>
             
             <motion.button
@@ -414,12 +422,12 @@ export default function Home() {
               {loading ? (
                 <>
                   <div className="h-5 w-5 animate-spin rounded-full border-2 border-indigo-600/30 border-t-indigo-600"></div>
-                  {t("home.cta.loading")}
+                  Preparando experiência...
                 </>
               ) : (
                 <>
                   <Sparkles className="h-6 w-6" />
-                  {t("home.cta.button")}
+                  Comece agora gratuitamente
                   <ArrowRight className="h-5 w-5" />
                 </>
               )}
@@ -432,7 +440,7 @@ export default function Home() {
               viewport={{ once: true }}
               className="mt-6 text-sm opacity-75"
             >
-              {t("home.cta.badge")}
+              ✨ Sem cadastro necessário • Demonstração completa • Dados fictícios
             </motion.p>
           </motion.div>
         </div>
@@ -452,19 +460,19 @@ export default function Home() {
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-purple-600">
                 <PiggyBank className="h-5 w-5 text-white" />
               </div>
-              <span className="text-2xl font-bold">{t("brand.short")}</span>
+              <span className="text-2xl font-bold">MoneyMapp</span>
             </div>
             
             <div className="mb-4 space-y-2">
-              <p className="text-white/80">{t("home.footer.copyright", { year: currentYear })}</p>
+              <p className="text-white/80">© 2024 MoneyMapp TCC. Todos os direitos reservados.</p>
               <p className="text-sm text-white/60">
-                {t("home.footer.note")}
+                Desenvolvido como Trabalho de Conclusão de Curso - Tecnologia da Informação
               </p>
             </div>
             
             <div className="flex items-center justify-center gap-2 text-sm text-white/50">
               <Globe className="h-4 w-4" />
-              <span>{t("home.footer.tagline")}</span>
+              <span>Uma solução brasileira para educação financeira</span>
             </div>
           </motion.div>
         </div>

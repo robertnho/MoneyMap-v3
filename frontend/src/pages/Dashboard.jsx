@@ -1,5 +1,5 @@
 // src/pages/Dashboard.jsx
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
@@ -16,7 +16,6 @@ import {
   Wallet,
   Clock,
   CreditCard,
-  Banknote,
   ShieldAlert,
   Settings,
   Sparkles,
@@ -36,44 +35,35 @@ import {
   LineChart,
   Line,
 } from 'recharts'
-
-/* ============================================================================
-   DADOS MOCKADOS
-============================================================================ */
-const mockData = {
-  saldo: 12450.8,
-  receitas: 8500.0,
-  despesas: 4250.3,
-  economia: 4249.7,
-  receitasVsDespesas: [
-    { mes: 'Jul', receitas: 7200, despesas: 4800 },
-    { mes: 'Ago', receitas: 7800, despesas: 4200 },
-    { mes: 'Set', receitas: 8100, despesas: 4500 },
-    { mes: 'Out', receitas: 8500, despesas: 4250 },
-  ],
-  categorias: [
-    { name: 'Alimentação', value: 1200, color: '#8b5cf6' },
-    { name: 'Transporte', value: 800, color: '#6366f1' },
-    { name: 'Moradia', value: 1500, color: '#a855f7' },
-    { name: 'Lazer', value: 600, color: '#c084fc' },
-    { name: 'Outros', value: 150.3, color: '#d8b4fe' },
-  ],
-  transacoesRecentes: [
-    { id: 1, tipo: 'receita', descricao: 'Salário', valor: 5500.0, data: '2024-10-01', categoria: 'Trabalho' },
-    { id: 2, tipo: 'receita', descricao: 'Freelance', valor: 1200.0, data: '2024-10-02', categoria: 'Trabalho' },
-    { id: 3, tipo: 'despesa', descricao: 'Supermercado', valor: 320.5, data: '2024-10-02', categoria: 'Alimentação' },
-    { id: 4, tipo: 'despesa', descricao: 'Combustível', valor: 180.0, data: '2024-10-03', categoria: 'Transporte' },
-    { id: 5, tipo: 'despesa', descricao: 'Aluguel', valor: 1200.0, data: '2024-10-05', categoria: 'Moradia' },
-  ],
-}
+import api from '../services/api'
 
 /* ============================================================================
    HELPERS
 ============================================================================ */
-const money = (v) =>
-  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v)
+const formatMoney = (value) => {
+  const numeric = typeof value === 'number' ? value : Number(value)
+  if (!Number.isFinite(numeric)) return '--'
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(numeric)
+}
 
-const tooltipCurrency = (v) => [`R$ ${Number(v).toLocaleString('pt-BR')}`, '']
+const resolveTrend = (value) => {
+  if (typeof value !== 'number' || Number.isNaN(value)) return null
+  if (value === 0) return { direction: 'up', label: '0,0' }
+  return {
+    direction: value > 0 ? 'up' : 'down',
+    label: Math.abs(value).toLocaleString('pt-BR', { maximumFractionDigits: 1 }),
+  }
+}
+
+const tooltipCurrency = (value) => [formatMoney(value ?? 0), '']
+
+const formatDate = (value) => {
+  if (!value) return '--'
+  const input = typeof value === 'string' && value.length === 10 ? `${value}T00:00:00` : value
+  const date = new Date(input)
+  if (Number.isNaN(date.getTime())) return value
+  return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
+}
 
 /* ============================================================================
    UI BASICS
@@ -165,13 +155,15 @@ function KpiCard({ title, value, trend = 'up', trendValue = '', icon: Icon, tone
             </p>
           </div>
         </div>
-        <motion.span
-          whileHover={{ scale: 1.05 }}
-          className={`inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium shadow-sm ${scheme.chipBg} ${scheme.chipFg}`}
-        >
-          {trend === 'up' ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
-          {trendValue}
-        </motion.span>
+        {trendValue ? (
+          <motion.span
+            whileHover={{ scale: 1.05 }}
+            className={`inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium shadow-sm ${scheme.chipBg} ${scheme.chipFg}`}
+          >
+            {trend === 'up' ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+            {trendValue}
+          </motion.span>
+        ) : null}
       </div>
 
       <div className="mt-3 flex items-center gap-2">
@@ -191,8 +183,9 @@ function KpiCard({ title, value, trend = 'up', trendValue = '', icon: Icon, tone
   )
 }
 
-function TransactionRow({ t }) {
+function TransactionRow({ transaction: t }) {
   const receita = t.tipo === 'receita'
+  const detalhes = [formatDate(t.data), t.categoria, t.account?.name].filter(Boolean).join(' • ')
   return (
     <div className="group flex items-center justify-between py-2">
       <div className="flex items-center gap-3">
@@ -207,9 +200,7 @@ function TransactionRow({ t }) {
         </div>
         <div>
           <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{t.descricao}</p>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            {t.categoria} • {t.data}
-          </p>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">{detalhes || 'Sem detalhes'}</p>
         </div>
       </div>
       <div
@@ -217,7 +208,7 @@ function TransactionRow({ t }) {
           receita ? 'text-violet-600 dark:text-violet-400' : 'text-purple-600 dark:text-purple-400'
         }`}
       >
-        {receita ? '+' : '-'} {money(t.valor)}
+        {receita ? '+' : '-'} {formatMoney(t.valor)}
       </div>
     </div>
   )
@@ -253,150 +244,102 @@ function QuickActionCard({
 /* ============================================================================
    NOVOS COMPONENTES
 ============================================================================ */
-function FilterPanel({ year, setYear, month, setMonth }) {
-  const years = [2023, 2024, 2025]
-  const months = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
-
-  return (
-    <SectionCard title="Filtros" className="h-fit">
-      <div className="space-y-3">
-        <div>
-          <p className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Ano</p>
-          <div className="flex flex-wrap gap-1">
-            {years.map((y) => (
-              <button
-                key={y}
-                onClick={() => setYear(y)}
-                className={`rounded-lg px-2 py-1.5 text-xs font-medium border transition-all duration-200 ${
-                  year === y
-                    ? 'border-transparent bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg shadow-violet-500/25'
-                    : 'border-zinc-200/60 hover:border-zinc-300 hover:bg-zinc-100 dark:border-white/10 dark:hover:bg-zinc-800'
-                }`}
-              >
-                {y}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <p className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Meses</p>
-          <div className="grid grid-cols-4 gap-1">
-            {months.map((m) => (
-              <button
-                key={m}
-                onClick={() => setMonth(m)}
-                className={`rounded-lg px-1 py-1.5 text-xs font-medium capitalize border transition-all duration-200 ${
-                  month === m
-                    ? 'border-transparent bg-gradient-to-br from-purple-500 to-violet-600 text-white shadow-md'
-                    : 'border-zinc-200/60 hover:border-zinc-300 hover:bg-zinc-100 dark:border-white/10 dark:hover:bg-zinc-800'
-                }`}
-              >
-                {m}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-    </SectionCard>
-  )
-}
-
-function FinancialInsightsCard() {
-  const insights = [
-    { title: '💡 Economia Inteligente', desc: 'Você gastou 15% menos em alimentação este mês!', impact: 'Economizou R$ 180', color: 'violet' },
-    { title: '⚠️ Atenção aos Gastos', desc: 'Gastos com lazer aumentaram 23% comparado ao mês passado', impact: 'R$ 138 a mais', color: 'amber' },
-    { title: '🎯 Meta Próxima', desc: 'Faltam apenas R$ 1.400 para sua reserva de emergência', impact: '72% concluído', color: 'blue' },
+function PeriodPanel({ periodo, onChange }) {
+  const periodos = [
+    { label: 'Últimos 3 meses', value: '3meses' },
+    { label: 'Últimos 6 meses', value: '6meses' },
+    { label: 'Último ano', value: '1ano' },
   ]
+
   return (
-    <SectionCard title="Insights Financeiros" className="h-full">
+    <SectionCard title="Período" className="h-fit">
       <div className="space-y-2">
-        {insights.map((insight, i) => (
-          <div
-            key={i}
-            className={`rounded-xl border p-3 ${
-              insight.color === 'violet'
-                ? 'border-violet-200 bg-violet-50 dark:border-violet-900/30 dark:bg-violet-950/20'
-                : insight.color === 'amber'
-                ? 'border-amber-200 bg-amber-50 dark:border-amber-900/30 dark:bg-amber-950/20'
-                : 'border-purple-200 bg-purple-50 dark:border-purple-900/30 dark:bg-purple-950/20'
-            }`}
-          >
-            <h4 className="mb-1 text-xs font-semibold text-zinc-900 dark:text-zinc-100">{insight.title}</h4>
-            <p className="mb-2 text-xs leading-tight text-zinc-600 dark:text-zinc-400">{insight.desc}</p>
-            <span
-              className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                insight.color === 'violet'
-                  ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300'
-                  : insight.color === 'amber'
-                  ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
-                  : 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
+        {periodos.map((item) => {
+          const ativo = periodo === item.value
+          return (
+            <button
+              key={item.value}
+              onClick={() => onChange(item.value)}
+              className={`w-full rounded-xl border px-3 py-2 text-left text-xs font-medium transition-all duration-200 ${
+                ativo
+                  ? 'border-transparent bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg shadow-violet-500/25'
+                  : 'border-zinc-200/60 text-zinc-600 hover:border-zinc-300 hover:bg-zinc-100 dark:border-white/10 dark:text-zinc-300 dark:hover:bg-zinc-800'
               }`}
             >
-              {insight.impact}
-            </span>
-          </div>
-        ))}
+              {item.label}
+            </button>
+          )
+        })}
       </div>
     </SectionCard>
   )
 }
 
-function InvestmentCard() {
-  const investimentos = [
-    { nome: 'Tesouro Selic', valor: 2500, rendimento: '+2.3%', cor: 'text-violet-600' },
-    { nome: 'CDB Banco Inter', valor: 1800, rendimento: '+1.8%', cor: 'text-purple-600' },
-    { nome: 'Ações ITSA4', valor: 920, rendimento: '-0.5%', cor: 'text-indigo-500' },
-  ]
-  const totalInvestido = investimentos.reduce((acc, inv) => acc + inv.valor, 0)
+function FinancialInsightsCard({ insights, carregando }) {
   return (
-    <SectionCard
-      title="Investimentos"
-      right={<span className="text-sm font-medium text-violet-600 dark:text-violet-400">+R$ 87 este mês</span>}
-      className="h-full"
-    >
-      <div className="space-y-4">
-        <div className="rounded-xl bg-gradient-to-br from-violet-50 to-purple-50 p-4 text-center dark:from-violet-950/20 dark:to-purple-950/20">
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">Total Investido</p>
-          <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{money(totalInvestido)}</p>
-          <p className="text-xs text-violet-600 dark:text-violet-400">+3.2% no mês</p>
-        </div>
-        <div className="space-y-3">
-          {investimentos.map((inv, i) => (
-            <div key={i} className="flex items-center justify-between rounded-lg bg-white/50 p-3 dark:bg-zinc-800/50">
-              <div>
-                <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{inv.nome}</p>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">{money(inv.valor)}</p>
-              </div>
-              <span className={`text-sm font-medium ${inv.cor}`}>{inv.rendimento}</span>
+    <SectionCard title="Insights Financeiros" className="h-full">
+      {carregando ? (
+        <p className="text-xs text-zinc-500 dark:text-zinc-400">Gerando insights...</p>
+      ) : insights.length ? (
+        <div className="space-y-2">
+          {insights.map((insight, index) => (
+            <div
+              key={index}
+              className={`rounded-xl border p-3 ${
+                insight.tone === 'amber'
+                  ? 'border-amber-200 bg-amber-50 dark:border-amber-900/30 dark:bg-amber-950/20'
+                  : insight.tone === 'emerald'
+                  ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-900/30 dark:bg-emerald-950/20'
+                  : 'border-violet-200 bg-violet-50 dark:border-violet-900/30 dark:bg-violet-950/20'
+              }`}
+            >
+              <h4 className="mb-1 text-xs font-semibold text-zinc-900 dark:text-zinc-100">{insight.title}</h4>
+              <p className="mb-1 text-xs leading-tight text-zinc-600 dark:text-zinc-400">{insight.description}</p>
+              {insight.highlight ? (
+                <span className="inline-flex rounded-full bg-white/70 px-2 py-0.5 text-[11px] font-medium text-zinc-600 dark:bg-white/10 dark:text-zinc-200">
+                  {insight.highlight}
+                </span>
+              ) : null}
             </div>
           ))}
         </div>
-      </div>
+      ) : (
+        <p className="text-xs text-zinc-500 dark:text-zinc-400">Nenhum insight disponível ainda.</p>
+      )}
     </SectionCard>
   )
 }
 
-function WeatherFinanceCard() {
+function WeatherFinanceCard({ saldo, trend, carregando }) {
+  const direction = trend?.direction ?? 'up'
+  const label = trend?.label ?? '0,0'
+  const mood = direction === 'down' ? '🌥️' : '☀️'
+  const titulo = direction === 'down' ? 'Atenção' : 'Ensolarado'
+  const mensagem = direction === 'down'
+    ? 'Despesas cresceram em relação ao período anterior. Reveja seus gastos essenciais.'
+    : 'Situação saudável — mantenha seus hábitos positivos.'
+
   return (
-    <SectionCard title="Clima Financeiro" className="relative overflow-hidden h-full">
-      <div className="absolute -right-6 -top-6 h-16 w-16 rounded-full bg-gradient-to-br from-violet-400 to-purple-500 opacity-20"></div>
-      <div className="relative">
-        <div className="mb-3 flex items-center gap-3">
-          <div className="text-3xl">☀️</div>
+    <SectionCard title="Clima Financeiro" className="relative h-full overflow-hidden">
+      <div className="absolute -right-6 -top-6 h-16 w-16 rounded-full bg-gradient-to-br from-violet-400 to-purple-500 opacity-20" />
+      <div className="relative space-y-3">
+        <div className="flex items-center gap-3">
+          <div className="text-3xl">{mood}</div>
           <div>
-            <p className="font-semibold text-zinc-900 dark:text-zinc-100">Ensolarado</p>
-            <p className="text-xs text-zinc-600 dark:text-zinc-400">Suas finanças estão saudáveis</p>
+            <p className="font-semibold text-zinc-900 dark:text-zinc-100">{carregando ? '---' : titulo}</p>
+            <p className="text-xs text-zinc-600 dark:text-zinc-400">
+              {carregando ? 'Calculando variáveis...' : mensagem}
+            </p>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-3 text-xs">
           <div>
-            <p className="text-zinc-500 dark:text-zinc-400">Saúde Financeira</p>
-            <p className="font-medium text-violet-600 dark:text-violet-400">Excelente</p>
+            <p className="text-zinc-500 dark:text-zinc-400">Saldo atual</p>
+            <p className="font-medium text-violet-600 dark:text-violet-400">{carregando ? '--' : formatMoney(saldo)}</p>
           </div>
           <div>
-            <p className="text-zinc-500 dark:text-zinc-400">Próximos 30 dias</p>
-            <p className="font-medium text-zinc-900 dark:text-zinc-100">Estável</p>
+            <p className="text-zinc-500 dark:text-zinc-400">Tendência</p>
+            <p className="font-medium text-zinc-900 dark:text-zinc-100">{carregando ? '--' : `${direction === 'down' ? '-' : '+'}${label}%`}</p>
           </div>
         </div>
       </div>
@@ -404,11 +347,37 @@ function WeatherFinanceCard() {
   )
 }
 
-function GoalCard({ percent = 72 }) {
+function GoalCard({ goal, carregando, onManageGoal = () => {} }) {
+  if (carregando) {
+    return (
+      <SectionCard title="Progresso da Meta" className="h-full">
+        <p className="text-xs text-zinc-500 dark:text-zinc-400">Buscando metas ativas...</p>
+      </SectionCard>
+    )
+  }
+
+  if (!goal) {
+    return (
+      <SectionCard title="Progresso da Meta" className="h-full">
+        <div className="space-y-3 text-sm text-zinc-600 dark:text-zinc-300">
+          <p>Você ainda não possui metas ativas.</p>
+          <button
+            onClick={onManageGoal}
+            className="inline-flex items-center gap-2 rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white shadow-lg transition hover:bg-violet-700"
+          >
+            <Target className="h-4 w-4" /> Criar meta
+          </button>
+        </div>
+      </SectionCard>
+    )
+  }
+
+  const percent = goal.targetAmount ? Math.min(100, Math.round((goal.currentAmount / goal.targetAmount) * 100)) : 0
   const data = [
     { name: 'meta', value: percent },
     { name: 'faltando', value: 100 - percent },
   ]
+
   return (
     <SectionCard title="Progresso da Meta" className="h-full">
       <div className="flex items-center gap-6">
@@ -416,7 +385,7 @@ function GoalCard({ percent = 72 }) {
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie data={data} dataKey="value" innerRadius={50} outerRadius={65} startAngle={90} endAngle={-270}>
-                <Cell key="ok" fill="#16a34a" />
+                <Cell key="meta" fill="#16a34a" />
                 <Cell key="faltando" fill="#e5e7eb" />
                 <Label value={`${percent}%`} position="center" />
               </Pie>
@@ -424,12 +393,18 @@ function GoalCard({ percent = 72 }) {
           </ResponsiveContainer>
         </div>
         <div className="space-y-1">
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">Meta: montar reserva de emergência</p>
-          <p className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">{money(5000)}</p>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">Estimativa de conclusão em 3 meses</p>
-          <button className="mt-2 inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700">
-            <Target className="h-4 w-4" />
-            Ajustar metas
+          <p className="text-xs font-semibold uppercase tracking-wide text-violet-600 dark:text-violet-400">{goal.title}</p>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            Progresso: {formatMoney(goal.currentAmount)} de {formatMoney(goal.targetAmount)}
+          </p>
+          {goal.dueDate ? (
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">Prazo: {formatDate(goal.dueDate)}</p>
+          ) : null}
+          <button
+            onClick={onManageGoal}
+            className="mt-2 inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-700"
+          >
+            <Target className="h-4 w-4" /> Ajustar metas
           </button>
         </div>
       </div>
@@ -437,70 +412,123 @@ function GoalCard({ percent = 72 }) {
   )
 }
 
-function AccountsCard() {
-  const contas = [
-    { nome: 'Carteira', valor: 420.5, icon: Banknote },
-    { nome: 'Nubank', valor: 6020.0, icon: CreditCard },
-    { nome: 'Itaú', valor: 5980.3, icon: CreditCard },
-  ]
+function InvestmentCard({ evolucaoSaldo, carregando }) {
+  const saldoAtual = evolucaoSaldo.length ? evolucaoSaldo[evolucaoSaldo.length - 1].saldo : null
+  const saldoInicial = evolucaoSaldo.length ? evolucaoSaldo[0].saldo : null
+  const variacao = saldoAtual !== null && saldoInicial !== null ? saldoAtual - saldoInicial : null
+
+  return (
+    <SectionCard
+      title="Performance do Patrimônio"
+      right={
+        variacao !== null && !carregando ? (
+          <span className={`text-sm font-medium ${variacao >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+            {variacao >= 0 ? '+' : ''}{formatMoney(variacao)}
+          </span>
+        ) : null
+      }
+      className="h-full"
+    >
+      {carregando ? (
+        <p className="text-xs text-zinc-500 dark:text-zinc-400">Calculando evolução...</p>
+      ) : (
+        <div className="space-y-3">
+          <div className="rounded-xl bg-gradient-to-br from-violet-50 to-purple-50 p-4 text-center dark:from-violet-950/20 dark:to-purple-950/20">
+            <p className="text-xs text-zinc-600 dark:text-zinc-400">Saldo acumulado</p>
+            <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{formatMoney(saldoAtual)}</p>
+            <p className="text-[11px] text-violet-600 dark:text-violet-400">Comparado ao início do período</p>
+          </div>
+          <div className="space-y-2 text-xs text-zinc-600 dark:text-zinc-400">
+            <p>
+              Início do período: <strong className="text-zinc-800 dark:text-zinc-200">{formatMoney(saldoInicial)}</strong>
+            </p>
+            {variacao !== null ? (
+              <p>
+                Diferença acumulada: <strong className={`${variacao >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>{formatMoney(variacao)}</strong>
+              </p>
+            ) : null}
+          </div>
+        </div>
+      )}
+    </SectionCard>
+  )
+}
+
+function AccountsCard({ contas, carregando }) {
   return (
     <SectionCard title="Saldo por Conta" className="h-full">
-      <ul className="space-y-3">
-        {contas.map(({ nome, valor, icon: Icon }, i) => (
-          <li key={i} className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <BadgeIcon className="bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
-                <Icon className="h-5 w-5" />
-              </BadgeIcon>
-              <span className="font-medium text-zinc-800 dark:text-zinc-200">{nome}</span>
-            </div>
-            <span className="font-semibold text-zinc-900 dark:text-zinc-100">{money(valor)}</span>
-          </li>
-        ))}
-      </ul>
+      {carregando ? (
+        <p className="text-xs text-zinc-500 dark:text-zinc-400">Carregando contas...</p>
+      ) : contas.length ? (
+        <ul className="space-y-3">
+          {contas.map((conta) => (
+            <li key={conta.id} className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <BadgeIcon className="bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+                  <CreditCard className="h-5 w-5" />
+                </BadgeIcon>
+                <span className="font-medium text-zinc-800 dark:text-zinc-200">{conta.name}</span>
+              </div>
+              <span className="font-semibold text-zinc-900 dark:text-zinc-100">{formatMoney(conta.balance)}</span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-xs text-zinc-500 dark:text-zinc-400">Nenhuma conta ativa encontrada.</p>
+      )}
     </SectionCard>
   )
 }
 
-function AlertsCard() {
-  const itens = [
-    { tipo: 'Atraso', msg: 'Conta de energia vence amanhã', tone: 'amber' },
-    { tipo: 'Dica', msg: 'Você pode economizar 8% trocando plano de celular', tone: 'emerald' },
-  ]
+function AlertsCard({ alerts, carregando }) {
   return (
     <SectionCard title="Alertas" right={<ShieldAlert className="h-5 w-5 text-amber-500" aria-hidden="true" />} className="h-full">
-      <ul className="space-y-2">
-        {itens.map((a, i) => (
-          <li
-            key={i}
-            className={`rounded-lg border px-3 py-2 text-sm ${
-              a.tone === 'amber'
-                ? 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/30 dark:bg-amber-900/20 dark:text-amber-200'
-                : 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/30 dark:bg-emerald-900/20 dark:text-emerald-200'
-            }`}
-          >
-            {a.msg}
-          </li>
-        ))}
-      </ul>
+      {carregando ? (
+        <p className="text-xs text-zinc-500 dark:text-zinc-400">Avaliando riscos...</p>
+      ) : alerts.length ? (
+        <ul className="space-y-2">
+          {alerts.map((alerta, index) => (
+            <li
+              key={index}
+              className={`rounded-lg border px-3 py-2 text-xs ${
+                alerta.tone === 'emerald'
+                  ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/30 dark:bg-emerald-900/20 dark:text-emerald-200'
+                  : 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/30 dark:bg-amber-900/20 dark:text-amber-200'
+              }`}
+            >
+              {alerta.message}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-xs text-zinc-500 dark:text-zinc-400">Nenhum alerta relevante neste período.</p>
+      )}
     </SectionCard>
   )
 }
 
-function LineChartCard() {
+function LineChartCard({ data, carregando }) {
   return (
     <SectionCard title="Receita x Despesa (Linha)" className="h-full">
       <div className="h-[240px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={mockData.receitasVsDespesas}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-            <XAxis dataKey="mes" stroke="#6b7280" />
-            <YAxis stroke="#6b7280" />
-            <Tooltip formatter={tooltipCurrency} />
-            <Line type="monotone" dataKey="receitas" stroke="#16a34a" strokeWidth={3} dot={false} />
-            <Line type="monotone" dataKey="despesas" stroke="#dc2626" strokeWidth={3} dot={false} />
-          </LineChart>
-        </ResponsiveContainer>
+        {carregando ? (
+          <div className="flex h-full items-center justify-center text-xs text-zinc-500 dark:text-zinc-400">Gerando série...</div>
+        ) : data.length ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={data}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis dataKey="mes" stroke="#6b7280" />
+              <YAxis stroke="#6b7280" />
+              <Tooltip formatter={tooltipCurrency} labelFormatter={(label) => `Mês: ${label}`} />
+              <Line type="monotone" dataKey="receitas" stroke="#16a34a" strokeWidth={3} dot={false} />
+              <Line type="monotone" dataKey="despesas" stroke="#dc2626" strokeWidth={3} dot={false} />
+            </LineChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="flex h-full items-center justify-center text-xs text-zinc-500 dark:text-zinc-400">
+            Sem movimentações suficientes.
+          </div>
+        )}
       </div>
     </SectionCard>
   )
@@ -511,13 +539,128 @@ function LineChartCard() {
 ============================================================================ */
 export default function Dashboard() {
   const navigate = useNavigate()
-  const [year, setYear] = useState(2024)
-  const [month, setMonth] = useState('out')
+  const [periodo, setPeriodo] = useState('6meses')
+  const [carregando, setCarregando] = useState(true)
+  const [erro, setErro] = useState('')
+  const [dados, setDados] = useState({
+    totals: null,
+    receitasVsDespesas: [],
+    evolucaoSaldo: [],
+    categorias: [],
+    contas: [],
+    transacoesRecentes: [],
+    goalResumo: null,
+  })
+
+  useEffect(() => {
+    let ativo = true
+
+    async function carregarDashboard() {
+      setCarregando(true)
+      setErro('')
+      try {
+        const resposta = await api.dashboard.overview(periodo)
+        if (!ativo) return
+        setDados(resposta.data)
+      } catch (e) {
+        if (!ativo) return
+        setErro(e.response?.data?.error || 'Não foi possível carregar o dashboard.')
+        setDados({
+          totals: null,
+          receitasVsDespesas: [],
+          evolucaoSaldo: [],
+          categorias: [],
+          contas: [],
+          transacoesRecentes: [],
+          goalResumo: null,
+        })
+      } finally {
+        if (ativo) setCarregando(false)
+      }
+    }
+
+    carregarDashboard()
+    return () => {
+      ativo = false
+    }
+  }, [periodo])
+
+  const totais = dados.totals
+  const totalReceitas = totais?.receitas?.valor ?? null
+  const totalDespesas = totais?.despesas?.valor ?? null
+  const saldoTotal = totais?.saldo?.valor ?? null
+  const economia = saldoTotal ?? (totalReceitas !== null && totalDespesas !== null ? totalReceitas - totalDespesas : null)
+
+  const trendReceitas = resolveTrend(totais?.receitas?.variacaoPercentual) ?? { direction: 'up', label: '0,0' }
+  const trendDespesas = resolveTrend(totais?.despesas?.variacaoPercentual) ?? { direction: 'up', label: '0,0' }
+  const trendSaldo = resolveTrend(totais?.saldo?.variacaoPercentual) ?? { direction: 'up', label: '0,0' }
+
+  const receitasVsDespesas = dados.receitasVsDespesas ?? []
+  const categorias = dados.categorias ?? []
+  const evolucaoSaldo = dados.evolucaoSaldo ?? []
+  const contas = dados.contas ?? []
+  const transacoesRecentes = dados.transacoesRecentes ?? []
+  const goalResumo = dados.goalResumo
 
   const totalCategorias = useMemo(
-    () => mockData.categorias.reduce((acc, c) => acc + c.value, 0),
-    []
+    () => categorias.reduce((acc, categoria) => acc + (categoria.value || 0), 0),
+    [categorias]
   )
+
+  const insights = useMemo(() => {
+    const lista = []
+    if (trendReceitas.label && totalReceitas !== null) {
+      lista.push({
+        title: '💡 Receitas',
+        description: `Receitas no período somam ${formatMoney(totalReceitas)} com variação de ${trendReceitas.label}% versus janela anterior.`,
+        tone: trendReceitas.direction === 'down' ? 'amber' : 'emerald',
+        highlight: trendReceitas.direction === 'down' ? 'Atenção para novas fontes de renda' : 'Mantenha a consistência',
+      })
+    }
+
+    if (categorias[0]) {
+      lista.push({
+        title: '📊 Categoria em destaque',
+        description: `${categorias[0].name} representa ${categorias[0].percentage ?? 0}% das despesas do período.`,
+        tone: categorias[0].percentage >= 40 ? 'amber' : 'violet',
+        highlight: formatMoney(categorias[0].value),
+      })
+    }
+
+    if (economia !== null) {
+      lista.push({
+        title: '🎯 Economia acumulada',
+        description: `O saldo do período é ${formatMoney(economia)}. Considere direcionar parte disso para suas metas.`,
+        tone: economia >= 0 ? 'emerald' : 'amber',
+        highlight: economia >= 0 ? 'Bom resultado' : 'Reduza despesas',
+      })
+    }
+
+    return lista.slice(0, 3)
+  }, [trendReceitas, totalReceitas, categorias, economia])
+
+  const alerts = useMemo(() => {
+    const lista = []
+    if (totalReceitas !== null && totalDespesas !== null && totalDespesas > totalReceitas) {
+      lista.push({
+        tone: 'amber',
+        message: 'As despesas superaram as receitas no período selecionado. Reveja seus gastos prioritários.',
+      })
+    }
+    if (categorias[0] && categorias[0].percentage >= 45) {
+      lista.push({
+        tone: 'amber',
+        message: `${categorias[0].name} concentra ${categorias[0].percentage}% das despesas. Avalie ajustes.`,
+      })
+    }
+    if (!contas.length) {
+      lista.push({
+        tone: 'emerald',
+        message: 'Cadastre uma conta financeira para acompanhar o saldo consolidado no dashboard.',
+      })
+    }
+    return lista
+  }, [totalReceitas, totalDespesas, categorias, contas])
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-gradient-to-br from-white via-slate-50 to-slate-100 transition-colors duration-300 ease-out dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
@@ -540,14 +683,14 @@ export default function Dashboard() {
       </div>
 
       {/* Header */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
         className="sticky top-0 z-20 w-full border-b border-slate-200/60 bg-white/90 backdrop-blur-xl shadow-sm transition-colors duration-300 dark:border-slate-800/60 dark:bg-slate-900/85 dark:shadow-slate-950/40"
       >
         <div className="mx-auto flex max-w-[1440px] 2xl:max-w-[1600px] items-center justify-between px-6 py-4 lg:px-8">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
@@ -570,7 +713,7 @@ export default function Dashboard() {
             </div>
           </motion.div>
 
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
@@ -600,8 +743,14 @@ export default function Dashboard() {
 
       {/* Conteúdo */}
       <div className="mx-auto max-w-[1440px] 2xl:max-w-[1600px] px-6 pb-6 lg:px-8">
+        {erro && (
+          <div className="mt-6 rounded-2xl border border-red-200 bg-red-50/90 p-4 text-sm text-red-700 shadow-sm dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-200">
+            {erro}
+          </div>
+        )}
+
         {/* SEÇÃO PRINCIPAL - Cards KPI e Filtros na mesma linha, colados no topo */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.6 }}
@@ -609,45 +758,73 @@ export default function Dashboard() {
         >
           {/* KPIs principais ocupando mais espaço */}
           <div className="col-span-12 lg:col-span-9 xl:col-span-10">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.8, delay: 0.8 }}
               className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4"
             >
-              <KpiCard title="Saldo Total" value={money(mockData.saldo)} trend="up" trendValue="+12,3%" icon={Wallet} tone="violet" />
-              <KpiCard title="Receitas do Mês" value={money(mockData.receitas)} trend="up" trendValue="+8,2%" icon={TrendingUp} tone="blue" />
-              <KpiCard title="Despesas do Mês" value={money(mockData.despesas)} trend="down" trendValue="-5,1%" icon={TrendingDown} tone="purple" />
-              <KpiCard title="Economia" value={money(mockData.economia)} trend="up" trendValue="+15,7%" icon={PiggyBank} tone="indigo" />
+              <KpiCard
+                title="Saldo Total"
+                value={formatMoney(saldoTotal)}
+                trend={trendSaldo.direction}
+                trendValue={`${trendSaldo.label}%`}
+                icon={Wallet}
+                tone="violet"
+              />
+              <KpiCard
+                title="Receitas do Período"
+                value={formatMoney(totalReceitas)}
+                trend={trendReceitas.direction}
+                trendValue={`${trendReceitas.label}%`}
+                icon={TrendingUp}
+                tone="blue"
+              />
+              <KpiCard
+                title="Despesas do Período"
+                value={formatMoney(totalDespesas)}
+                trend={trendDespesas.direction}
+                trendValue={`${trendDespesas.label}%`}
+                icon={TrendingDown}
+                tone="purple"
+              />
+              <KpiCard
+                title="Economia"
+                value={formatMoney(economia)}
+                trend={trendSaldo.direction}
+                trendValue={`${trendSaldo.label}%`}
+                icon={PiggyBank}
+                tone="indigo"
+              />
             </motion.div>
           </div>
 
           {/* Filtros compactos à direita */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 1.0 }}
             className="col-span-12 lg:col-span-3 xl:col-span-2"
           >
-            <FilterPanel year={year} setYear={setYear} month={month} setMonth={setMonth} />
+            <PeriodPanel periodo={periodo} onChange={setPeriodo} />
           </motion.div>
         </motion.div>
 
         {/* SEGUNDA SEÇÃO - Cards auxiliares logo abaixo com espaçamento harmonioso */}
-        <motion.section 
+        <motion.section
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 1.2 }}
           className="mb-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
         >
-          <WeatherFinanceCard />
-          <FinancialInsightsCard />
-          <GoalCard percent={72} />
-          <InvestmentCard />
+          <WeatherFinanceCard saldo={saldoTotal} trend={trendSaldo} carregando={carregando} />
+          <FinancialInsightsCard insights={insights} carregando={carregando} />
+          <GoalCard goal={goalResumo} carregando={carregando} onManageGoal={() => navigate('/metas')} />
+          <InvestmentCard evolucaoSaldo={evolucaoSaldo} carregando={carregando} />
         </motion.section>
 
         {/* TERCEIRA SEÇÃO - Gráficos compactos */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 1.4 }}
@@ -655,34 +832,52 @@ export default function Dashboard() {
         >
           <SectionCard title="Receitas vs Despesas" className="h-full">
             <div className="h-[240px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={mockData.receitasVsDespesas}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" />
-                  <XAxis dataKey="mes" stroke="#ffffff80" />
-                  <YAxis stroke="#ffffff80" />
-                  <Tooltip formatter={tooltipCurrency} labelFormatter={(l) => `Mês: ${l}`} />
-                  <Bar dataKey="receitas" fill="#8b5cf6" radius={[6, 6, 0, 0]} />
-                  <Bar dataKey="despesas" fill="#6366f1" radius={[6, 6, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              {carregando ? (
+                <div className="flex h-full items-center justify-center text-xs text-zinc-500 dark:text-zinc-400">Carregando séries...</div>
+              ) : receitasVsDespesas.length ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={receitasVsDespesas}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" />
+                    <XAxis dataKey="mes" stroke="#ffffff80" />
+                    <YAxis stroke="#ffffff80" />
+                    <Tooltip formatter={tooltipCurrency} labelFormatter={(l) => `Mês: ${l}`} />
+                    <Bar dataKey="receitas" fill="#8b5cf6" radius={[6, 6, 0, 0]} />
+                    <Bar dataKey="despesas" fill="#6366f1" radius={[6, 6, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex h-full items-center justify-center text-xs text-zinc-500 dark:text-zinc-400">
+                  Sem movimentações registradas neste período.
+                </div>
+              )}
             </div>
           </SectionCard>
 
           <SectionCard title="Gastos por Categoria" className="h-full">
             <div className="h-[240px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={mockData.categorias} cx="50%" cy="50%" innerRadius={50} outerRadius={90} dataKey="value" paddingAngle={2}>
-                    {mockData.categorias.map((c, i) => <Cell key={i} fill={c.color} />)}
-                    <Label value={money(totalCategorias)} position="center" className="text-white font-bold" />
-                  </Pie>
-                  <Tooltip formatter={tooltipCurrency} />
-                </PieChart>
-              </ResponsiveContainer>
+              {carregando ? (
+                <div className="flex h-full items-center justify-center text-xs text-zinc-500 dark:text-zinc-400">Mapeando categorias...</div>
+              ) : categorias.length ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={categorias} cx="50%" cy="50%" innerRadius={50} outerRadius={90} dataKey="value" paddingAngle={2}>
+                      {categorias.map((categoria, index) => (
+                        <Cell key={index} fill={categoria.color} />
+                      ))}
+                      <Label value={formatMoney(totalCategorias)} position="center" className="text-white font-bold" />
+                    </Pie>
+                    <Tooltip formatter={tooltipCurrency} />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex h-full items-center justify-center text-xs text-zinc-500 dark:text-zinc-400">
+                  Cadastre despesas para ver a distribuição por categoria.
+                </div>
+              )}
             </div>
           </SectionCard>
 
-          <LineChartCard />
+          <LineChartCard data={receitasVsDespesas} carregando={carregando} />
         </motion.div>
 
         {/* QUARTA SEÇÃO - Transações / Contas / Alertas */}
@@ -696,16 +891,24 @@ export default function Dashboard() {
               </button>
             }
           >
-            <div className="max-h-[200px] divide-y divide-zinc-200/60 overflow-y-auto dark:divide-white/10">
-              {mockData.transacoesRecentes.slice(0, 3).map((t) => <TransactionRow key={t.id} t={t} />)}
-            </div>
+            {carregando ? (
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">Carregando transações...</p>
+            ) : transacoesRecentes.length ? (
+              <div className="max-h-[200px] divide-y divide-zinc-200/60 overflow-y-auto dark:divide-white/10">
+                {transacoesRecentes.map((t) => (
+                  <TransactionRow key={t.id} transaction={t} />
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">Nenhuma transação confirmada encontrada.</p>
+            )}
           </SectionCard>
-          <AccountsCard />
-          <AlertsCard />
+          <AccountsCard contas={contas} carregando={carregando} />
+          <AlertsCard alerts={alerts} carregando={carregando} />
         </div>
 
         {/* QUINTA SEÇÃO - Ações rápidas */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 1.8 }}
@@ -734,10 +937,10 @@ export default function Dashboard() {
               </div>
               <div className="mb-3 rounded-xl bg-white/60 p-3 backdrop-blur dark:bg-zinc-800/60">
                 <p className="text-sm leading-relaxed text-zinc-800 dark:text-zinc-200">
-                  🎉 <strong>Parabéns!</strong> Você economizou <span className="font-bold text-purple-600 dark:text-purple-400">{money(mockData.economia)}</span> este mês — isso representa um aumento de <strong>15.7%</strong> comparado ao mês anterior!
+                  🎉 <strong>Resumo:</strong> Seu saldo no período é <span className="font-bold text-purple-600 dark:text-purple-400">{formatMoney(economia)}</span> — variação de <strong>{trendSaldo.label}%</strong> em relação à janela anterior.
                 </p>
                 <p className="mt-2 text-xs text-zinc-600 dark:text-zinc-400">
-                  💰 <strong>Recomendação:</strong> Considere alocar 70% dessa quantia ({money(mockData.economia * 0.7)}) para sua reserva de emergência e 30% ({money(mockData.economia * 0.3)}) para investimentos de baixo risco.
+                  💰 <strong>Recomendação:</strong> Avalie direcionar 70% desse valor ({formatMoney((economia || 0) * 0.7)}) para metas ou reserva e 30% ({formatMoney((economia || 0) * 0.3)}) para oportunidades de investimento de baixo risco.
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">

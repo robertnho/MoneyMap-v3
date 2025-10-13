@@ -2,8 +2,21 @@
 import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
+import swaggerUi from 'swagger-ui-express'
 import fs from 'fs'
 import path from 'path'
+
+// Carregar OpenAPI JSON de forma compatível com múltiplas versões do Node
+let openapiDocument = {}
+try {
+  const swaggerPath = path.join(process.cwd(), 'backend', 'swagger', 'openapi.json')
+  if (fs.existsSync(swaggerPath)) {
+    openapiDocument = JSON.parse(fs.readFileSync(swaggerPath, 'utf8'))
+  }
+} catch (e) {
+  console.warn('Could not load OpenAPI document:', e && e.message)
+}
+// (fs and path already imported above)
 import { fileURLToPath } from 'url'
 import { PrismaClient } from '@prisma/client'
 import morgan from 'morgan'
@@ -11,6 +24,14 @@ import morgan from 'morgan'
 import authRouter from './routes/auth.js'
 import accountsRouter from './routes/accounts.js'
 import transactionsRouter from './routes/transactions.js'
+import recurringTransactionsRouter from './routes/recurring-transactions.js'
+import categoriesRouter from './routes/categories.js'
+import goalsRouter from './routes/goals.js'
+import budgetsRouter from './routes/budgets.js'
+import debtsRouter from './routes/debts.js'
+import reportsRouter from './routes/reports.js'
+import dashboardRouter from './routes/dashboard.js'
+import notificationsRouter from './routes/notifications.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -22,7 +43,30 @@ const prisma = new PrismaClient({
 
 const app = express()
 
-app.use(cors())
+const parseOrigins = (value) => {
+  if (!value) return []
+  return value
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean)
+}
+
+const allowedOrigins = parseOrigins(process.env.CORS_ORIGINS)
+
+const corsOptions = allowedOrigins.length
+  ? {
+      origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin)) {
+          return callback(null, true)
+        }
+        console.warn(`CORS bloqueado para origem: ${origin}`)
+        return callback(new Error('Not allowed by CORS'))
+      },
+      credentials: true,
+    }
+  : undefined
+
+app.use(cors(corsOptions))
 app.use(express.json())
 
 // ===== LOGS NO TERMINAL =====
@@ -84,20 +128,81 @@ app.get('/docs', (req, res) => {
       create: { method: 'POST', path: '/accounts' },
       update: { method: 'PUT', path: '/accounts/:id' },
       remove: { method: 'DELETE', path: '/accounts/:id' },
+      migrateTransactions: { method: 'POST', path: '/transacoes/migrate' },
     },
     transacoes: {
       list: { method: 'GET', path: '/transacoes' },
       create: { method: 'POST', path: '/transacoes' },
       update: { method: 'PUT', path: '/transacoes/:id' },
       remove: { method: 'DELETE', path: '/transacoes/:id' },
+      migrate: { method: 'POST', path: '/transacoes/migrate' },
+      transfer: { method: 'POST', path: '/transacoes/transfer' },
+      recurring: {
+        list: { method: 'GET', path: '/transacoes/recorrentes' },
+        create: { method: 'POST', path: '/transacoes/recorrentes' },
+        update: { method: 'PUT', path: '/transacoes/recorrentes/:id' },
+        remove: { method: 'DELETE', path: '/transacoes/recorrentes/:id' },
+        run: { method: 'POST', path: '/transacoes/recorrentes/:id/executar' },
+        process: { method: 'POST', path: '/transacoes/recorrentes/processar' },
+      },
+    },
+    categories: {
+      list: { method: 'GET', path: '/categories' },
+      create: { method: 'POST', path: '/categories' },
+      update: { method: 'PUT', path: '/categories/:id' },
+      remove: { method: 'DELETE', path: '/categories/:id' },
+    },
+    metas: {
+      list: { method: 'GET', path: '/metas' },
+      create: { method: 'POST', path: '/metas' },
+      update: { method: 'PUT', path: '/metas/:id' },
+      remove: { method: 'DELETE', path: '/metas/:id' },
+    },
+    budgets: {
+      list: { method: 'GET', path: '/budgets' },
+      create: { method: 'POST', path: '/budgets' },
+      update: { method: 'PUT', path: '/budgets/:id' },
+      remove: { method: 'DELETE', path: '/budgets/:id' },
+    },
+    debts: {
+      list: { method: 'GET', path: '/debts' },
+      create: { method: 'POST', path: '/debts' },
+      update: { method: 'PUT', path: '/debts/:id' },
+      remove: { method: 'DELETE', path: '/debts/:id' },
+    },
+    notifications: {
+      list: { method: 'GET', path: '/notifications' },
+      create: { method: 'POST', path: '/notifications' },
+      markAllRead: { method: 'POST', path: '/notifications/mark-all-read' },
+      markRead: { method: 'POST', path: '/notifications/:id/read' },
+      markUnread: { method: 'POST', path: '/notifications/:id/unread' },
+      remove: { method: 'DELETE', path: '/notifications/:id' },
+    },
+    reports: {
+      totals: { method: 'GET', path: '/relatorios/totais' },
+      monthly: { method: 'GET', path: '/relatorios/mensal' },
+      categories: { method: 'GET', path: '/relatorios/categorias' },
+    },
+    dashboard: {
+      overview: { method: 'GET', path: '/dashboard' },
     },
   })
 })
 
+app.use('/swagger', swaggerUi.serve, swaggerUi.setup(openapiDocument))
+
 // ===== ROTAS =====
 app.use('/auth', authRouter)
 app.use('/accounts', accountsRouter)
+app.use('/transacoes/recorrentes', recurringTransactionsRouter)
 app.use('/transacoes', transactionsRouter)
+app.use('/categories', categoriesRouter)
+app.use('/metas', goalsRouter)
+app.use('/budgets', budgetsRouter)
+app.use('/debts', debtsRouter)
+app.use('/relatorios', reportsRouter)
+app.use('/dashboard', dashboardRouter)
+app.use('/notifications', notificationsRouter)
 
 // ===== SERVE SPA (produção) ou REDIRECIONA PARA O VITE (dev) =====
 const STATIC_DIR = process.env.STATIC_DIR

@@ -1,60 +1,8 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Target, TrendingUp, Calendar, Plus, CheckCircle, Circle, DollarSign, Percent } from 'lucide-react'
 import { useTheme } from '../contexts/ThemeContext.jsx'
-
-// Dados mockados para demonstração
-const mockMetas = [
-  {
-    id: 1,
-    titulo: 'Reserva de Emergência',
-    valorAtual: 8500.00,
-    valorMeta: 12000.00,
-    prazo: '2024-12-31',
-    categoria: 'Emergência',
-    cor: 'blue',
-    status: 'ativo'
-  },
-  {
-    id: 2,
-    titulo: 'Viagem para Europa',
-    valorAtual: 3200.00,
-    valorMeta: 8000.00,
-    prazo: '2025-06-15',
-    categoria: 'Lazer',
-    cor: 'purple',
-    status: 'ativo'
-  },
-  {
-    id: 3,
-    titulo: 'Entrada do Carro',
-    valorAtual: 15000.00,
-    valorMeta: 15000.00,
-    prazo: '2024-09-30',
-    categoria: 'Transporte',
-    cor: 'green',
-    status: 'concluido'
-  },
-  {
-    id: 4,
-    titulo: 'Curso de Especialização',
-    valorAtual: 800.00,
-    valorMeta: 2500.00,
-    prazo: '2025-03-01',
-    categoria: 'Educação',
-    cor: 'orange',
-    status: 'ativo'
-  },
-  {
-    id: 5,
-    titulo: 'Investimento Inicial',
-    valorAtual: 2100.00,
-    valorMeta: 10000.00,
-    prazo: '2025-12-31',
-    categoria: 'Investimentos',
-    cor: 'indigo',
-    status: 'ativo'
-  }
-]
+import api from '../services/api'
+import GoalModal from '../components/GoalModal'
 
 function MetaCard({ meta, isDark }) {
   const progresso = Math.min((meta.valorAtual / meta.valorMeta) * 100, 100)
@@ -212,6 +160,31 @@ function DicaCard({ metasConcluidas, progressoGeral, isDark }) {
 
 export default function Metas() {
   const { isDark } = useTheme()
+  const [metas, setMetas] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [editing, setEditing] = useState(null)
+
+  useEffect(() => {
+    let mounted = true
+    async function fetchGoals() {
+      setLoading(true)
+      setError(null)
+      try {
+        const res = await api.metas.listar()
+        if (!mounted) return
+        setMetas((res.data && res.data.goals) || [])
+      } catch (e) {
+        setError(e.response?.data?.error || e.message || 'Erro ao carregar metas')
+      } finally {
+        if (mounted) setLoading(false)
+      }
+    }
+
+    fetchGoals()
+    return () => { mounted = false }
+  }, [])
   const formatMoney = (value) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -219,19 +192,34 @@ export default function Metas() {
     }).format(value)
   }
 
-  const metasAtivas = mockMetas.filter(m => m.status === 'ativo')
-  const metasConcluidas = mockMetas.filter(m => m.status === 'concluido')
-  
-  const totalEconomizado = mockMetas.reduce((acc, meta) => acc + meta.valorAtual, 0)
-  const totalMetas = mockMetas.reduce((acc, meta) => acc + meta.valorMeta, 0)
-  const progressoGeral = ((totalEconomizado / totalMetas) * 100)
+  const metasAtivas = metas.filter(m => m.status === 'active')
+  const metasConcluidas = metas.filter(m => m.status === 'completed')
 
-  // Reorganizar metas para o layout desejado: Entrada do Carro ao lado de Investimento Inicial
-  const metasOrganizadas = [
-    ...metasAtivas.slice(0, 2), // Reserva de Emergência, Viagem para Europa
-    mockMetas.find(m => m.id === 3), // Entrada do Carro (concluída)
-    ...metasAtivas.slice(2) // Curso de Especialização, Investimento Inicial
-  ].filter(Boolean)
+  const totalEconomizado = metas.reduce((acc, meta) => acc + (Number(meta.currentAmount) || 0), 0)
+  const totalMetas = metas.reduce((acc, meta) => acc + (Number(meta.targetAmount) || 0), 0)
+  const progressoGeral = totalMetas ? ((totalEconomizado / totalMetas) * 100) : 0
+
+  // manter ordem natural
+  const metasOrganizadas = metas
+
+  function openCreateModal() {
+    setEditing(null)
+    setModalOpen(true)
+  }
+
+  function openEditModal(goal) {
+    setEditing(goal)
+    setModalOpen(true)
+  }
+
+  async function handleSaved(goal) {
+    // atualizar lista
+    setMetas((prev) => {
+      const exists = prev.find((g) => g.id === goal.id)
+      if (exists) return prev.map((g) => (g.id === goal.id ? goal : g))
+      return [goal, ...prev]
+    })
+  }
 
   return (
   <div className={`min-h-screen transition-colors duration-300 ${
@@ -321,17 +309,41 @@ export default function Metas() {
           {/* Todas as Metas + Dica em Grid Uniforme */}
           <div className="mb-4">
             <h2 className={`text-xl font-semibold mb-3 ${isDark ? 'text-zinc-200' : 'text-zinc-700'}`}>Suas Metas</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {metasOrganizadas.map((meta) => (
-                <MetaCard key={meta.id} meta={meta} isDark={isDark} />
-              ))}
-              <DicaCard 
-                metasConcluidas={metasConcluidas.length} 
-                progressoGeral={progressoGeral.toFixed(1)} 
-                isDark={isDark}
-              />
+            <div className="flex items-center justify-between mb-3">
+              <div />
+              <div>
+                <button onClick={handleCreateQuick} className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-2 rounded-xl font-semibold">Nova Meta</button>
+              </div>
             </div>
+
+            {loading ? (
+              <div className="rounded-2xl p-6 bg-white/30 text-center">Carregando metas...</div>
+            ) : error ? (
+              <div className="rounded-2xl p-6 bg-red-50 text-center text-red-700">Erro: {error}</div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {metasOrganizadas.map((meta) => (
+                  <div key={meta.id} onDoubleClick={() => openEditModal(meta)}>
+                    <MetaCard meta={{
+                      titulo: meta.title,
+                      valorAtual: Number(meta.currentAmount),
+                      valorMeta: Number(meta.targetAmount),
+                      prazo: meta.dueDate ?? new Date().toISOString().slice(0,10),
+                      categoria: meta.description ?? '',
+                      cor: 'blue',
+                      status: meta.status === 'completed' ? 'concluido' : 'ativo',
+                    }} isDark={isDark} />
+                  </div>
+                ))}
+                <DicaCard 
+                  metasConcluidas={metasConcluidas.length} 
+                  progressoGeral={progressoGeral.toFixed(1)} 
+                  isDark={isDark}
+                />
+              </div>
+            )}
           </div>
+          <GoalModal isOpen={modalOpen} onClose={() => setModalOpen(false)} initial={editing} onSaved={handleSaved} />
 
           {/* Copyright */}
           <div className={`text-center text-sm font-medium backdrop-blur-sm rounded-xl p-3 border transition-colors duration-300 ${
