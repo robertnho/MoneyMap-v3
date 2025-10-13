@@ -4,16 +4,6 @@ const baseURL = import.meta.env.VITE_API_URL || ''
 
 const instancia = axios.create({ baseURL })
 
-// Garante que o token salvo seja aplicado em recarregamentos antes de qualquer requisição
-try {
-  const storedToken = typeof window !== 'undefined' ? localStorage.getItem('mm_token') : null
-  if (storedToken) {
-    instancia.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`
-  }
-} catch (error) {
-  console.warn('Não foi possível recuperar o token armazenado:', error)
-}
-
 // Wrappers de endpoints
 const api = {
   instancia,
@@ -27,6 +17,19 @@ const api = {
     criar: (payload) => instancia.post('/transacoes', payload),
     atualizar: (id, payload) => instancia.put(`/transacoes/${id}`, payload),
     remover: (id) => instancia.delete(`/transacoes/${id}`),
+    migrar: (payload) => instancia.post('/transacoes/migrate', payload),
+    transferir: (payload) => instancia.post('/transacoes/transfer', payload),
+    importar: (formData) => instancia.post('/transacoes/import', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+    recorrentes: {
+      listar: () => instancia.get('/transacoes/recorrentes'),
+      criar: (payload) => instancia.post('/transacoes/recorrentes', payload),
+      atualizar: (id, payload) => instancia.put(`/transacoes/recorrentes/${id}`, payload),
+      remover: (id) => instancia.delete(`/transacoes/recorrentes/${id}`),
+      executar: (id) => instancia.post(`/transacoes/recorrentes/${id}/executar`),
+      processarPendentes: () => instancia.post('/transacoes/recorrentes/processar'),
+    },
   },
   metas: {
     listar: () => instancia.get('/metas'),
@@ -35,15 +38,44 @@ const api = {
     remover: (id) => instancia.delete(`/metas/${id}`),
   },
   relatorios: {
-    resumo: (mes) => instancia.get('/relatorios/resumo', { params: { mes } }),
-    categorias: (mes) => instancia.get('/relatorios/categorias', { params: { mes } }),
+    totais: (periodo) => instancia.get('/relatorios/totais', { params: periodo ? { periodo } : undefined }),
+    categorias: (periodo) => instancia.get('/relatorios/categorias', { params: periodo ? { periodo } : undefined }),
     mensal: (periodo) => instancia.get('/relatorios/mensal', { params: { periodo } }),
   },
+  dashboard: {
+    overview: (periodo) => instancia.get('/dashboard', { params: periodo ? { periodo } : undefined }),
+  },
+  budgets: {
+    listar: () => instancia.get('/budgets'),
+    criar: (payload) => instancia.post('/budgets', payload),
+    atualizar: (id, payload) => instancia.put(`/budgets/${id}`, payload),
+    remover: (id) => instancia.delete(`/budgets/${id}`),
+  },
+  debts: {
+    listar: () => instancia.get('/debts'),
+    criar: (payload) => instancia.post('/debts', payload),
+    atualizar: (id, payload) => instancia.put(`/debts/${id}`, payload),
+    remover: (id) => instancia.delete(`/debts/${id}`),
+  },
   accounts: {
-    list: () => instancia.get('/accounts'),
+    list: (params = {}) => instancia.get('/accounts', { params }),
     create: (payload) => instancia.post('/accounts', payload),
     update: (id, payload) => instancia.put(`/accounts/${id}`, payload),
     remove: (id) => instancia.delete(`/accounts/${id}`),
+  },
+  categories: {
+    list: () => instancia.get('/categories'),
+    create: (payload) => instancia.post('/categories', payload),
+    update: (id, payload) => instancia.put(`/categories/${id}`, payload),
+    remove: (id) => instancia.delete(`/categories/${id}`),
+  },
+  notifications: {
+    listar: (params = {}) => instancia.get('/notifications', { params }),
+    criar: (payload) => instancia.post('/notifications', payload),
+    marcarTodasComoLidas: () => instancia.post('/notifications/mark-all-read'),
+    marcarComoLida: (id) => instancia.post(`/notifications/${id}/read`),
+    marcarComoNaoLida: (id) => instancia.post(`/notifications/${id}/unread`),
+    remover: (id) => instancia.delete(`/notifications/${id}`),
   },
 }
 

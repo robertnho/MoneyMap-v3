@@ -36,6 +36,51 @@ export const dadosDemo = {
     { id: 15, tipo: 'despesa', descricao: 'Investimento CDB', valor: 1000.00, data: '2024-10-10', categoria: 'Investimentos', status: 'confirmado' },
   ],
 
+  notificacoes: [
+    {
+      id: 'demo-rec-1',
+      title: 'Recorrência executada: Aluguel',
+      message: '1 lançamento foi gerado a partir da recorrência "Aluguel". Próxima execução em 2024-11-05.',
+      type: 'recurring',
+      severity: 'success',
+      createdAt: '2024-10-05T12:00:00Z',
+      readAt: null,
+      metadata: {
+        recurringId: 100,
+        occurrences: ['2024-10-05'],
+        nextRun: '2024-11-05',
+        executedCount: 6,
+        isActive: true,
+      },
+    },
+    {
+      id: 'demo-budget-1',
+      title: 'Orçamento de Alimentação em alerta',
+      message: 'Você atingiu 85% do limite definido para Alimentação neste mês. Considere revisar seus gastos.',
+      type: 'budget',
+      severity: 'warning',
+      createdAt: '2024-10-08T14:30:00Z',
+      readAt: '2024-10-09T08:15:00Z',
+      metadata: {
+        budgetId: 45,
+        percentual: 85,
+      },
+    },
+    {
+      id: 'demo-goal-1',
+      title: 'Meta concluída: Curso de Inglês',
+      message: 'Parabéns! Você atingiu 100% da meta Curso de Inglês e pode registrar uma celebração.',
+      type: 'goal',
+      severity: 'info',
+      createdAt: '2024-09-30T17:45:00Z',
+      readAt: '2024-10-01T10:05:00Z',
+      metadata: {
+        goalId: 3,
+        reachedAt: '2024-09-30',
+      },
+    },
+  ],
+
   // Metas financeiras
   metas: [
     {

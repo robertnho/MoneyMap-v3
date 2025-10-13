@@ -1,5 +1,5 @@
 // src/context/AuthContext.jsx
-import { createContext, useEffect, useMemo, useState, useContext, useCallback } from 'react'
+import { createContext, useEffect, useMemo, useState, useContext } from 'react'
 import api from '../services/api'
 
 const AuthContexto = createContext(null)
@@ -84,26 +84,17 @@ export function AuthProvider({ children }) {
     delete api.instancia.defaults.headers.common['Authorization']
   }
 
-  const atualizarUsuario = useCallback((updates) => {
-    setUsuario((prev) => {
-      const next = prev ? { ...prev, ...updates } : { ...updates }
-      try {
-        if (Object.keys(next).length > 0) {
-          localStorage.setItem('mm_usuario', JSON.stringify(next))
-        } else {
-          localStorage.removeItem('mm_usuario')
-        }
-      } catch (error) {
-        console.error('Erro ao persistir usuário atualizado', error)
-      }
-      return next
-    })
-  }, [])
+  const permissoes = useMemo(() => {
+    if (!usuario) return []
+    const raw = usuario.permissions ?? usuario.permissoes
+    if (Array.isArray(raw) && raw.length) return raw
+    if (typeof raw === 'string' && raw.trim()) {
+      return raw.split(',').map((p) => p.trim()).filter(Boolean)
+    }
+    return ['dashboard:read', 'transactions:write', 'reports:read']
+  }, [usuario])
 
-  const value = useMemo(
-    () => ({ usuario, token, entrar, registrar, sair, atualizarUsuario }),
-    [usuario, token, atualizarUsuario]
-  )
+  const value = useMemo(() => ({ usuario, token, permissoes, entrar, registrar, sair }), [usuario, token, permissoes])
 
   return <AuthContexto.Provider value={value}>{children}</AuthContexto.Provider>
 }
