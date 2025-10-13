@@ -13,6 +13,7 @@ import {
   X,
   CircleDollarSign,
   Bell,
+  Calculator,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 
@@ -24,6 +25,7 @@ const itens = [
   { to: '/metas', rotulo: 'Metas', icone: Target },
   { to: '/budgets', rotulo: 'Orçamentos', icone: PiggyBank },
   { to: '/debts', rotulo: 'Dívidas', icone: CircleDollarSign },
+  { to: '/calculadoras', rotulo: 'Calculadoras', icone: Calculator },
   { to: '/relatorios', rotulo: 'Relatórios', icone: BarChart3 },
   { to: '/educacao', rotulo: 'Educação', icone: BookOpen },
   { to: '/configuracoes', rotulo: 'Configurações', icone: Settings },

@@ -125,6 +125,78 @@ export default function Configuracoes() {
 
   // --------- PREFERÊNCIAS ----------
   const { isDark, toggleTheme } = useTheme()
+  const [settingsForm, setSettingsForm] = useState({
+    currency: 'BRL',
+    locale: 'pt-BR',
+    timezone: 'America/Sao_Paulo',
+    notifyBudgetPct: 80,
+    notifyDebtDays: 3,
+  })
+  const [settingsLoading, setSettingsLoading] = useState(false)
+  const [settingsSaving, setSettingsSaving] = useState(false)
+  const [settingsLoaded, setSettingsLoaded] = useState(false)
+
+  const loadSettings = useCallback(async () => {
+    try {
+      setSettingsLoading(true)
+      const { data } = await api.settings.obter()
+      if (data) {
+        const pct = Number(data.notifyBudgetPct ?? 0.8) * 100
+        const debt = Number(data.notifyDebtDays ?? 3)
+        setSettingsForm({
+          currency: data.currency ?? 'BRL',
+          locale: data.locale ?? 'pt-BR',
+          timezone: data.timezone ?? 'America/Sao_Paulo',
+          notifyBudgetPct: Number.isFinite(pct) ? Math.max(0, Math.min(100, pct)) : 80,
+          notifyDebtDays: Number.isFinite(debt) ? Math.max(0, Math.min(60, debt)) : 3,
+        })
+      }
+      setSettingsLoaded(true)
+    } catch (error) {
+      console.error('load settings error', error)
+      setToast('Não foi possível carregar preferências')
+    } finally {
+      setSettingsLoading(false)
+    }
+  }, [setToast])
+
+  useEffect(() => {
+    if (tab === 'Preferências' && !settingsLoaded && !settingsLoading) {
+      loadSettings()
+    }
+  }, [tab, settingsLoaded, settingsLoading, loadSettings])
+
+  const handleSettingsChange = useCallback((field, value) => {
+    setSettingsForm((prev) => ({ ...prev, [field]: value }))
+  }, [])
+
+  const handleSettingsSave = useCallback(async (event) => {
+    event.preventDefault()
+    setSettingsSaving(true)
+    try {
+      const pct = Math.max(0, Math.min(100, Number(settingsForm.notifyBudgetPct) || 0))
+      const debtDays = Math.max(0, Math.min(60, Number(settingsForm.notifyDebtDays) || 0))
+      await api.settings.salvar({
+        currency: settingsForm.currency,
+        locale: settingsForm.locale,
+        timezone: settingsForm.timezone,
+        notifyBudgetPct: pct / 100,
+        notifyDebtDays: debtDays,
+      })
+      setSettingsForm((prev) => ({
+        ...prev,
+        notifyBudgetPct: pct,
+        notifyDebtDays: debtDays,
+      }))
+      setToast('Preferências salvas com sucesso.')
+    } catch (error) {
+      console.error('save settings error', error)
+      const msg = error?.response?.data?.error ?? 'Não foi possível salvar as preferências.'
+      setToast(msg)
+    } finally {
+      setSettingsSaving(false)
+    }
+  }, [settingsForm, setToast])
 
   // --------- DADOS ----------
   function baixarDados() {
@@ -763,15 +835,92 @@ export default function Configuracoes() {
                         <Globe className="h-5 w-5 text-blue-600" />
                         <h3 className="font-semibold text-zinc-800 dark:text-white">🌐 Idioma</h3>
                       </div>
-                      <select className="w-full rounded-xl border border-zinc-300 dark:border-zinc-600 p-3 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-violet-500/50">
+                      <select
+                        value={settingsForm.locale}
+                        onChange={(event) => handleSettingsChange('locale', event.target.value)}
+                        disabled={settingsLoading}
+                        className="w-full rounded-xl border border-zinc-300 dark:border-zinc-600 p-3 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-violet-500/50 disabled:opacity-60"
+                      >
                         <option value="pt-BR">Português (Brasil)</option>
                         <option value="en-US">English (US)</option>
                         <option value="es-ES">Español</option>
                       </select>
                     </div>
 
-                    {/* Modo Demo */}
-                    {/* Privacidade */}
+                    <div className="rounded-2xl border border-zinc-200/60 bg-white/50 backdrop-blur-sm p-6 shadow-md transition-all duration-300 dark:border-white/10 dark:bg-zinc-800/50 md:col-span-2">
+                      <div className="flex items-center gap-3 mb-4">
+                        <Settings className="h-5 w-5 text-indigo-600" />
+                        <h3 className="font-semibold text-zinc-800 dark:text-white">⚙️ Preferências de conta</h3>
+                      </div>
+                      {settingsLoading && !settingsLoaded ? (
+                        <p className="text-sm text-zinc-500 dark:text-zinc-400">Carregando preferências...</p>
+                      ) : (
+                        <form className="space-y-4" onSubmit={handleSettingsSave}>
+                          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <div>
+                              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Moeda padrão</label>
+                              <select
+                                value={settingsForm.currency}
+                                onChange={(event) => handleSettingsChange('currency', event.target.value)}
+                                className="w-full rounded-xl border border-zinc-300 dark:border-zinc-600 p-3 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-violet-500/50"
+                                disabled={settingsSaving}
+                              >
+                                <option value="BRL">Real (BRL)</option>
+                                <option value="USD">Dólar (USD)</option>
+                                <option value="EUR">Euro (EUR)</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Fuso horário</label>
+                              <input
+                                type="text"
+                                value={settingsForm.timezone}
+                                onChange={(event) => handleSettingsChange('timezone', event.target.value)}
+                                className="w-full rounded-xl border border-zinc-300 dark:border-zinc-600 px-4 py-3 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-violet-500/40 focus:border-violet-500"
+                                placeholder="Ex.: America/Sao_Paulo"
+                                disabled={settingsSaving}
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Alerta de orçamento (%)</label>
+                              <input
+                                type="number"
+                                min="0"
+                                max="100"
+                                step="0.5"
+                                value={settingsForm.notifyBudgetPct}
+                                onChange={(event) => handleSettingsChange('notifyBudgetPct', Number(event.target.value))}
+                                className="w-full rounded-xl border border-zinc-300 dark:border-zinc-600 px-4 py-3 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-violet-500/40 focus:border-violet-500"
+                                disabled={settingsSaving}
+                              />
+                              <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Porcentagem do orçamento mensal para enviar alerta.</p>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Dias antes do vencimento da dívida</label>
+                              <input
+                                type="number"
+                                min="0"
+                                max="60"
+                                value={settingsForm.notifyDebtDays}
+                                onChange={(event) => handleSettingsChange('notifyDebtDays', Number(event.target.value))}
+                                className="w-full rounded-xl border border-zinc-300 dark:border-zinc-600 px-4 py-3 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-violet-500/40 focus:border-violet-500"
+                                disabled={settingsSaving}
+                              />
+                              <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Quantidade de dias para antecipar alertas de dívidas.</p>
+                            </div>
+                          </div>
+                          <div className="flex justify-end">
+                            <button
+                              type="submit"
+                              disabled={settingsSaving}
+                              className="px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-sky-400 text-white font-medium shadow-lg hover:opacity-90 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                            >
+                              {settingsSaving ? 'Salvando…' : 'Salvar preferências'}
+                            </button>
+                          </div>
+                        </form>
+                      )}
+                    </div>
 
                   </div>
                 </div>

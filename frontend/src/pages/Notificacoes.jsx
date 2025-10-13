@@ -47,6 +47,9 @@ const typeLabels = {
   budget: 'Orçamento',
   goal: 'Meta',
   reminder: 'Lembrete',
+  BUDGET_THRESHOLD: 'Orçamento',
+  DEBT_DUE: 'Dívida',
+  GOAL_REACHED: 'Meta',
 }
 
 const filters = [

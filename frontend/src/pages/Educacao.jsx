@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ChevronRight, BookOpen, TrendingUp, PiggyBank, Shield, Target, Lightbulb, Play, Clock, CheckCircle, Star, GraduationCap, Zap, Calendar } from 'lucide-react'
+import api from '../services/api'
 
 // Dados mockados para demonstração
 const categorias = [
@@ -42,6 +43,7 @@ const artigos = [
   {
     id: 1,
     categoria: 'orcamento',
+    slug: 'orcamento-como-fazer-orcamento',
     titulo: 'Como fazer um orçamento que funciona',
     tempo: '8 min',
     dificuldade: 'Iniciante',
@@ -51,6 +53,7 @@ const artigos = [
   {
     id: 2,
     categoria: 'dividas',
+    slug: 'dividas-metodo-bola-de-neve',
     titulo: 'Método bola de neve para quitar dívidas',
     tempo: '6 min',
     dificuldade: 'Iniciante',
@@ -60,6 +63,7 @@ const artigos = [
   {
     id: 3,
     categoria: 'reserva',
+    slug: 'reserva-quanto-guardar',
     titulo: 'Reserva de emergência: quanto guardar?',
     tempo: '10 min',
     dificuldade: 'Iniciante',
@@ -69,6 +73,7 @@ const artigos = [
   {
     id: 4,
     categoria: 'investimentos',
+    slug: 'investimentos-tesouro-direto',
     titulo: 'Tesouro Direto: seu primeiro investimento',
     tempo: '12 min',
     dificuldade: 'Iniciante',
@@ -114,8 +119,9 @@ function CategoriaCard({ categoria }) {
   )
 }
 
-function ArtigoCard({ artigo }) {
+function ArtigoCard({ artigo, completed, onToggle, saving }) {
   const navigate = useNavigate()
+  const isCompleted = Boolean(completed)
 
   return (
     <div 
@@ -124,7 +130,7 @@ function ArtigoCard({ artigo }) {
     >
       <div className="flex items-start justify-between mb-4">
         <h3 className="text-lg font-semibold text-zinc-800 dark:text-white pr-4 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">{artigo.titulo}</h3>
-        {artigo.concluido ? (
+        {isCompleted ? (
           <CheckCircle className="w-6 h-6 text-emerald-500 flex-shrink-0" />
         ) : (
           <Play className="w-6 h-6 text-violet-500 flex-shrink-0" />
@@ -148,24 +154,101 @@ function ArtigoCard({ artigo }) {
       <p className="text-zinc-600 dark:text-zinc-300 text-sm mb-6 leading-relaxed">
         {artigo.conteudo.substring(0, 180)}...
       </p>
-      
-      <button className={`w-full rounded-xl py-3 px-4 font-medium text-sm transition-all duration-200 ${
-        artigo.concluido
-          ? 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700'
-          : 'bg-gradient-to-r from-indigo-500 to-sky-400 text-white shadow-md hover:opacity-90 hover:-translate-y-0.5'
-      }`}>
-        {artigo.concluido ? 'Revisar Artigo' : 'Ler Artigo'}
-      </button>
+
+      <div className="flex flex-wrap gap-3">
+        <button
+          type="button"
+          className={`flex-1 min-w-[140px] rounded-xl py-3 px-4 font-medium text-sm transition-all duration-200 ${
+            isCompleted
+              ? 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700'
+              : 'bg-gradient-to-r from-indigo-500 to-sky-400 text-white shadow-md hover:opacity-90 hover:-translate-y-0.5'
+          }`}
+        >
+          {isCompleted ? 'Revisar Artigo' : 'Ler Artigo'}
+        </button>
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation()
+            onToggle?.()
+          }}
+          disabled={saving}
+          className="min-w-[140px] rounded-xl border border-violet-300 px-4 py-3 text-sm font-medium text-violet-600 transition hover:bg-violet-50 disabled:opacity-60 dark:border-violet-700 dark:text-violet-300 dark:hover:bg-violet-900/20"
+        >
+          {saving ? 'Salvando…' : isCompleted ? 'Marcar como pendente' : 'Marcar como concluído'}
+        </button>
+      </div>
     </div>
   )
 }
 
 export default function Educacao() {
   const [categoriaSelecionada, setCategoriaSelecionada] = useState('todas')
-  
-  const artigosFiltrados = categoriaSelecionada === 'todas' 
-    ? artigos 
-    : artigos.filter(artigo => artigo.categoria === categoriaSelecionada)
+  const [progressMap, setProgressMap] = useState({})
+  const [loadingProgress, setLoadingProgress] = useState(false)
+  const [savingSlug, setSavingSlug] = useState('')
+  const [statusInfo, setStatusInfo] = useState(null)
+
+  const fetchProgress = useCallback(async () => {
+    try {
+      setLoadingProgress(true)
+      const { data } = await api.education.progresso()
+      if (Array.isArray(data)) {
+        const map = {}
+        data.forEach((item) => {
+          if (item.lessonSlug) {
+            map[item.lessonSlug] = Boolean(item.completed)
+          }
+        })
+        setProgressMap(map)
+      }
+    } catch (error) {
+      console.error('load education progress error', error)
+      setStatusInfo({ text: 'Não foi possível carregar seu progresso.', tone: 'error' })
+    } finally {
+      setLoadingProgress(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchProgress()
+  }, [fetchProgress])
+
+  useEffect(() => {
+    if (!statusInfo?.text) return
+    const timer = setTimeout(() => setStatusInfo(null), 3000)
+    return () => clearTimeout(timer)
+  }, [statusInfo])
+
+  const handleToggleProgresso = useCallback(async (slug, completed) => {
+    setSavingSlug(slug)
+    try {
+      const next = !completed
+      await api.education.salvarProgresso({ lessonSlug: slug, completed: next })
+      setProgressMap((prev) => ({ ...prev, [slug]: next }))
+      setStatusInfo({ text: next ? 'Lição marcada como concluída.' : 'Lição marcada como pendente.', tone: 'success' })
+    } catch (error) {
+      console.error('toggle education progress error', error)
+      setStatusInfo({ text: 'Não foi possível atualizar o progresso.', tone: 'error' })
+    } finally {
+      setSavingSlug('')
+    }
+  }, [])
+
+  const artigosComStatus = useMemo(
+    () => artigos.map((artigo) => ({ ...artigo, concluido: progressMap[artigo.slug] ?? artigo.concluido })),
+    [progressMap],
+  )
+
+  const artigosFiltrados = useMemo(
+    () => (categoriaSelecionada === 'todas'
+      ? artigosComStatus
+      : artigosComStatus.filter((artigo) => artigo.categoria === categoriaSelecionada)),
+    [categoriaSelecionada, artigosComStatus],
+  )
+
+  const totalConcluidos = useMemo(() => artigosComStatus.filter((artigo) => artigo.concluido).length, [artigosComStatus])
+  const progressoPercent = artigosComStatus.length ? Math.round((totalConcluidos / artigosComStatus.length) * 100) : 0
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden">
@@ -215,6 +298,20 @@ export default function Educacao() {
           </div>
         </div>
       </div>
+
+        {statusInfo?.text ? (
+          <div className="mx-auto max-w-[1600px] px-6 pt-4 lg:px-8">
+            <div
+              className={`rounded-xl border px-4 py-3 text-sm ${
+                statusInfo.tone === 'error'
+                  ? 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/40 dark:bg-rose-900/20 dark:text-rose-200'
+                  : 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-900/20 dark:text-emerald-200'
+              }`}
+            >
+              {statusInfo.text}
+            </div>
+          </div>
+        ) : null}
 
       {/* Conteúdo */}
       <div className="mx-auto max-w-[1600px] px-6 pb-6 lg:px-8 space-y-8">
@@ -283,7 +380,13 @@ export default function Educacao() {
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {artigosFiltrados.map((artigo) => (
-              <ArtigoCard key={artigo.id} artigo={artigo} />
+              <ArtigoCard
+                key={artigo.id}
+                artigo={artigo}
+                completed={artigo.concluido}
+                onToggle={() => handleToggleProgresso(artigo.slug, artigo.concluido)}
+                saving={savingSlug === artigo.slug}
+              />
             ))}
           </div>
         </div>
@@ -304,10 +407,17 @@ export default function Educacao() {
             <div>
               <div className="mb-3 flex items-center justify-between">
                 <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Artigos Concluídos</span>
-                <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">2 de 4 (50%)</span>
+                <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                  {loadingProgress
+                    ? 'Carregando...'
+                    : `${totalConcluidos} de ${artigosComStatus.length} (${progressoPercent}%)`}
+                </span>
               </div>
               <div className="h-3 w-full rounded-full bg-zinc-200 dark:bg-zinc-700">
-                <div className="h-3 rounded-full bg-gradient-to-r from-violet-500 to-purple-500 transition-all duration-700" style={{ width: '50%' }}></div>
+                <div
+                  className="h-3 rounded-full bg-gradient-to-r from-violet-500 to-purple-500 transition-all duration-700"
+                  style={{ width: `${progressoPercent}%` }}
+                ></div>
               </div>
             </div>
             
