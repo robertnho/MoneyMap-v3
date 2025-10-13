@@ -5,6 +5,7 @@ import cors from 'cors'
 import swaggerUi from 'swagger-ui-express'
 import fs from 'fs'
 import path from 'path'
+import cron from 'node-cron'
 
 // Carregar OpenAPI JSON de forma compatível com múltiplas versões do Node
 let openapiDocument = {}
@@ -18,8 +19,8 @@ try {
 }
 // (fs and path already imported above)
 import { fileURLToPath } from 'url'
-import { PrismaClient } from '@prisma/client'
 import morgan from 'morgan'
+import prisma from './lib/prisma.js'
 
 import authRouter from './routes/auth.js'
 import accountsRouter from './routes/accounts.js'
@@ -32,14 +33,14 @@ import debtsRouter from './routes/debts.js'
 import reportsRouter from './routes/reports.js'
 import dashboardRouter from './routes/dashboard.js'
 import notificationsRouter from './routes/notifications.js'
+import recurringRouter from './routes/recurring.js'
+import settingsRouter from './routes/settings.js'
+import educationRouter from './routes/education.js'
+import { processRecurringRules } from './jobs/processRecurring.js'
+import { generateNotifications } from './jobs/notifications.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
-
-// Prisma com logs no terminal
-const prisma = new PrismaClient({
-  log: ['query', 'info', 'warn', 'error'],
-})
 
 const app = express()
 
@@ -177,6 +178,9 @@ app.get('/docs', (req, res) => {
       markRead: { method: 'POST', path: '/notifications/:id/read' },
       markUnread: { method: 'POST', path: '/notifications/:id/unread' },
       remove: { method: 'DELETE', path: '/notifications/:id' },
+      prefs: { method: 'GET', path: '/notifications/prefs' },
+      updatePrefs: { method: 'PUT', path: '/notifications/prefs' },
+      runNow: { method: 'POST', path: '/notifications/run-now' },
     },
     reports: {
       totals: { method: 'GET', path: '/relatorios/totais' },
@@ -185,6 +189,20 @@ app.get('/docs', (req, res) => {
     },
     dashboard: {
       overview: { method: 'GET', path: '/dashboard' },
+    },
+    recurring: {
+      list: { method: 'GET', path: '/recurring' },
+      create: { method: 'POST', path: '/recurring' },
+      update: { method: 'PUT', path: '/recurring/:id' },
+      process: { method: 'POST', path: '/recurring/process-now' },
+    },
+    settings: {
+      get: { method: 'GET', path: '/settings' },
+      update: { method: 'PUT', path: '/settings' },
+    },
+    education: {
+      progressList: { method: 'GET', path: '/education/progress' },
+      progressSave: { method: 'POST', path: '/education/progress' },
     },
   })
 })
@@ -203,6 +221,28 @@ app.use('/debts', debtsRouter)
 app.use('/relatorios', reportsRouter)
 app.use('/dashboard', dashboardRouter)
 app.use('/notifications', notificationsRouter)
+app.use('/recurring', recurringRouter)
+app.use('/settings', settingsRouter)
+app.use('/education', educationRouter)
+
+// ===== CRON JOBS =====
+cron.schedule('10 2 * * *', async () => {
+  try {
+    await processRecurringRules()
+    console.info('[cron] recurring ok')
+  } catch (error) {
+    console.error('[cron] recurring error:', error?.message || error)
+  }
+})
+
+cron.schedule('30 7 * * *', async () => {
+  try {
+    await generateNotifications()
+    console.info('[cron] notifications ok')
+  } catch (error) {
+    console.error('[cron] notifications error:', error?.message || error)
+  }
+})
 
 // ===== SERVE SPA (produção) ou REDIRECIONA PARA O VITE (dev) =====
 const STATIC_DIR = process.env.STATIC_DIR

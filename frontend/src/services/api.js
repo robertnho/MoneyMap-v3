@@ -76,6 +76,19 @@ const api = {
     marcarComoLida: (id) => instancia.post(`/notifications/${id}/read`),
     marcarComoNaoLida: (id) => instancia.post(`/notifications/${id}/unread`),
     remover: (id) => instancia.delete(`/notifications/${id}`),
+    preferencias: {
+      obter: () => instancia.get('/notifications/prefs'),
+      salvar: (payload) => instancia.put('/notifications/prefs', payload),
+    },
+    executarAgora: () => instancia.post('/notifications/run-now'),
+  },
+  settings: {
+    obter: () => instancia.get('/settings'),
+    salvar: (payload) => instancia.put('/settings', payload),
+  },
+  education: {
+    progresso: () => instancia.get('/education/progress'),
+    salvarProgresso: (payload) => instancia.post('/education/progress', payload),
   },
 }
 

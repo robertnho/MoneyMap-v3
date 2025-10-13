@@ -1,8 +1,6 @@
 // backend/src/middleware/auth.js
-import { PrismaClient } from '@prisma/client'
 import { verifyToken } from '../lib/jwt.js'
-
-const prisma = new PrismaClient()
+import prisma from '../lib/prisma.js'
 
 export async function requireAuth (req, res, next) {
   try {

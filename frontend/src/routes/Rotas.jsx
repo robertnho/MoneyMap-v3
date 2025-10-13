@@ -19,6 +19,7 @@ import Configuracoes from '../pages/Configuracoes.jsx';
 import Budgets from '../pages/Budgets.jsx';
 import Debts from '../pages/Debts.jsx';
 import Notificacoes from '../pages/Notificacoes.jsx';
+import CalculadorasExtras from '../pages/CalculadorasExtras.jsx';
 
 import PublicLayout from '../layouts/PublicLayout.jsx';
 import DashboardLayout from '../layouts/DashboardLayout.jsx';
@@ -95,6 +96,7 @@ export default function Rotas() {
         <Route path="/metas" element={<Metas />} />
         <Route path="/budgets" element={<Budgets />} />
         <Route path="/debts" element={<Debts />} />
+        <Route path="/calculadoras" element={<CalculadorasExtras />} />
         <Route
           path="/relatorios"
           element={(

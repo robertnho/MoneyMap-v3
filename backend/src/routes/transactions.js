@@ -1,12 +1,20 @@
+import crypto from 'crypto'
 import { Router } from 'express'
 import multer from 'multer'
 import { parse } from 'csv-parse/sync'
-import { PrismaClient, Prisma } from '@prisma/client'
+import { Prisma } from '@prisma/client'
 import { z } from 'zod'
 import { requireAuth } from '../middleware/auth.js'
+import prisma from '../lib/prisma.js'
 
-const prisma = new PrismaClient()
 const router = Router()
+
+function txHash ({ userId, accountId, data, valor, descricao }) {
+  const date = new Date(data)
+  if (Number.isNaN(date.getTime())) return null
+  const base = `${userId}|${accountId}|${date.toISOString().slice(0, 10)}|${Number(valor).toFixed(2)}|${(descricao || '').trim().toLowerCase()}`
+  return crypto.createHash('sha256').update(base).digest('hex')
+}
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -738,8 +746,17 @@ router.post('/import', requireAuth, upload.single('file'), async (req, res) => {
       }
 
       const dataFinal = parsed.data
+      const targetAccountId = dataFinal.accountId ?? account.id
+      const hash = txHash({
+        userId: req.user.id,
+        accountId: targetAccountId,
+        data: dataFinal.data,
+        valor: dataFinal.valor,
+        descricao: dataFinal.descricao,
+      })
+
       validRows.push({
-        accountId: dataFinal.accountId ?? account.id,
+        accountId: targetAccountId,
         descricao: dataFinal.descricao,
         categoria: dataFinal.categoria ?? 'Outros',
         categoryId: dataFinal.categoryId ?? null,
@@ -748,6 +765,7 @@ router.post('/import', requireAuth, upload.single('file'), async (req, res) => {
         status: dataFinal.status,
         data: dataFinal.data,
         observacao: dataFinal.observacao ?? null,
+        importHash: hash,
       })
     })
 
@@ -758,11 +776,40 @@ router.post('/import', requireAuth, upload.single('file'), async (req, res) => {
       })
     }
 
+    const seenHashes = new Set()
+    const uniqueRows = []
+    let duplicateInFile = 0
+    for (const row of validRows) {
+      if (!row.importHash) {
+        uniqueRows.push(row)
+        continue
+      }
+      if (seenHashes.has(row.importHash)) {
+        duplicateInFile += 1
+        continue
+      }
+      seenHashes.add(row.importHash)
+      uniqueRows.push(row)
+    }
+
+    if (!uniqueRows.length) {
+      return res.json({
+        processed: records.length,
+        imported: 0,
+        ignored: skippedRows + duplicateInFile,
+        duplicates: duplicateInFile,
+        adjustedSigns,
+        warnings,
+        errors,
+      })
+    }
+
     const insertResult = await prisma.transaction.createMany({
-      data: validRows,
+      data: uniqueRows,
+      skipDuplicates: true,
     })
 
-    const duplicates = Math.max(0, validRows.length - insertResult.count)
+    const duplicates = duplicateInFile + Math.max(0, uniqueRows.length - insertResult.count)
     const ignored = skippedRows + duplicates
 
     res.json({
