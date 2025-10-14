@@ -1,13 +1,19 @@
 // backend/src/routes/accounts.js
 import { Router } from 'express'
-import { PrismaClient, Prisma } from '@prisma/client'
+import { Prisma } from '@prisma/client'
 import { z } from 'zod'
 import { requireAuth } from '../middleware/auth.js'
+import prisma from '../lib/prisma.js'
 
-const prisma = new PrismaClient()
 const router = Router()
 
 const colorSchema = z.string().trim().min(1).max(20)
+const currencySchema = z
+  .string()
+  .trim()
+  .min(3)
+  .max(3)
+  .transform((value) => value.toUpperCase())
 const balanceSchema = z
   .union([z.string(), z.number()])
   .transform((valor) => {
@@ -28,6 +34,7 @@ const CreateAccountSchema = z.object({
   color: colorSchema,
   isDefault: z.boolean().optional(),
   initialBalance: balanceSchema.optional(),
+  currency: currencySchema.optional(),
 })
 
 const UpdateAccountSchema = z.object({
@@ -36,6 +43,7 @@ const UpdateAccountSchema = z.object({
   isDefault: z.boolean().optional(),
   initialBalance: balanceSchema.optional(),
   isArchived: z.boolean().optional(),
+  currency: currencySchema.optional(),
 })
 
 const includeArchivedFlag = (value) => {
@@ -68,7 +76,7 @@ router.get('/', requireAuth, async (req, res) => {
 // Cria conta
 router.post('/', requireAuth, async (req, res) => {
   try {
-    const { name, color, isDefault, initialBalance } = CreateAccountSchema.parse(req.body)
+    const { name, color, isDefault, initialBalance, currency } = CreateAccountSchema.parse(req.body)
     const userId = req.user.id
 
     const account = await prisma.$transaction(async (tx) => {
@@ -87,6 +95,8 @@ router.post('/', requireAuth, async (req, res) => {
           userId,
           initialBalance: initialBalance ?? new Prisma.Decimal('0'),
           archivedAt: null,
+          deletedAt: null,
+          currency: currency ?? 'BRL',
         },
       })
     })
@@ -132,6 +142,7 @@ router.put('/:id', requireAuth, async (req, res) => {
       if (parsed.name !== undefined) updateData.name = parsed.name
       if (parsed.color !== undefined) updateData.color = parsed.color
       if (parsed.initialBalance !== undefined) updateData.initialBalance = parsed.initialBalance
+      if (parsed.currency !== undefined) updateData.currency = parsed.currency
 
       if (parsed.isArchived === true) {
         updateData.archivedAt = new Date()

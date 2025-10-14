@@ -1,9 +1,7 @@
 import { Router } from 'express'
-import { PrismaClient } from '@prisma/client'
 import { z } from 'zod'
 import { requireAuth } from '../middleware/auth.js'
-
-const prisma = new PrismaClient()
+import prisma from '../lib/prisma.js'
 const router = Router()
 
 const periodoSchema = z.enum(['3meses', '6meses', '1ano']).default('6meses')
@@ -57,10 +55,30 @@ const buildMonthBuckets = (end, months) => {
   return buckets
 }
 
-const serializeTotals = (transactions) =>
+const convertAmount = (amount, fromCurrency, baseCurrency, rateMap) => {
+  const numeric = typeof amount === 'number' ? amount : Number(amount ?? 0)
+  if (!Number.isFinite(numeric)) return 0
+  const from = (fromCurrency || baseCurrency || 'BRL').toUpperCase()
+  const base = (baseCurrency || 'BRL').toUpperCase()
+  if (from === base) return numeric
+
+  const forwardKey = `${from}:${base}`
+  const backwardKey = `${base}:${from}`
+
+  if (rateMap.has(forwardKey)) {
+    return numeric * rateMap.get(forwardKey)
+  }
+  if (rateMap.has(backwardKey)) {
+    const rate = rateMap.get(backwardKey)
+    if (rate) return numeric / rate
+  }
+  return numeric
+}
+
+const serializeTotals = (transactions, baseCurrency, rateMap) =>
   transactions.reduce(
     (acc, tx) => {
-      const valor = Number(tx.valor)
+      const valor = convertAmount(tx.valor, tx.account?.currency, baseCurrency, rateMap)
       if (tx.tipo === 'receita') acc.receitas += valor
       else acc.despesas += valor
       return acc
@@ -75,6 +93,7 @@ const loadTransactions = (userId, range, { includeCategory = false } = {}) => {
     categoria: true,
     categoryId: true,
     data: true,
+    account: { select: { currency: true } },
   }
 
   const select = includeCategory
@@ -98,11 +117,30 @@ const loadTransactions = (userId, range, { includeCategory = false } = {}) => {
   })
 }
 
+const buildCurrencyContext = async (userId, queryBase) => {
+  const baseCurrency = queryBase
+    ? queryBase.toString().trim().toUpperCase()
+    : (
+        (
+          await prisma.userSettings.findUnique({
+            where: { userId },
+            select: { currency: true },
+          })
+        )?.currency ?? 'BRL'
+      ).toUpperCase()
+
+  const rates = await prisma.fxRate.findMany({ select: { base: true, quote: true, rate: true } })
+  const rateMap = new Map(rates.map((rate) => [`${rate.base.toUpperCase()}:${rate.quote.toUpperCase()}`, Number(rate.rate)]))
+
+  return { baseCurrency, rateMap }
+}
+
 router.get('/', requireAuth, async (req, res) => {
   try {
     const { periodo = '6meses' } = queryWithPeriodo.parse(req.query)
     const range = getPeriodRange(periodo)
     const previousRange = getPreviousRange(range)
+    const { baseCurrency, rateMap } = await buildCurrencyContext(req.user.id, req.query.base)
 
     const [
       currentTransactions,
@@ -117,7 +155,7 @@ router.get('/', requireAuth, async (req, res) => {
       loadTransactions(req.user.id, previousRange),
       prisma.account.findMany({
         where: { userId: req.user.id, archivedAt: null },
-        select: { id: true, name: true, color: true, isDefault: true, initialBalance: true },
+        select: { id: true, name: true, color: true, isDefault: true, initialBalance: true, currency: true },
         orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }],
       }),
       prisma.transaction.groupBy({
@@ -131,14 +169,14 @@ router.get('/', requireAuth, async (req, res) => {
           status: 'confirmado',
           data: { lt: range.start },
         },
-        select: { valor: true, tipo: true },
+        select: { valor: true, tipo: true, account: { select: { currency: true } } },
       }),
       prisma.transaction.findMany({
         where: { account: { userId: req.user.id }, status: 'confirmado' },
         orderBy: [{ data: 'desc' }, { createdAt: 'desc' }],
         take: 5,
         include: {
-          account: { select: { id: true, name: true, color: true } },
+          account: { select: { id: true, name: true, color: true, currency: true } },
           category: { select: { id: true, name: true, color: true } },
         },
       }),
@@ -148,8 +186,8 @@ router.get('/', requireAuth, async (req, res) => {
       }),
     ])
 
-    const currentTotalsRaw = serializeTotals(currentTransactions)
-    const previousTotalsRaw = serializeTotals(previousTransactions)
+    const currentTotalsRaw = serializeTotals(currentTransactions, baseCurrency, rateMap)
+    const previousTotalsRaw = serializeTotals(previousTransactions, baseCurrency, rateMap)
 
     const currentTotals = {
       receitas: round2(currentTotalsRaw.receitas),
@@ -171,7 +209,7 @@ router.get('/', requireAuth, async (req, res) => {
       const key = `${date.getUTCFullYear()}-${date.getUTCMonth()}`
       const bucket = bucketsMap.get(key)
       if (!bucket) return
-      const valor = Number(tx.valor)
+      const valor = convertAmount(tx.valor, tx.account?.currency, baseCurrency, rateMap)
       if (tx.tipo === 'receita') bucket.receitas += valor
       else bucket.despesas += valor
     })
@@ -183,9 +221,12 @@ router.get('/', requireAuth, async (req, res) => {
       despesas: round2(bucket.despesas),
     }))
 
-    const saldoInicial = accounts.reduce((acc, account) => acc + Number(account.initialBalance), 0)
+    const saldoInicial = accounts.reduce(
+      (acc, account) => acc + convertAmount(account.initialBalance, account.currency, baseCurrency, rateMap),
+      0,
+    )
     const saldoAnteriorRange = transactionsBeforeRange.reduce((acc, tx) => {
-      const valor = Number(tx.valor)
+      const valor = convertAmount(tx.valor, tx.account?.currency, baseCurrency, rateMap)
       return tx.tipo === 'receita' ? acc + valor : acc - valor
     }, saldoInicial)
 
@@ -196,7 +237,10 @@ router.get('/', requireAuth, async (req, res) => {
     })
 
     const despesas = currentTransactions.filter((tx) => tx.tipo === 'despesa')
-    const totalDespesas = despesas.reduce((acc, tx) => acc + Number(tx.valor), 0)
+    const totalDespesas = despesas.reduce(
+      (acc, tx) => acc + convertAmount(tx.valor, tx.account?.currency, baseCurrency, rateMap),
+      0,
+    )
 
     const categoryMap = new Map()
     despesas.forEach((tx) => {
@@ -206,7 +250,7 @@ router.get('/', requireAuth, async (req, res) => {
         color: tx.category?.color ?? null,
         value: 0,
       }
-      entry.value += Number(tx.valor)
+      entry.value += convertAmount(tx.valor, tx.account?.currency, baseCurrency, rateMap)
       if (!entry.color && tx.category?.color) entry.color = tx.category.color
       categoryMap.set(key, entry)
     })
@@ -221,9 +265,11 @@ router.get('/', requireAuth, async (req, res) => {
       }))
 
     const accountTotals = new Map()
+    const accountCurrencyMap = new Map(accounts.map((account) => [account.id, account.currency || baseCurrency]))
     accountAggregates.forEach((item) => {
       const entry = accountTotals.get(item.accountId) ?? { receitas: 0, despesas: 0 }
-      const valor = Number(item._sum?.valor ?? 0)
+      const currency = accountCurrencyMap.get(item.accountId) || baseCurrency
+      const valor = convertAmount(item._sum?.valor ?? 0, currency, baseCurrency, rateMap)
       if (item.tipo === 'receita') entry.receitas += valor
       else entry.despesas += valor
       accountTotals.set(item.accountId, entry)
@@ -231,12 +277,14 @@ router.get('/', requireAuth, async (req, res) => {
 
     const contas = accounts.map((account) => {
       const totals = accountTotals.get(account.id) ?? { receitas: 0, despesas: 0 }
-      const balance = round2(Number(account.initialBalance) + totals.receitas - totals.despesas)
+      const initial = convertAmount(account.initialBalance, account.currency, baseCurrency, rateMap)
+      const balance = round2(initial + totals.receitas - totals.despesas)
       return {
         id: account.id,
         name: account.name,
         color: account.color,
         isDefault: account.isDefault,
+        currency: account.currency,
         balance,
       }
     })
@@ -244,7 +292,7 @@ router.get('/', requireAuth, async (req, res) => {
     const transacoesRecentes = recentTransactions.map((tx) => ({
       id: tx.id,
       descricao: tx.descricao,
-      valor: Number(tx.valor),
+      valor: convertAmount(tx.valor, tx.account?.currency, baseCurrency, rateMap),
       tipo: tx.tipo,
       data: tx.data.toISOString().slice(0, 10),
       categoria: tx.category?.name ?? tx.categoria,
@@ -253,6 +301,7 @@ router.get('/', requireAuth, async (req, res) => {
             id: tx.account.id,
             name: tx.account.name,
             color: tx.account.color,
+            currency: tx.account.currency,
           }
         : null,
     }))
@@ -262,15 +311,17 @@ router.get('/', requireAuth, async (req, res) => {
           id: activeGoal.id,
           title: activeGoal.title,
           description: activeGoal.description ?? null,
-          targetAmount: Number(activeGoal.targetAmount),
-          currentAmount: Number(activeGoal.currentAmount),
-          currency: activeGoal.currency,
+          targetAmount: convertAmount(activeGoal.targetAmount, activeGoal.currency, baseCurrency, rateMap),
+          currentAmount: convertAmount(activeGoal.currentAmount, activeGoal.currency, baseCurrency, rateMap),
+          currency: baseCurrency,
+          originalCurrency: activeGoal.currency,
           dueDate: activeGoal.dueDate ? activeGoal.dueDate.toISOString() : null,
           status: activeGoal.status,
         }
       : null
 
     res.json({
+      baseCurrency,
       period: {
         periodo,
         inicio: range.start.toISOString(),
