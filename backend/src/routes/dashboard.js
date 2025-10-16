@@ -1,8 +1,13 @@
 import { Router } from 'express'
 import { z } from 'zod'
 import { requireAuth } from '../middleware/auth.js'
-import prisma from '../lib/prisma.js'
+
 const router = Router()
+
+async function getPrisma() {
+  const module = await import('../lib/prisma.js')
+  return module.default
+}
 
 const periodoSchema = z.enum(['3meses', '6meses', '1ano']).default('6meses')
 const queryWithPeriodo = z.object({ periodo: periodoSchema.optional() })
@@ -86,7 +91,7 @@ const serializeTotals = (transactions, baseCurrency, rateMap) =>
     { receitas: 0, despesas: 0 }
   )
 
-const loadTransactions = (userId, range, { includeCategory = false } = {}) => {
+const loadTransactions = (prisma, userId, range, { includeCategory = false } = {}) => {
   const baseSelect = {
     valor: true,
     tipo: true,
@@ -118,6 +123,8 @@ const loadTransactions = (userId, range, { includeCategory = false } = {}) => {
 }
 
 const buildCurrencyContext = async (userId, queryBase) => {
+  const prisma = await getPrisma()
+  
   const baseCurrency = queryBase
     ? queryBase.toString().trim().toUpperCase()
     : (
@@ -137,6 +144,7 @@ const buildCurrencyContext = async (userId, queryBase) => {
 
 router.get('/', requireAuth, async (req, res) => {
   try {
+    const prisma = await getPrisma()
     const { periodo = '6meses' } = queryWithPeriodo.parse(req.query)
     const range = getPeriodRange(periodo)
     const previousRange = getPreviousRange(range)
@@ -151,8 +159,8 @@ router.get('/', requireAuth, async (req, res) => {
       recentTransactions,
       activeGoal,
     ] = await Promise.all([
-      loadTransactions(req.user.id, range, { includeCategory: true }),
-      loadTransactions(req.user.id, previousRange),
+      loadTransactions(prisma, req.user.id, range, { includeCategory: true }),
+      loadTransactions(prisma, req.user.id, previousRange),
       prisma.account.findMany({
         where: { userId: req.user.id, archivedAt: null },
         select: { id: true, name: true, color: true, isDefault: true, initialBalance: true, currency: true },

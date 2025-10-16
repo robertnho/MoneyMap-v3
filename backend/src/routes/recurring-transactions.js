@@ -1,9 +1,9 @@
 import { Router } from 'express'
-import { PrismaClient, Prisma } from '@prisma/client'
+import { Prisma } from '@prisma/client'
 import { z } from 'zod'
 import { requireAuth } from '../middleware/auth.js'
+import prisma from '../lib/prisma.js'
 
-const prisma = new PrismaClient()
 const router = Router()
 
 const FREQUENCY_VALUES = ['daily', 'weekly', 'monthly', 'yearly']

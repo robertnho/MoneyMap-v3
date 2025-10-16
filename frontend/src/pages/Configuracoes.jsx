@@ -82,6 +82,11 @@ function Toast({ message, onClose }) {
 export default function Configuracoes() {
   const { usuario } = useAuth() // ← sem token (não há mais sincronizar)
   const [tab, setTab] = useState('Perfil')
+  const [toast, setToastMessage] = useState('')
+  const setToast = useCallback((msg) => {
+    setToastMessage(msg)
+    setTimeout(() => setToastMessage(''), 3000)
+  }, [])
 
   // --------- PERFIL ----------
   const [formPerfil, setFormPerfil] = useState({ name: '', email: '' })
@@ -610,14 +615,6 @@ export default function Configuracoes() {
   const handleClearCategoryForm = useCallback(() => {
     resetCategoryForm()
   }, [resetCategoryForm])
-
-  // --------- FEEDBACK ----------
-  const [toast, setToast] = useState('')
-  useEffect(() => {
-    if (!toast) return
-    const id = setTimeout(() => setToast(''), 2500)
-    return () => clearTimeout(id)
-  }, [toast])
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden">
@@ -1401,6 +1398,8 @@ export default function Configuracoes() {
           © {new Date().getFullYear()} MoneyMapp TCC. Todos os direitos reservados.
         </div>
       </div>
+
+      <Toast message={toast} onClose={() => setToastMessage('')} />
     </div>
   )
 }

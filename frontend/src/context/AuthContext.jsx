@@ -30,9 +30,9 @@ export function AuthProvider({ children }) {
 
     const { data } = await api.auth.login({ email, password: pwd })
 
-    // Compatível com { user, token } ou { usuario, token }
+    // Compatível com { user, access } ou { user, token } ou { usuario, token }
     const u = data?.user ?? data?.usuario ?? null
-    const t = data?.token ?? ''
+    const t = data?.access ?? data?.token ?? ''
 
     setToken(t)
     setUsuario(u)
@@ -59,7 +59,7 @@ export function AuthProvider({ children }) {
 
     // Se o backend já devolver token + user/usuario, efetua login automático
     const u = data?.user ?? data?.usuario ?? null
-    const t = data?.token ?? ''
+    const t = data?.access ?? data?.token ?? ''
 
     if (t || u) {
       setToken(t)

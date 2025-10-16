@@ -13,7 +13,8 @@ export async function requireAuth (req, res, next) {
     if (!token) return res.status(401).json({ error: 'Token ausente' })
 
     const payload = verifyToken(token)
-    const userId = payload?.sub ? Number(payload.sub) : NaN
+    // Aceita tanto 'id' quanto 'sub' como identificador de usuário
+    const userId = payload?.id ? Number(payload.id) : (payload?.sub ? Number(payload.sub) : NaN)
     if (!payload || Number.isNaN(userId)) {
       return res.status(401).json({ error: 'Token inválido' })
     }

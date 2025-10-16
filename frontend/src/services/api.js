@@ -4,6 +4,18 @@ const baseURL = import.meta.env.VITE_API_URL || ''
 
 const instancia = axios.create({ baseURL })
 
+// Interceptor REQUEST para adicionar token em TODAS as requisições
+instancia.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('mm_token')
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+    return config
+  },
+  (error) => Promise.reject(error)
+)
+
 // Wrappers de endpoints
 const api = {
   instancia,
