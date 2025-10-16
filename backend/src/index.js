@@ -36,6 +36,8 @@ import notificationsRouter from './routes/notifications.js'
 import recurringRouter from './routes/recurring.js'
 import settingsRouter from './routes/settings.js'
 import educationRouter from './routes/education.js'
+import currencyRouter from './routes/currency.js'
+import investmentRouter from './routes/investment.js'
 import { processRecurringRules } from './jobs/processRecurring.js'
 import { generateNotifications } from './jobs/notifications.js'
 
@@ -204,6 +206,15 @@ app.get('/docs', (req, res) => {
       progressList: { method: 'GET', path: '/education/progress' },
       progressSave: { method: 'POST', path: '/education/progress' },
     },
+    currency: {
+      listRates: { method: 'GET', path: '/currency/rates' },
+      upsertRate: { method: 'PUT', path: '/currency/rates' },
+    },
+    investment: {
+      getProfile: { method: 'GET', path: '/investment/profile' },
+      saveProfile: { method: 'POST', path: '/investment/profile' },
+      guides: { method: 'GET', path: '/investment/guides' },
+    },
   })
 })
 
@@ -224,6 +235,8 @@ app.use('/notifications', notificationsRouter)
 app.use('/recurring', recurringRouter)
 app.use('/settings', settingsRouter)
 app.use('/education', educationRouter)
+app.use('/currency', currencyRouter)
+app.use('/investment', investmentRouter)
 
 // ===== CRON JOBS =====
 cron.schedule('10 2 * * *', async () => {
