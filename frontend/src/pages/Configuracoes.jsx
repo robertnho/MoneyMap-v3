@@ -826,23 +826,7 @@ export default function Configuracoes() {
                       />
                     </div>
 
-                    {/* Idioma */}
-                    <div className="rounded-2xl border border-zinc-200/60 bg-white/50 backdrop-blur-sm p-6 shadow-md hover:shadow-xl transition-all duration-300 dark:border-white/10 dark:bg-zinc-800/50">
-                      <div className="flex items-center gap-3 mb-4">
-                        <Globe className="h-5 w-5 text-blue-600" />
-                        <h3 className="font-semibold text-zinc-800 dark:text-white">🌐 Idioma</h3>
-                      </div>
-                      <select
-                        value={settingsForm.locale}
-                        onChange={(event) => handleSettingsChange('locale', event.target.value)}
-                        disabled={settingsLoading}
-                        className="w-full rounded-xl border border-zinc-300 dark:border-zinc-600 p-3 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-violet-500/50 disabled:opacity-60"
-                      >
-                        <option value="pt-BR">Português (Brasil)</option>
-                        <option value="en-US">English (US)</option>
-                        <option value="es-ES">Español</option>
-                      </select>
-                    </div>
+                    {/* Idioma removido — manter preferências sem seleção de língua */}
 
                     <div className="rounded-2xl border border-zinc-200/60 bg-white/50 backdrop-blur-sm p-6 shadow-md transition-all duration-300 dark:border-white/10 dark:bg-zinc-800/50 md:col-span-2">
                       <div className="flex items-center gap-3 mb-4">

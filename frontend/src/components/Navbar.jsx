@@ -1,6 +1,6 @@
 import React from 'react'
 import { NavLink, Link, useNavigate } from 'react-router-dom'
-import { PiggyBank } from 'lucide-react'
+import { PiggyBank, LogOut } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
 
 export default function Navbar() {
@@ -48,8 +48,10 @@ export default function Navbar() {
             )}
             <button
               onClick={aoSair}
-              className="rounded bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white transition-colors duration-200 hover:bg-emerald-500 dark:hover:bg-emerald-500"
+              title="Sair"
+              className="rounded bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white transition-colors duration-200 hover:bg-emerald-500 dark:hover:bg-emerald-500 inline-flex items-center"
             >
+              <LogOut className="mr-2 h-4 w-4" />
               Sair
             </button>
           </div>
