@@ -6,6 +6,11 @@ import { processRecurringRules } from '../jobs/processRecurring.js'
 
 const router = Router()
 
+const hasModel = (client, modelName) => {
+  const model = client?.[modelName]
+  return !!model && (typeof model.findMany === 'function' || typeof model.findFirst === 'function' || typeof model.findUnique === 'function')
+}
+
 router.use(requireAuth)
 
 const allowedFreq = new Set(['DAILY', 'WEEKLY', 'MONTHLY'])
@@ -37,10 +42,10 @@ function alignDateToWeekday(date, weekday) {
 
 router.get('/', async (req, res, next) => {
   try {
-    const items = await prisma.recurringRule.findMany({
-      where: { userId: req.user.id },
-      orderBy: { nextRunAt: 'asc' },
-    })
+    if (!hasModel(prisma, 'recurringRule')) {
+      return res.json([])
+    }
+    const items = await prisma.recurringRule.findMany({ where: { userId: req.user.id }, orderBy: { nextRunAt: 'asc' } })
     res.json(items)
   } catch (error) {
     next(error)
@@ -49,6 +54,9 @@ router.get('/', async (req, res, next) => {
 
 router.post('/', async (req, res, next) => {
   try {
+    if (!hasModel(prisma, 'recurringRule')) {
+      return res.status(404).json({ error: 'Recurso de regras recorrentes não disponível' })
+    }
     const { accountId, tipo, categoria, valor, freq, dayOfMonth, dayOfWeek, firstRunAt } = req.body
 
     if (!tipo || !allowedTipo.has(String(tipo).toLowerCase())) {
@@ -124,6 +132,9 @@ router.post('/process-now', async (_req, res, next) => {
 
 router.put('/:id', async (req, res, next) => {
   try {
+    if (!hasModel(prisma, 'recurringRule')) {
+      return res.status(404).json({ error: 'Recurso de regras recorrentes não disponível' })
+    }
     const id = Number(req.params.id)
     if (!Number.isInteger(id)) {
       return res.status(400).json({ error: 'ID inválido' })

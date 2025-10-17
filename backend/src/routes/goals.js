@@ -1,9 +1,9 @@
 import { Router } from 'express'
-import { PrismaClient, Prisma } from '@prisma/client'
+import { Prisma } from '@prisma/client'
 import { z } from 'zod'
 import { requireAuth } from '../middleware/auth.js'
+import prisma from '../lib/prisma.js'
 
-const prisma = new PrismaClient()
 const router = Router()
 
 const amountSchema = z
@@ -63,6 +63,49 @@ const contributionsListSchema = z.object({
 
 const round2 = (value) => Math.round((value + Number.EPSILON) * 100) / 100
 
+const formatDateOnly = (date) => {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return null
+  const normalized = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+  return normalized.toISOString().slice(0, 10)
+}
+
+const parseDateOnly = (value) => {
+  if (!value) return null
+
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return new Date(value.getFullYear(), value.getMonth(), value.getDate())
+  }
+
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    if (!trimmed) return null
+
+    const datePortion = trimmed.split('T')[0]
+    const parts = datePortion.split('-')
+    if (parts.length === 3) {
+      const [year, month, day] = parts.map(Number)
+      if (!Number.isNaN(year) && !Number.isNaN(month) && !Number.isNaN(day)) {
+        return new Date(year, month - 1, day)
+      }
+    }
+
+    const parsed = new Date(trimmed)
+    if (!Number.isNaN(parsed.getTime())) {
+      return new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate())
+    }
+    return null
+  }
+
+  if (typeof value === 'number') {
+    const parsed = new Date(value)
+    if (!Number.isNaN(parsed.getTime())) {
+      return new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate())
+    }
+  }
+
+  return null
+}
+
 const serializeContribution = (entry) => ({
   id: entry.id,
   goalId: entry.goalId,
@@ -72,13 +115,14 @@ const serializeContribution = (entry) => ({
   createdAt: entry.createdAt.toISOString(),
 })
 
-const serializeGoal = (goal, { includeHistory = false } = {}) => {
+const serializeGoal = (goal, { includeHistory = false, contributionsCount } = {}) => {
   const target = Number(goal.targetAmount ?? 0)
   const current = Number(goal.currentAmount ?? 0)
   const progress = target > 0 ? Math.min(current / target, 1) * 100 : 0
   const remaining = round2(target - current)
   const contributionsArray = goal.contributions ? [...goal.contributions] : []
   const lastContributionAt = contributionsArray.length ? contributionsArray[0].contributedAt.toISOString() : null
+  const totalContributions = contributionsCount ?? goal._count?.contributions ?? contributionsArray.length
 
   return {
     id: goal.id,
@@ -87,14 +131,14 @@ const serializeGoal = (goal, { includeHistory = false } = {}) => {
     targetAmount: target,
     currentAmount: current,
     currency: goal.currency,
-    dueDate: goal.dueDate ? goal.dueDate.toISOString().slice(0, 10) : null,
+  dueDate: formatDateOnly(goal.dueDate),
     status: goal.status,
     createdAt: goal.createdAt.toISOString(),
     updatedAt: goal.updatedAt.toISOString(),
     summary: {
       progress: round2(progress),
       remaining,
-      contributionsCount: goal._count?.contributions ?? contributionsArray.length,
+      contributionsCount: totalContributions,
       lastContributionAt,
     },
     contributions: includeHistory
@@ -103,24 +147,237 @@ const serializeGoal = (goal, { includeHistory = false } = {}) => {
   }
 }
 
+let goalsSupportsCountInclude = true
+let goalsSupportsContributionsInclude = true
+let goalContributionsModelAvailable = Boolean(
+  prisma.goalContribution && typeof prisma.goalContribution.findMany === 'function',
+)
+
+const isCountIncludeError = (error) =>
+  error instanceof Prisma.PrismaClientValidationError && error.message.includes('Unknown field `_count`')
+const isContributionsIncludeError = (error) =>
+  error instanceof Prisma.PrismaClientValidationError && error.message.includes('Unknown field `contributions`')
+
+const getGoalContributionDelegate = () => {
+  if (!goalContributionsModelAvailable) return null
+  const delegate = prisma.goalContribution
+  if (!delegate) {
+    goalContributionsModelAvailable = false
+    return null
+  }
+  return delegate
+}
+
+const loadFallbackContributions = async (goalId, includeHistory) => {
+  const delegate = getGoalContributionDelegate()
+  if (!delegate || typeof delegate.findMany !== 'function') {
+    return []
+  }
+
+  try {
+    return await delegate.findMany({
+      where: { goalId },
+      orderBy: { contributedAt: 'desc' },
+      ...(includeHistory ? {} : { take: 1 }),
+    })
+  } catch (error) {
+    goalContributionsModelAvailable = false
+    console.warn('Goal contributions fallback query failed:', error)
+    return []
+  }
+}
+
+const ensureGoalContributions = async (goals, includeHistory) => {
+  if (goalsSupportsContributionsInclude || !goals.length) return goals
+
+  const enriched = await Promise.all(
+    goals.map(async (goal) => {
+      const contributions = await loadFallbackContributions(goal.id, includeHistory)
+      return { ...goal, contributions }
+    }),
+  )
+
+  return enriched
+}
+
+const ensureSingleGoalContributions = async (goal, includeHistory) => {
+  if (!goal || goalsSupportsContributionsInclude) return goal
+
+  const contributions = await loadFallbackContributions(goal.id, includeHistory)
+  return { ...goal, contributions }
+}
+
+async function fetchGoalsWithFallback(userId, includeHistory) {
+  const contributionsInclude = goalsSupportsContributionsInclude
+    ? {
+        contributions: {
+          orderBy: { contributedAt: 'desc' },
+          ...(includeHistory ? {} : { take: 1 }),
+        },
+      }
+    : undefined
+
+  if (goalsSupportsCountInclude) {
+    try {
+      const goals = await prisma.goal.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+        include: goalsSupportsContributionsInclude
+          ? {
+              _count: { select: { contributions: true } },
+              ...contributionsInclude,
+            }
+          : {
+              _count: { select: { contributions: true } },
+            },
+      })
+
+      const hydratedGoals = await ensureGoalContributions(goals, includeHistory)
+      return { goals: hydratedGoals, counts: null }
+    } catch (error) {
+      if (isContributionsIncludeError(error)) {
+        goalsSupportsContributionsInclude = false
+        return fetchGoalsWithFallback(userId, includeHistory)
+      }
+      if (!isCountIncludeError(error)) throw error
+      goalsSupportsCountInclude = false
+    }
+  }
+
+  let goals
+  try {
+    const query = {
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+    }
+    if (contributionsInclude) {
+      query.include = contributionsInclude
+    }
+    goals = await prisma.goal.findMany(query)
+  } catch (error) {
+    if (goalsSupportsContributionsInclude && isContributionsIncludeError(error)) {
+      goalsSupportsContributionsInclude = false
+      return fetchGoalsWithFallback(userId, includeHistory)
+    }
+    throw error
+  }
+
+  goals = await ensureGoalContributions(goals, includeHistory)
+
+  const goalIds = goals.map((goal) => goal.id)
+  if (!goalIds.length) {
+    return { goals, counts: null }
+  }
+
+  const delegate = getGoalContributionDelegate()
+  if (!delegate || typeof delegate.groupBy !== 'function') {
+    return { goals, counts: null }
+  }
+
+  try {
+    const counts = await delegate.groupBy({
+      by: ['goalId'],
+      where: { goalId: { in: goalIds } },
+      _count: { goalId: true },
+    })
+
+    const map = new Map(counts.map((entry) => [entry.goalId, entry._count.goalId]))
+    return { goals, counts: map }
+  } catch (error) {
+    goalContributionsModelAvailable = false
+    console.warn('Goal contributions count fallback failed:', error)
+    return { goals, counts: null }
+  }
+}
+
+async function findGoalWithFallback(goalId, userId, { includeHistory = false } = {}) {
+  const contributionsInclude = goalsSupportsContributionsInclude
+    ? {
+        contributions: {
+          orderBy: { contributedAt: 'desc' },
+          ...(includeHistory ? {} : { take: 1 }),
+        },
+      }
+    : undefined
+
+  if (goalsSupportsCountInclude) {
+    try {
+      const goal = await prisma.goal.findFirst({
+        where: { id: goalId, userId },
+        include: goalsSupportsContributionsInclude
+          ? {
+              _count: { select: { contributions: true } },
+              ...contributionsInclude,
+            }
+          : {
+              _count: { select: { contributions: true } },
+            },
+      })
+
+      const hydratedGoal = await ensureSingleGoalContributions(goal, includeHistory)
+      if (!hydratedGoal) return { goal: null, count: null }
+      return { goal: hydratedGoal, count: hydratedGoal._count?.contributions ?? null }
+    } catch (error) {
+      if (isContributionsIncludeError(error)) {
+        goalsSupportsContributionsInclude = false
+        return findGoalWithFallback(goalId, userId, { includeHistory })
+      }
+      if (!isCountIncludeError(error)) throw error
+      goalsSupportsCountInclude = false
+    }
+  }
+
+  let goal
+  try {
+    const query = {
+      where: { id: goalId, userId },
+    }
+    if (contributionsInclude) {
+      query.include = contributionsInclude
+    }
+    goal = await prisma.goal.findFirst(query)
+  } catch (error) {
+    if (goalsSupportsContributionsInclude && isContributionsIncludeError(error)) {
+      goalsSupportsContributionsInclude = false
+      return findGoalWithFallback(goalId, userId, { includeHistory })
+    }
+    throw error
+  }
+
+  const hydratedGoal = await ensureSingleGoalContributions(goal, includeHistory)
+  if (!hydratedGoal) return { goal: null, count: null }
+
+  const delegate = getGoalContributionDelegate()
+  if (!delegate || typeof delegate.count !== 'function') {
+    const contributionsLength = Array.isArray(hydratedGoal.contributions) ? hydratedGoal.contributions.length : 0
+    return { goal: hydratedGoal, count: contributionsLength }
+  }
+
+  try {
+    const count = await delegate.count({ where: { goalId } })
+    return { goal: hydratedGoal, count }
+  } catch (error) {
+    goalContributionsModelAvailable = false
+    console.warn('Goal contributions count query failed:', error)
+    const contributionsLength = Array.isArray(hydratedGoal.contributions) ? hydratedGoal.contributions.length : 0
+    return { goal: hydratedGoal, count: contributionsLength }
+  }
+}
+
 // Listar metas do usuário com resumo
 router.get('/', requireAuth, async (req, res) => {
   try {
     const { includeHistory } = listQuerySchema.parse(req.query)
 
-    const goals = await prisma.goal.findMany({
-      where: { userId: req.user.id },
-      orderBy: { createdAt: 'desc' },
-      include: {
-        _count: { select: { contributions: true } },
-        contributions: {
-          orderBy: { contributedAt: 'desc' },
-          ...(includeHistory ? {} : { take: 1 }),
-        },
-      },
-    })
+    const { goals, counts } = await fetchGoalsWithFallback(req.user.id, includeHistory)
 
-    res.json({ goals: goals.map((goal) => serializeGoal(goal, { includeHistory })) })
+    res.json({
+      goals: goals.map((goal) => {
+        const contributionsList = Array.isArray(goal.contributions) ? goal.contributions : []
+        const contributionsCount = counts ? counts.get(goal.id) ?? contributionsList.length : contributionsList.length
+        return serializeGoal({ ...goal, contributions: contributionsList }, { includeHistory, contributionsCount })
+      }),
+    })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(422).json({ error: 'Parâmetros inválidos', issues: error.flatten() })
@@ -134,25 +391,27 @@ router.get('/', requireAuth, async (req, res) => {
 router.post('/', requireAuth, async (req, res) => {
   try {
     const payload = CreateGoalSchema.parse(req.body)
-
-    const goal = await prisma.goal.create({
+    const created = await prisma.goal.create({
       data: {
         title: payload.title,
         description: payload.description ?? null,
         targetAmount: payload.targetAmount,
         currentAmount: payload.currentAmount ?? new Prisma.Decimal('0'),
         currency: payload.currency ?? 'BRL',
-        dueDate: payload.dueDate ? new Date(payload.dueDate) : null,
+        dueDate: parseDateOnly(payload.dueDate),
         status: payload.status ?? 'active',
         userId: req.user.id,
       },
-      include: {
-        _count: { select: { contributions: true } },
-        contributions: { orderBy: { contributedAt: 'desc' }, take: 1 },
-      },
     })
 
-    res.status(201).json({ goal: serializeGoal(goal) })
+    const { goal, count } = await findGoalWithFallback(created.id, req.user.id, { includeHistory: false })
+
+    res.status(201).json({
+      goal: serializeGoal(goal ?? { ...created, contributions: [] }, {
+        includeHistory: false,
+        contributionsCount: count ?? 0,
+      }),
+    })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(422).json({ error: 'Dados inválidos', issues: error.flatten() })
@@ -174,7 +433,7 @@ router.put('/:id', requireAuth, async (req, res) => {
     const existing = await prisma.goal.findFirst({ where: { id, userId: req.user.id } })
     if (!existing) return res.status(404).json({ error: 'Meta não encontrada' })
 
-    const updated = await prisma.goal.update({
+    await prisma.goal.update({
       where: { id },
       data: {
         title: payload.title ?? undefined,
@@ -182,16 +441,22 @@ router.put('/:id', requireAuth, async (req, res) => {
         targetAmount: payload.targetAmount ?? undefined,
         currentAmount: payload.currentAmount ?? undefined,
         currency: payload.currency ?? undefined,
-        dueDate: payload.dueDate ? new Date(payload.dueDate) : undefined,
+        dueDate: payload.dueDate === undefined ? undefined : parseDateOnly(payload.dueDate),
         status: payload.status ?? undefined,
-      },
-      include: {
-        _count: { select: { contributions: true } },
-        contributions: { orderBy: { contributedAt: 'desc' }, take: 1 },
       },
     })
 
-    res.json({ goal: serializeGoal(updated) })
+    const { goal, count } = await findGoalWithFallback(id, req.user.id, { includeHistory: false })
+    if (!goal) {
+      return res.status(404).json({ error: 'Meta não encontrada' })
+    }
+
+    res.json({
+      goal: serializeGoal(goal, {
+        includeHistory: false,
+        contributionsCount: count ?? undefined,
+      }),
+    })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(422).json({ error: 'Dados inválidos', issues: error.flatten() })
@@ -229,9 +494,15 @@ router.post('/:id/contributions', requireAuth, async (req, res) => {
     const goal = await prisma.goal.findFirst({ where: { id: goalId, userId: req.user.id } })
     if (!goal) return res.status(404).json({ error: 'Meta não encontrada' })
 
+    const contributionsDelegate = getGoalContributionDelegate()
+    if (!contributionsDelegate || typeof contributionsDelegate.create !== 'function') {
+      goalContributionsModelAvailable = false
+      return res.status(503).json({ error: 'Registro de contribuições indisponível no momento' })
+    }
+
     const contributedAt = payload.contributedAt ? new Date(payload.contributedAt) : new Date()
 
-    const { contribution, updatedGoal } = await prisma.$transaction(async (tx) => {
+    const { contribution, goalSnapshot, contributions, contributionsCount } = await prisma.$transaction(async (tx) => {
       const createdContribution = await tx.goalContribution.create({
         data: {
           goalId,
@@ -250,18 +521,30 @@ router.post('/:id/contributions', requireAuth, async (req, res) => {
           currentAmount: nextAmount,
           status: needsComplete ? 'completed' : undefined,
         },
-        include: {
-          _count: { select: { contributions: true } },
-          contributions: { orderBy: { contributedAt: 'desc' }, take: 5 },
-        },
       })
 
-      return { contribution: createdContribution, updatedGoal: updated }
+      const recentContributions = await tx.goalContribution.findMany({
+        where: { goalId },
+        orderBy: { contributedAt: 'desc' },
+        take: 5,
+      })
+
+      const totalContributions = await tx.goalContribution.count({ where: { goalId } })
+
+      return {
+        contribution: createdContribution,
+        goalSnapshot: updated,
+        contributions: recentContributions,
+        contributionsCount: totalContributions,
+      }
     })
 
     res.status(201).json({
       contribution: serializeContribution(contribution),
-      goal: serializeGoal(updatedGoal, { includeHistory: false }),
+      goal: serializeGoal({ ...goalSnapshot, contributions }, {
+        includeHistory: false,
+        contributionsCount,
+      }),
     })
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -283,7 +566,13 @@ router.get('/:id/contributions', requireAuth, async (req, res) => {
     const goal = await prisma.goal.findFirst({ where: { id: goalId, userId: req.user.id }, select: { id: true } })
     if (!goal) return res.status(404).json({ error: 'Meta não encontrada' })
 
-    const contributions = await prisma.goalContribution.findMany({
+    const contributionsDelegate = getGoalContributionDelegate()
+    if (!contributionsDelegate || typeof contributionsDelegate.findMany !== 'function') {
+      goalContributionsModelAvailable = false
+      return res.json({ contributions: [] })
+    }
+
+    const contributions = await contributionsDelegate.findMany({
       where: { goalId },
       orderBy: { contributedAt: 'desc' },
       take: take ?? undefined,
@@ -305,7 +594,13 @@ router.delete('/contributions/:contributionId', requireAuth, async (req, res) =>
     const contributionId = Number(req.params.contributionId)
     if (!Number.isInteger(contributionId)) return res.status(400).json({ error: 'ID inválido' })
 
-    const contribution = await prisma.goalContribution.findFirst({
+    const contributionsDelegate = getGoalContributionDelegate()
+    if (!contributionsDelegate || typeof contributionsDelegate.findFirst !== 'function') {
+      goalContributionsModelAvailable = false
+      return res.status(503).json({ error: 'Recurso de contribuições indisponível no momento' })
+    }
+
+    const contribution = await contributionsDelegate.findFirst({
       where: { id: contributionId },
       include: { goal: true },
     })

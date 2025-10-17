@@ -1,13 +1,50 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Target, TrendingUp, Calendar, Plus, CheckCircle, Circle, DollarSign, Percent } from 'lucide-react'
 import { useTheme } from '../contexts/ThemeContext.jsx'
 import api from '../services/api'
 import GoalModal from '../components/GoalModal'
 
-function MetaCard({ meta, isDark }) {
+function MetaCard({ meta, isDark, onEdit, onDelete }) {
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef(null)
+
+  useEffect(() => {
+    if (!menuOpen) return
+
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setMenuOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [menuOpen])
+
+  const toLocalDate = (value) => {
+    if (!value) return null
+    if (value instanceof Date) {
+      return new Date(value.getFullYear(), value.getMonth(), value.getDate())
+    }
+    if (typeof value === 'string' && value.length >= 10) {
+      const [year, month, day] = value.split('T')[0].split('-')
+      if (year && month && day) {
+        return new Date(Number(year), Number(month) - 1, Number(day))
+      }
+    }
+    const parsed = new Date(value)
+    if (Number.isNaN(parsed.getTime())) return null
+    return new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate())
+  }
+
+  const prazoDate = toLocalDate(meta.prazo)
+  const hoje = new Date()
+  const hojeDateOnly = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate())
+  const diasRestantes = prazoDate
+    ? Math.ceil((prazoDate.getTime() - hojeDateOnly.getTime()) / (1000 * 60 * 60 * 24))
+    : 0
   const progresso = Math.min((meta.valorAtual / meta.valorMeta) * 100, 100)
-  const diasRestantes = Math.ceil((new Date(meta.prazo) - new Date()) / (1000 * 60 * 60 * 24))
-  
+
   const formatMoney = (value) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -16,7 +53,17 @@ function MetaCard({ meta, isDark }) {
   }
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('pt-BR')
+    if (!dateString) return 'Sem prazo'
+    if (dateString instanceof Date) {
+      return dateString.toLocaleDateString('pt-BR')
+    }
+    const [year, month, day] = dateString.split('T')[0].split('-')
+    if (year && month && day) {
+      return `${day.padStart(2, '0')}/${month.padStart(2, '0')}/${year}`
+    }
+    const parsed = new Date(dateString)
+    if (Number.isNaN(parsed.getTime())) return 'Sem prazo'
+    return parsed.toLocaleDateString('pt-BR')
   }
 
   const corClasses = {
@@ -28,7 +75,7 @@ function MetaCard({ meta, isDark }) {
   }
 
   return (
-    <div className={`backdrop-blur-lg rounded-2xl border shadow-lg p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl h-full flex flex-col ${
+    <div className={`backdrop-blur-lg rounded-2xl border shadow-lg p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl h-full flex flex-col relative ${
       meta.status === 'concluido'
         ? isDark
           ? 'bg-emerald-500/15 border-emerald-500/30 hover:bg-emerald-500/20'
@@ -100,19 +147,59 @@ function MetaCard({ meta, isDark }) {
       </div>
 
       {/* Ações */}
-      <div className="flex gap-2 pt-3 mt-auto">
-        <button className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white py-2 px-3 rounded-xl text-xs font-semibold shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-300">
+      <div className="flex gap-2 pt-3 mt-auto" ref={menuRef}>
+        <button
+          className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white py-2 px-3 rounded-xl text-xs font-semibold shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-300"
+          onClick={() => onEdit?.()}
+        >
           Adicionar
         </button>
-        <button className={`px-3 py-2 backdrop-blur-sm rounded-xl transition-all duration-300 transform hover:scale-110 shadow-sm hover:shadow-md ${
-          isDark
-            ? 'bg-white/10 text-zinc-300 hover:text-white hover:bg-white/20'
-            : 'bg-white/40 text-gray-600 hover:text-gray-800 hover:bg-white/60'
-        }`}>
+        <button
+          className={`px-3 py-2 backdrop-blur-sm rounded-xl transition-all duration-300 transform hover:scale-110 shadow-sm hover:shadow-md ${
+            isDark
+              ? 'bg-white/10 text-zinc-300 hover:text-white hover:bg-white/20'
+              : 'bg-white/40 text-gray-600 hover:text-gray-800 hover:bg-white/60'
+          }`}
+          onClick={() => setMenuOpen((prev) => !prev)}
+          aria-label="Mais ações"
+        >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
           </svg>
         </button>
+
+        {menuOpen && (
+          <div className={`absolute right-0 bottom-16 flex flex-col gap-1 rounded-xl border shadow-lg backdrop-blur-sm p-2 text-xs font-semibold ${
+            isDark ? 'bg-slate-900/90 border-white/10 text-zinc-100' : 'bg-white border-gray-200 text-gray-700'
+          }`}>
+            <button
+              className={`${
+                isDark
+                  ? 'hover:bg-white/10 rounded-lg px-3 py-2 text-left'
+                  : 'hover:bg-gray-100 rounded-lg px-3 py-2 text-left'
+              }`}
+              onClick={() => {
+                setMenuOpen(false)
+                onEdit?.()
+              }}
+            >
+              Editar meta
+            </button>
+            <button
+              className={`${
+                isDark
+                  ? 'hover:bg-red-500/20 text-red-300 rounded-lg px-3 py-2 text-left'
+                  : 'hover:bg-red-100 text-red-600 rounded-lg px-3 py-2 text-left'
+              }`}
+              onClick={() => {
+                setMenuOpen(false)
+                onDelete?.()
+              }}
+            >
+              Excluir meta
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -221,6 +308,20 @@ export default function Metas() {
     })
   }
 
+  async function handleDelete(goal) {
+    if (!goal || !goal.id) return
+    const shouldDelete = window.confirm(`Deseja realmente excluir a meta "${goal.title}"?`)
+    if (!shouldDelete) return
+
+    try {
+      await api.metas.remover(goal.id)
+      setMetas((prev) => prev.filter((item) => item.id !== goal.id))
+      setError(null)
+    } catch (e) {
+      setError(e.response?.data?.error || e.message || 'Falha ao remover meta')
+    }
+  }
+
   return (
   <div className={`min-h-screen transition-colors duration-300 ${
       isDark ? 'bg-slate-950 text-slate-100' : 'bg-gradient-to-br from-sky-100 via-indigo-100 to-purple-100 text-slate-900'
@@ -241,7 +342,10 @@ export default function Metas() {
                 Defina e acompanhe seus objetivos financeiros
               </p>
             </div>
-            <button className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-5 py-2.5 rounded-xl font-semibold flex items-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 mx-auto sm:mx-0">
+            <button
+              onClick={openCreateModal}
+              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-5 py-2.5 rounded-xl font-semibold flex items-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 mx-auto sm:mx-0"
+            >
               <Plus className="w-4 h-4" />
               Nova Meta
             </button>
@@ -312,7 +416,7 @@ export default function Metas() {
             <div className="flex items-center justify-between mb-3">
               <div />
               <div>
-                <button onClick={handleCreateQuick} className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-2 rounded-xl font-semibold">Nova Meta</button>
+                <button onClick={openCreateModal} className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-2 rounded-xl font-semibold">Nova Meta</button>
               </div>
             </div>
 
@@ -324,15 +428,21 @@ export default function Metas() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {metasOrganizadas.map((meta) => (
                   <div key={meta.id} onDoubleClick={() => openEditModal(meta)}>
-                    <MetaCard meta={{
-                      titulo: meta.title,
-                      valorAtual: Number(meta.currentAmount),
-                      valorMeta: Number(meta.targetAmount),
-                      prazo: meta.dueDate ?? new Date().toISOString().slice(0,10),
-                      categoria: meta.description ?? '',
-                      cor: 'blue',
-                      status: meta.status === 'completed' ? 'concluido' : 'ativo',
-                    }} isDark={isDark} />
+                    <MetaCard
+                      meta={{
+                        id: meta.id,
+                        titulo: meta.title,
+                        valorAtual: Number(meta.currentAmount),
+                        valorMeta: Number(meta.targetAmount),
+                        prazo: meta.dueDate ?? new Date().toISOString().slice(0, 10),
+                        categoria: meta.description ?? '',
+                        cor: 'blue',
+                        status: meta.status === 'completed' ? 'concluido' : 'ativo',
+                      }}
+                      isDark={isDark}
+                      onEdit={() => openEditModal(meta)}
+                      onDelete={() => handleDelete(meta)}
+                    />
                   </div>
                 ))}
                 <DicaCard 
