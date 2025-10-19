@@ -2,6 +2,7 @@ import React from 'react'
 import { NavLink, Link, useNavigate } from 'react-router-dom'
 import { PiggyBank } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
+import UserProfile from './UserProfile.jsx'
 
 export default function Navbar() {
   const { token, sair, usuario } = useAuth()
@@ -40,18 +41,10 @@ export default function Navbar() {
             <NavLink to="/notificacoes" className={linkClass}>Notificações</NavLink>
             <NavLink to="/configuracoes" className={linkClass}>Configurações</NavLink>
 
-            {/* Saudação + sair */}
-            {usuario?.name && (
-              <span className="mx-2 hidden text-sm text-gray-600 dark:text-slate-300 lg:inline">
-                Olá, <strong className="font-medium text-gray-900 dark:text-slate-100">{usuario.name.split(' ')[0]}</strong>
-              </span>
-            )}
-            <button
-              onClick={aoSair}
-              className="rounded bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white transition-colors duration-200 hover:bg-emerald-500 dark:hover:bg-emerald-500"
-            >
-              Sair
-            </button>
+            {/* Perfil do Usuário */}
+            <div className="border-l border-gray-200 dark:border-slate-700 pl-2 ml-2">
+              <UserProfile />
+            </div>
           </div>
         ) : (
           <div className="flex items-center gap-2">

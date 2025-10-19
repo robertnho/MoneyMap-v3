@@ -251,27 +251,71 @@ function PeriodPanel({ periodo, onChange }) {
     { label: 'Último ano', value: '1ano' },
   ]
 
+  const [aberto, setAberto] = React.useState(false)
+  
+  const labelAbreviado = {
+    '3meses': '3 meses',
+    '6meses': '6 meses',
+    '1ano': '1 ano'
+  }
+
+  const periodAtivo = periodos.find(p => p.value === periodo)
+
   return (
-    <SectionCard title="Período" className="h-fit">
-      <div className="space-y-2">
-        {periodos.map((item) => {
-          const ativo = periodo === item.value
-          return (
-            <button
-              key={item.value}
-              onClick={() => onChange(item.value)}
-              className={`w-full rounded-xl border px-3 py-2 text-left text-xs font-medium transition-all duration-200 ${
-                ativo
-                  ? 'border-transparent bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg shadow-violet-500/25'
-                  : 'border-zinc-200/60 text-zinc-600 hover:border-zinc-300 hover:bg-zinc-100 dark:border-white/10 dark:text-zinc-300 dark:hover:bg-zinc-800'
-              }`}
-            >
-              {item.label}
-            </button>
-          )
-        })}
-      </div>
-    </SectionCard>
+    <div className="relative">
+      <button
+        onClick={() => setAberto(!aberto)}
+        className="group rounded-2xl border border-blue-100 dark:border-blue-500/30 bg-white dark:bg-zinc-900/70 p-4 shadow-lg transition-all duration-300 hover:shadow-xl dark:shadow-2xl min-h-[120px] w-full text-left hover:scale-[1.02] hover:-translate-y-1"
+      >
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl shadow-lg bg-gradient-to-br from-blue-500 to-blue-600">
+              <svg className="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+              </svg>
+            </div>
+            <div>
+              <p className="mb-1 text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-white/60">
+                Período
+              </p>
+              <p className="leading-none text-xl font-bold text-zinc-900 dark:text-white whitespace-nowrap">
+                {labelAbreviado[periodo]}
+              </p>
+            </div>
+          </div>
+          <svg className={`w-5 h-5 text-blue-600 dark:text-blue-400 transition-transform ${aberto ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+          </svg>
+        </div>
+      </button>
+
+      {aberto && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setAberto(false)} />
+          <div className="absolute top-full mt-2 right-0 z-50 bg-white dark:bg-zinc-900 border border-blue-100 dark:border-blue-500/30 rounded-xl shadow-xl overflow-hidden min-w-[200px]">
+            {periodos.map((item) => {
+              const ativo = periodo === item.value
+              return (
+                <button
+                  key={item.value}
+                  onClick={() => {
+                    onChange(item.value)
+                    setAberto(false)
+                  }}
+                  className={`w-full px-4 py-3 text-left text-sm font-medium transition-all duration-200 ${
+                    ativo
+                      ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white'
+                      : 'text-gray-700 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-800'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              )
+            })}
+          </div>
+        </>
+      )}
+    </div>
   )
 }
 

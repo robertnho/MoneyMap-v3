@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Outlet, Link } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
+import UserProfile from "../components/UserProfile.jsx";
 import { Bell, Menu } from "lucide-react";
 import ThemeToggle from "../components/ThemeToggle.jsx";
 import api from "../services/api.js";
@@ -100,6 +101,9 @@ export default function DashboardLayout() {
               ) : null}
             </Link>
             <ThemeToggle floating={false} className="relative hover:scale-105" />
+            <div className="border-l border-slate-200 dark:border-slate-700 pl-2 ml-2">
+              <UserProfile />
+            </div>
           </div>
         </header>
 
