@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Outlet, Link, useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
-import { Bell, Menu, LogOut } from "lucide-react";
+import UserProfile from "../components/UserProfile.jsx";
+import { Bell, Menu } from "lucide-react";
 import ThemeToggle from "../components/ThemeToggle.jsx";
 import api from "../services/api.js";
 import { dadosDemo } from "../data/dadosDemo.js";
@@ -103,17 +104,9 @@ export default function DashboardLayout() {
               ) : null}
             </Link>
             <ThemeToggle floating={false} className="relative hover:scale-105" />
-            {/* Mostrar botão de logout quando autenticado */}
-            {token ? (
-              <button
-                onClick={() => { sair(); navigate('/login', { replace: true }) }}
-                title="Sair"
-                className="rounded bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white transition-colors duration-200 hover:bg-emerald-500 dark:hover:bg-emerald-500 inline-flex items-center"
-              >
-                <LogOut className="mr-2 h-4 w-4" />
-                Sair
-              </button>
-            ) : null}
+            <div className="border-l border-slate-200 dark:border-slate-700 pl-2 ml-2">
+              <UserProfile />
+            </div>
           </div>
         </header>
 

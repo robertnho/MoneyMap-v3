@@ -342,10 +342,7 @@ export default function Metas() {
                 Defina e acompanhe seus objetivos financeiros
               </p>
             </div>
-            <button
-              onClick={openCreateModal}
-              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-5 py-2.5 rounded-xl font-semibold flex items-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 mx-auto sm:mx-0"
-            >
+            <button onClick={openCreateModal} className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-5 py-2.5 rounded-xl font-semibold flex items-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 mx-auto sm:mx-0">
               <Plus className="w-4 h-4" />
               Nova Meta
             </button>
@@ -413,12 +410,6 @@ export default function Metas() {
           {/* Todas as Metas + Dica em Grid Uniforme */}
           <div className="mb-4">
             <h2 className={`text-xl font-semibold mb-3 ${isDark ? 'text-zinc-200' : 'text-zinc-700'}`}>Suas Metas</h2>
-            <div className="flex items-center justify-between mb-3">
-              <div />
-              <div>
-                <button onClick={openCreateModal} className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-2 rounded-xl font-semibold">Nova Meta</button>
-              </div>
-            </div>
 
             {loading ? (
               <div className="rounded-2xl p-6 bg-white/30 text-center">Carregando metas...</div>

@@ -1,5 +1,5 @@
 // frontend/src/pages/Configuracoes.jsx
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useTheme } from '../contexts/ThemeContext.jsx'
 import { formatarMoedaBRL, formatarDataISOParaBR } from '../utils/formatadores.js'
@@ -89,13 +89,71 @@ export default function Configuracoes() {
   }, [])
 
   // --------- PERFIL ----------
-  const [formPerfil, setFormPerfil] = useState({ name: '', email: '' })
+  const [formPerfil, setFormPerfil] = useState({ name: '', email: '', avatarUrl: '' })
+  const [perfilEditando, setPerfilEditando] = useState(false)
+  const [perfilSalvando, setPerfilSalvando] = useState(false)
+  const fileInputRef = useRef(null)
+  
   useEffect(() => {
     setFormPerfil({
       name: usuario?.name ?? '',
       email: usuario?.email ?? '',
+      avatarUrl: usuario?.avatarUrl ?? '',
     })
   }, [usuario])
+
+  const handleImageChange = useCallback((event) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    
+    // Validar tipo de arquivo
+    if (!file.type.startsWith('image/')) {
+      setToast('Por favor, selecione uma imagem.')
+      return
+    }
+    
+    // Validar tamanho (máx 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setToast('A imagem deve ter menos de 5MB.')
+      return
+    }
+    
+    // Converter para base64
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const base64 = e.target?.result
+      if (typeof base64 === 'string') {
+        setFormPerfil(p => ({ ...p, avatarUrl: base64 }))
+      }
+    }
+    reader.readAsDataURL(file)
+  }, [setToast])
+
+  const handleSalvarPerfil = useCallback(async () => {
+    if (!formPerfil.name.trim()) return setToast('Nome não pode estar vazio.')
+    if (!formPerfil.email.trim()) return setToast('Email não pode estar vazio.')
+    
+    setPerfilSalvando(true)
+    try {
+      // Aqui você precisaria de um endpoint para salvar o perfil
+      // Por enquanto, vamos simular salvando no localStorage
+      const usuarioAtualizado = {
+        ...usuario,
+        name: formPerfil.name,
+        email: formPerfil.email,
+        avatarUrl: formPerfil.avatarUrl,
+      }
+      localStorage.setItem('mm_usuario', JSON.stringify(usuarioAtualizado))
+      setToast('Perfil atualizado com sucesso.')
+      setPerfilEditando(false)
+    } catch (error) {
+      console.error('save perfil error', error)
+      const msg = error?.response?.data?.error ?? 'Não foi possível salvar o perfil.'
+      setToast(msg)
+    } finally {
+      setPerfilSalvando(false)
+    }
+  }, [formPerfil, usuario, setToast])
 
   const inicial = useMemo(
     () => (formPerfil.name?.trim()?.[0]?.toUpperCase() ?? 'U'),
@@ -696,12 +754,36 @@ export default function Configuracoes() {
                   {/* Avatar e info */}
                   <div className="flex flex-col sm:flex-row items-center gap-6 p-6 rounded-2xl bg-gradient-to-br from-violet-50 to-purple-50 dark:from-violet-900/20 dark:to-purple-900/20">
                     <div className="relative group">
-                      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-violet-600 to-purple-600 text-white flex items-center justify-center text-2xl font-bold shadow-lg transition-transform duration-300 group-hover:scale-105">
-                        {inicial}
-                      </div>
-                      <button className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-white dark:bg-zinc-800 border-2 border-violet-500 flex items-center justify-center shadow-lg hover:scale-110 transition-transform">
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="w-20 h-20 rounded-full bg-gradient-to-br from-violet-600 to-purple-600 text-white flex items-center justify-center text-2xl font-bold shadow-lg transition-transform duration-300 hover:scale-105 overflow-hidden"
+                      >
+                        {formPerfil.avatarUrl ? (
+                          <img 
+                            src={formPerfil.avatarUrl} 
+                            alt="Avatar" 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          inicial
+                        )}
+                      </button>
+                      <button 
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-white dark:bg-zinc-800 border-2 border-violet-500 flex items-center justify-center shadow-lg hover:scale-110 transition-transform cursor-pointer"
+                      >
                         <Camera className="h-3 w-3 text-violet-600" />
                       </button>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageChange}
+                        className="hidden"
+                        disabled={!perfilEditando}
+                      />
                     </div>
                     <div className="text-center sm:text-left">
                       <h3 className="text-xl font-bold text-zinc-800 dark:text-white">{formPerfil.name || 'Usuário'}</h3>
@@ -717,8 +799,13 @@ export default function Configuracoes() {
                       <input
                         type="text"
                         value={formPerfil.name}
-                        readOnly
-                        className="w-full rounded-xl border border-zinc-300 dark:border-zinc-600 px-4 py-3 bg-zinc-50 dark:bg-zinc-800 cursor-not-allowed text-zinc-500 dark:text-zinc-400"
+                        onChange={(e) => setFormPerfil(p => ({ ...p, name: e.target.value }))}
+                        readOnly={!perfilEditando}
+                        className={`w-full rounded-xl border border-zinc-300 dark:border-zinc-600 px-4 py-3 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 ${
+                          perfilEditando 
+                            ? 'cursor-text focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500' 
+                            : 'cursor-not-allowed text-zinc-500 dark:text-zinc-400'
+                        }`}
                       />
                     </div>
                     <div>
@@ -726,15 +813,41 @@ export default function Configuracoes() {
                       <input
                         type="email"
                         value={formPerfil.email}
-                        readOnly
-                        className="w-full rounded-xl border border-zinc-300 dark:border-zinc-600 px-4 py-3 bg-zinc-50 dark:bg-zinc-800 cursor-not-allowed text-zinc-500 dark:text-zinc-400"
+                        onChange={(e) => setFormPerfil(p => ({ ...p, email: e.target.value }))}
+                        readOnly={!perfilEditando}
+                        className={`w-full rounded-xl border border-zinc-300 dark:border-zinc-600 px-4 py-3 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 ${
+                          perfilEditando 
+                            ? 'cursor-text focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500' 
+                            : 'cursor-not-allowed text-zinc-500 dark:text-zinc-400'
+                        }`}
                       />
                     </div>
                   </div>
 
-                  <div className="flex justify-end pt-4">
-                    <button className="bg-gradient-to-r from-indigo-500 to-sky-400 text-white px-6 py-3 rounded-xl font-medium hover:opacity-90 transition-all duration-200 hover:-translate-y-0.5 shadow-lg">
-                      Editar Perfil
+                  <div className="flex justify-end gap-3 pt-4">
+                    {perfilEditando && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPerfilEditando(false)
+                          setFormPerfil({
+                            name: usuario?.name ?? '',
+                            email: usuario?.email ?? '',
+                            avatarUrl: usuario?.avatarUrl ?? '',
+                          })
+                        }}
+                        className="bg-gray-400 text-white px-6 py-3 rounded-xl font-medium hover:opacity-90 transition-all duration-200 hover:-translate-y-0.5 shadow-lg"
+                      >
+                        Cancelar
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => perfilEditando ? handleSalvarPerfil() : setPerfilEditando(true)}
+                      disabled={perfilSalvando}
+                      className="bg-gradient-to-r from-indigo-500 to-sky-400 text-white px-6 py-3 rounded-xl font-medium hover:opacity-90 transition-all duration-200 hover:-translate-y-0.5 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {perfilSalvando ? 'Salvando…' : perfilEditando ? 'Salvar Alterações' : 'Editar Perfil'}
                     </button>
                   </div>
                 </div>
