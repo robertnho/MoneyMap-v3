@@ -122,7 +122,7 @@ model RecurringExecution {
   id        Int      @id @default(autoincrement())
   ruleId    Int
   runDate   DateTime
-  createdTx Int?
+  createdTx Int?     @unique
 
   rule        RecurringRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
   transaction Transaction?  @relation("TransactionExecution", fields: [createdTx], references: [id], onDelete: SetNull)
@@ -140,6 +140,7 @@ model Category {
   updatedAt DateTime @updatedAt
   transactions Transaction[]
   recurringTransactions RecurringTransaction[]
+  budgets   Budget[]
 
   @@unique([userId, name])
   @@index([userId])
