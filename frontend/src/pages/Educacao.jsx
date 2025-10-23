@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { BookOpen, Download, FileText, TrendingUp, PiggyBank, Shield, Target, CreditCard, Heart, GraduationCap, Sparkles, X, Maximize2, Minimize2, ChevronLeft, ChevronRight } from 'lucide-react'
+import { BookOpen, Download, FileText, TrendingUp, PiggyBank, Shield, Target, CreditCard, Heart, GraduationCap, Sparkles, X, Maximize2, Minimize2, ChevronLeft, ChevronRight, Play, CheckCircle, Award } from 'lucide-react'
 
 // Conteúdo completo dos eBooks (em HTML para melhor formatação)
 const ebooksConteudo = {
@@ -1260,6 +1260,182 @@ const ebooks = [
   },
 ]
 
+// Vídeos do Mini Curso
+const videosMinicurso = [
+  {
+    id: 1,
+    titulo: 'Aula 1: Introdução à Educação Financeira',
+    descricao: 'Aprenda os conceitos básicos para começar sua jornada financeira',
+    videoId: 'CB5zuxQl5ro',
+    duracao: '15 min',
+    cor: 'from-blue-500 to-indigo-500',
+  },
+  {
+    id: 2,
+    titulo: 'Aula 2: Planejamento e Orçamento',
+    descricao: 'Como criar um orçamento pessoal eficiente',
+    videoId: 'SMCe1ZHS4Ag',
+    duracao: '18 min',
+    cor: 'from-emerald-500 to-teal-500',
+  },
+  {
+    id: 3,
+    titulo: 'Aula 3: Controle de Gastos',
+    descricao: 'Técnicas para controlar e reduzir despesas',
+    videoId: 'AfMGeMZmyUU',
+    duracao: '20 min',
+    cor: 'from-purple-500 to-violet-500',
+  },
+  {
+    id: 4,
+    titulo: 'Aula 4: Reserva de Emergência',
+    descricao: 'Construa seu colchão de segurança financeira',
+    videoId: 'CPeQs7CAaZQ',
+    duracao: '16 min',
+    cor: 'from-pink-500 to-rose-500',
+  },
+  {
+    id: 5,
+    titulo: 'Aula 5: Primeiros Investimentos',
+    descricao: 'Comece a investir de forma segura e inteligente',
+    videoId: 'KuRZucr-YLE',
+    duracao: '22 min',
+    cor: 'from-orange-500 to-amber-500',
+  },
+  {
+    id: 6,
+    titulo: 'Aula 6: Metas e Objetivos Financeiros',
+    descricao: 'Planeje e alcance seus sonhos financeiros',
+    videoId: 'Qx5dYnV8BAM',
+    duracao: '19 min',
+    cor: 'from-cyan-500 to-blue-500',
+  },
+]
+
+// Modal do player de vídeo
+function VideoPlayerModal({ video, onClose, onComplete, isCompleted }) {
+  useEffect(() => {
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = 'unset'
+    }
+  }, [])
+
+  useEffect(() => {
+    const handleEsc = (e) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', handleEsc)
+    return () => window.removeEventListener('keydown', handleEsc)
+  }, [onClose])
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+      <div className="relative w-full max-w-5xl bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 p-4">
+          <div>
+            <h3 className="text-xl font-bold text-zinc-900 dark:text-white">{video.titulo}</h3>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">{video.descricao}</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 transition-colors"
+          >
+            <X className="h-5 w-5 text-zinc-700 dark:text-zinc-300" />
+          </button>
+        </div>
+
+        {/* Video Player */}
+        <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
+          <iframe
+            className="absolute inset-0 w-full h-full"
+            src={`https://www.youtube.com/embed/${video.videoId}?autoplay=1&rel=0`}
+            title={video.titulo}
+            frameBorder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        </div>
+
+        {/* Footer com botão de conclusão */}
+        <div className="p-6 bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-800 dark:to-zinc-900">
+          {!isCompleted ? (
+            <button
+              onClick={onComplete}
+              className={`w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-gradient-to-r ${video.cor} text-white font-semibold shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all`}
+            >
+              <CheckCircle className="h-5 w-5" />
+              Marcar como Concluída
+            </button>
+          ) : (
+            <div className="text-center">
+              <div className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 font-semibold">
+                <CheckCircle className="h-5 w-5" />
+                Aula Concluída!
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Card de vídeo
+function VideoCard({ video, onPlay, isCompleted }) {
+  return (
+    <div className="group relative overflow-hidden rounded-2xl border border-zinc-200/60 bg-white dark:bg-zinc-900 dark:border-zinc-800 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]">
+      {/* Thumbnail */}
+      <div className="relative h-48 overflow-hidden bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900">
+        <img
+          src={`https://img.youtube.com/vi/${video.videoId}/maxresdefault.jpg`}
+          alt={video.titulo}
+          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+        />
+        
+        {/* Overlay com play button */}
+        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className={`flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br ${video.cor} shadow-2xl`}>
+            <Play className="h-8 w-8 text-white ml-1" fill="white" />
+          </div>
+        </div>
+
+        {/* Badge de duração */}
+        <div className="absolute bottom-3 right-3 px-3 py-1 rounded-lg bg-black/70 backdrop-blur-sm text-white text-xs font-semibold">
+          {video.duracao}
+        </div>
+
+        {/* Badge de concluído */}
+        {isCompleted && (
+          <div className="absolute top-3 right-3 px-3 py-1 rounded-lg bg-green-500 text-white text-xs font-semibold flex items-center gap-1">
+            <CheckCircle className="h-3 w-3" />
+            Concluída
+          </div>
+        )}
+      </div>
+
+      {/* Conteúdo */}
+      <div className="p-6">
+        <h3 className="text-xl font-bold text-zinc-900 dark:text-white mb-2 line-clamp-2">
+          {video.titulo}
+        </h3>
+        <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4 line-clamp-2">
+          {video.descricao}
+        </p>
+
+        <button
+          onClick={onPlay}
+          className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r ${video.cor} text-white font-semibold shadow-md hover:shadow-lg transform hover:scale-[1.02] transition-all`}
+        >
+          <Play className="h-4 w-4" fill="white" />
+          Assistir Aula
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // Modal visualizador de eBook (HTML)
 function EbookViewerModal({ ebook, onClose }) {
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -1553,6 +1729,9 @@ function EbookCard({ ebook, onRead }) {
 
 export default function Educacao() {
   const [ebookSelecionado, setEbookSelecionado] = useState(null)
+  const [videoSelecionado, setVideoSelecionado] = useState(null)
+  const [aulasCompletas, setAulasCompletas] = useState([])
+  const [cursoFinalizado, setCursoFinalizado] = useState(false)
 
   const abrirEbook = (ebook) => {
     setEbookSelecionado(ebook)
@@ -1561,6 +1740,43 @@ export default function Educacao() {
   const fecharEbook = () => {
     setEbookSelecionado(null)
   }
+
+  const abrirVideo = (video) => {
+    setVideoSelecionado(video)
+  }
+
+  const fecharVideo = () => {
+    setVideoSelecionado(null)
+  }
+
+  const marcarAulaConcluida = (videoId) => {
+    if (!aulasCompletas.includes(videoId)) {
+      const novasAulasCompletas = [...aulasCompletas, videoId]
+      setAulasCompletas(novasAulasCompletas)
+      
+      // Verificar se todas as aulas foram concluídas
+      if (novasAulasCompletas.length === videosMinicurso.length) {
+        setCursoFinalizado(true)
+      }
+      
+      // Avançar para próximo vídeo
+      const indexAtual = videosMinicurso.findIndex(v => v.id === videoId)
+      if (indexAtual < videosMinicurso.length - 1) {
+        setTimeout(() => {
+          fecharVideo()
+          setTimeout(() => {
+            abrirVideo(videosMinicurso[indexAtual + 1])
+          }, 300)
+        }, 1000)
+      } else {
+        setTimeout(() => {
+          fecharVideo()
+        }, 1500)
+      }
+    }
+  }
+
+  const progresso = (aulasCompletas.length / videosMinicurso.length) * 100
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden">
@@ -1629,50 +1845,81 @@ export default function Educacao() {
           ))}
         </div>
 
-        {/* Seção de benefícios */}
-        <div className="mt-16 rounded-2xl border border-zinc-200/60 bg-gradient-to-br from-violet-50 via-purple-50 to-fuchsia-50 p-8 shadow-lg dark:from-violet-900/20 dark:via-purple-900/20 dark:to-fuchsia-900/20 dark:border-white/10">
-          <div className="mb-6 text-center">
-            <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-purple-500 shadow-xl">
-              <Sparkles className="h-8 w-8 text-white" />
+        {/* Divisor decorativo */}
+        <div className="my-20 flex items-center justify-center">
+          <div className="h-px flex-1 bg-gradient-to-r from-transparent via-zinc-300 dark:via-zinc-700 to-transparent" />
+          <div className="px-6">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-amber-500 to-orange-500 shadow-lg">
+              <Play className="h-6 w-6 text-white" fill="white" />
             </div>
-            <h3 className="mb-2 text-2xl font-bold text-zinc-800 dark:text-white">
-              Por que baixar nossos eBooks?
-            </h3>
-            <p className="text-zinc-600 dark:text-zinc-400">
-              Conteúdo de qualidade, gratuito e acessível para todos
+          </div>
+          <div className="h-px flex-1 bg-gradient-to-r from-transparent via-zinc-300 dark:via-zinc-700 to-transparent" />
+        </div>
+
+        {/* Seção Mini Curso em Vídeo */}
+        <div className="mb-12">
+          <div className="mb-8 text-center">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-700 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+              <Play className="h-4 w-4" />
+              <span>6 Vídeo Aulas</span>
+            </div>
+            <h2 className="mb-4 text-4xl font-bold text-zinc-800 dark:text-white">
+              🎓 Mini Curso de Educação Financeira
+            </h2>
+            <p className="mx-auto max-w-2xl text-lg text-zinc-600 dark:text-zinc-400">
+              Assista às aulas completas, marque como concluídas e acompanhe seu progresso de aprendizado
             </p>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <div className="rounded-xl bg-white/60 backdrop-blur-sm border border-white/40 p-6 dark:bg-zinc-800/60 dark:border-zinc-700/40">
-              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 text-white">
-                <FileText className="h-6 w-6" />
-              </div>
-              <h4 className="mb-2 font-semibold text-zinc-800 dark:text-white">Conteúdo Prático</h4>
-              <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                Informações diretas e aplicáveis no seu dia a dia financeiro
-              </p>
+          {/* Barra de Progresso */}
+          <div className="mb-8 mx-auto max-w-3xl">
+            <div className="mb-3 flex items-center justify-between text-sm">
+              <span className="font-semibold text-zinc-700 dark:text-zinc-300">
+                Progresso do Curso
+              </span>
+              <span className="font-bold text-violet-600 dark:text-violet-400">
+                {aulasCompletas.length}/{videosMinicurso.length} aulas ({Math.round(progresso)}%)
+              </span>
             </div>
+            <div className="relative h-4 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+              <div
+                className="h-full bg-gradient-to-r from-violet-500 via-purple-500 to-fuchsia-500 transition-all duration-700 ease-out relative overflow-hidden"
+                style={{ width: `${progresso}%` }}
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/30 to-white/0 animate-shimmer" />
+              </div>
+            </div>
+          </div>
 
-            <div className="rounded-xl bg-white/60 backdrop-blur-sm border border-white/40 p-6 dark:bg-zinc-800/60 dark:border-zinc-700/40">
-              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white">
-                <Download className="h-6 w-6" />
+          {/* Mensagem de Conclusão */}
+          {cursoFinalizado && (
+            <div className="mb-8 mx-auto max-w-3xl animate-bounce-in">
+              <div className="rounded-2xl border-2 border-green-400 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 p-8 text-center shadow-2xl">
+                <div className="mb-4 flex justify-center">
+                  <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-green-400 to-emerald-500 shadow-xl animate-pulse">
+                    <Award className="h-10 w-10 text-white" />
+                  </div>
+                </div>
+                <h3 className="mb-2 text-3xl font-bold text-green-700 dark:text-green-400">
+                  🎉 Curso Concluído!
+                </h3>
+                <p className="text-lg text-green-600 dark:text-green-300">
+                  Parabéns por finalizar o Mini Curso de Educação Financeira!
+                </p>
               </div>
-              <h4 className="mb-2 font-semibold text-zinc-800 dark:text-white">100% Gratuito</h4>
-              <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                Acesso completo sem custos. Baixe e leia quando quiser
-              </p>
             </div>
+          )}
 
-            <div className="rounded-xl bg-white/60 backdrop-blur-sm border border-white/40 p-6 dark:bg-zinc-800/60 dark:border-zinc-700/40">
-              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500 to-violet-500 text-white">
-                <GraduationCap className="h-6 w-6" />
-              </div>
-              <h4 className="mb-2 font-semibold text-zinc-800 dark:text-white">Todos os Níveis</h4>
-              <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                Material adaptado desde iniciantes até investidores experientes
-              </p>
-            </div>
+          {/* Grid de Vídeos */}
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+            {videosMinicurso.map((video) => (
+              <VideoCard
+                key={video.id}
+                video={video}
+                onPlay={() => abrirVideo(video)}
+                isCompleted={aulasCompletas.includes(video.id)}
+              />
+            ))}
           </div>
         </div>
 
@@ -1690,6 +1937,16 @@ export default function Educacao() {
       {/* Modal do visualizador de eBook */}
       {ebookSelecionado && (
         <EbookViewerModal ebook={ebookSelecionado} onClose={fecharEbook} />
+      )}
+
+      {/* Modal do player de vídeo */}
+      {videoSelecionado && (
+        <VideoPlayerModal
+          video={videoSelecionado}
+          onClose={fecharVideo}
+          onComplete={() => marcarAulaConcluida(videoSelecionado.id)}
+          isCompleted={aulasCompletas.includes(videoSelecionado.id)}
+        />
       )}
     </div>
   )
