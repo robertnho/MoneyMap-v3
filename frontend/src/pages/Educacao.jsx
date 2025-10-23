@@ -1314,40 +1314,90 @@ const videosMinicurso = [
 
 // Modal do player de vídeo
 function VideoPlayerModal({ video, onClose, onComplete, isCompleted }) {
+  const [isVisible, setIsVisible] = useState(false)
+
   useEffect(() => {
+    // Bloquear scroll do body mantendo a posição
+    const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth
     document.body.style.overflow = 'hidden'
+    document.body.style.paddingRight = `${scrollBarWidth}px`
+    
+    // Trigger animation
+    setTimeout(() => setIsVisible(true), 10)
+    
     return () => {
-      document.body.style.overflow = 'unset'
+      // Restaurar scroll
+      document.body.style.overflow = ''
+      document.body.style.paddingRight = ''
     }
   }, [])
 
   useEffect(() => {
     const handleEsc = (e) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape') {
+        setIsVisible(false)
+        setTimeout(onClose, 300)
+      }
     }
     window.addEventListener('keydown', handleEsc)
     return () => window.removeEventListener('keydown', handleEsc)
   }, [onClose])
 
+  const handleClose = () => {
+    setIsVisible(false)
+    setTimeout(onClose, 300)
+  }
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-      <div className="relative w-full max-w-5xl bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl overflow-hidden">
+    <div 
+      className={`absolute z-50 transition-opacity duration-300 ${
+        isVisible ? 'opacity-100' : 'opacity-0'
+      }`}
+      style={{
+        position: 'absolute',
+        top: '1600px',
+        left: 0,
+        right: 0,
+        minHeight: '100vh',
+        width: '100%',
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        backdropFilter: 'blur(4px)',
+        display: 'flex',
+        alignItems: 'flex-start',
+        justifyContent: 'center',
+        paddingTop: `${window.scrollY + 50}px`,
+        paddingBottom: '2rem',
+        paddingLeft: '1rem',
+        paddingRight: '1rem'
+      }}
+      onClick={handleClose}
+    >
+      <div 
+        className={`relative w-full bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl overflow-hidden transition-all duration-300 ${
+          isVisible ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
+        }`}
+        style={{
+          maxWidth: '900px',
+          maxHeight: '90vh'
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 p-4">
-          <div>
+        <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 p-4 flex-shrink-0">
+          <div className="flex-1 pr-4">
             <h3 className="text-xl font-bold text-zinc-900 dark:text-white">{video.titulo}</h3>
             <p className="text-sm text-zinc-600 dark:text-zinc-400">{video.descricao}</p>
           </div>
           <button
-            onClick={onClose}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 transition-colors"
+            onClick={handleClose}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 transition-colors flex-shrink-0"
           >
             <X className="h-5 w-5 text-zinc-700 dark:text-zinc-300" />
           </button>
         </div>
 
         {/* Video Player */}
-        <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
+        <div className="relative w-full flex-shrink-0" style={{ paddingTop: '56.25%' }}>
           <iframe
             className="absolute inset-0 w-full h-full"
             src={`https://www.youtube.com/embed/${video.videoId}?autoplay=1&rel=0`}
@@ -1359,7 +1409,7 @@ function VideoPlayerModal({ video, onClose, onComplete, isCompleted }) {
         </div>
 
         {/* Footer com botão de conclusão */}
-        <div className="p-6 bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-800 dark:to-zinc-900">
+        <div className="p-6 bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-zinc-800 dark:to-zinc-900 flex-shrink-0">
           {!isCompleted ? (
             <button
               onClick={onComplete}
@@ -1516,7 +1566,12 @@ function EbookViewerModal({ ebook, onClose }) {
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm animate-in fade-in duration-300"
+      className="fixed inset-0 z-50 flex bg-black/90 backdrop-blur-sm animate-in fade-in duration-300"
+      style={{
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingTop: '95vh'
+      }}
       onClick={onClose}
     >
       <div 
