@@ -41,7 +41,7 @@
   "transactions.form.save": "Salvar Transação",
   "transactions.form.update": "Atualizar Transação",
   "transactions.form.saving": "Salvando...",
-  "transactions.footer": "© {{year}} MoneyMapp TCC. Todos os direitos reservados.",
+  "transactions.footer": "© {{year}} MoneyMapp. Todos os direitos reservados.",
   "transactions.confirm.delete": "Tem certeza de que deseja excluir esta transação?",
   "transactions.success.create": "Transação registrada com sucesso!",
   "transactions.success.update": "Transação atualizada com sucesso!",
@@ -138,5 +138,5 @@
   "settings.toast.accounts.unsetError": "Não foi possível remover o padrão da conta.",
   "settings.toast.languageChanged": "Idioma atualizado para {{language}}",
   "settings.motto": "💡 \"Personalize sua experiência no MoneyMapp do seu jeito.\"",
-  "settings.footer": "© {{year}} MoneyMapp TCC. Todos os direitos reservados."
+  "settings.footer": "© {{year}} MoneyMapp. Todos os direitos reservados."
 }

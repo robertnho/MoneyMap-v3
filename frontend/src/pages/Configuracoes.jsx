@@ -1492,7 +1492,7 @@ export default function Configuracoes() {
 
         {/* Rodapé */}
         <div className="text-center text-xs text-zinc-500 dark:text-zinc-400 mt-6">
-          © {new Date().getFullYear()} MoneyMapp TCC. Todos os direitos reservados.
+          © {new Date().getFullYear()} MoneyMapp. Todos os direitos reservados.
         </div>
       </div>
 

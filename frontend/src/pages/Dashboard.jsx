@@ -1003,7 +1003,7 @@ export default function Dashboard() {
 
         {/* Rodapé */}
         <div className="pt-6 text-center text-xs text-zinc-500 dark:text-zinc-400">
-          © 2024 MoneyMapp TCC. Todos os direitos reservados.
+          © 2025 MoneyMapp. Todos os direitos reservados.
         </div>
       </div>
     </div>

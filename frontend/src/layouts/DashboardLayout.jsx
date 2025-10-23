@@ -84,7 +84,7 @@ export default function DashboardLayout() {
               to="/dashboard"
               className="text-lg font-semibold tracking-wide text-slate-900 dark:text-slate-100"
             >
-              MoneyMapp TCC
+              MoneyMapp
             </Link>
             <span className="text-sm text-gray-500 dark:text-gray-400">
               • Área logada
