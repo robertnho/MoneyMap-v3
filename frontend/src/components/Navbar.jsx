@@ -1,6 +1,6 @@
 import React from 'react'
 import { NavLink, Link, useNavigate } from 'react-router-dom'
-import { PiggyBank } from 'lucide-react'
+import { PiggyBank, LogOut } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
 import UserProfile from './UserProfile.jsx'
 
@@ -27,7 +27,7 @@ export default function Navbar() {
           <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-white via-blue-50/60 to-blue-100/60 shadow-[0_10px_30px_-18px_rgba(37,99,235,0.55)] ring-1 ring-blue-100 transition-colors duration-300 dark:from-slate-800 dark:via-slate-800 dark:to-slate-700/80 dark:ring-slate-600">
             <PiggyBank className="h-5 w-5 text-slate-700 transition-colors duration-300 dark:text-slate-200" />
           </span>
-          <span className="text-lg font-semibold tracking-tight">MoneyMapp TCC</span>
+          <span className="text-lg font-semibold tracking-tight">MoneyMapp</span>
         </Link>
 
         {token ? (

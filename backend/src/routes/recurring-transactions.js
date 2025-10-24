@@ -6,6 +6,12 @@ import prisma from '../lib/prisma.js'
 
 const router = Router()
 
+// util: detecta se o modelo existe no Prisma Client
+const hasModel = (client, modelName) => {
+  const model = client?.[modelName]
+  return !!model && (typeof model.findMany === 'function' || typeof model.findFirst === 'function' || typeof model.findUnique === 'function')
+}
+
 const FREQUENCY_VALUES = ['daily', 'weekly', 'monthly', 'yearly']
 const STATUS_VALUES = ['confirmado', 'pendente']
 const TIPO_VALUES = ['receita', 'despesa']
@@ -289,7 +295,8 @@ const executeRecurring = async (recurring, userId, tx) => {
   }
 
   let categoriaNome = recurring.categoria
-  if (recurring.categoryId) {
+    const recurringCategoryId = Object.prototype.hasOwnProperty.call(recurring, 'categoryId') ? recurring.categoryId : null
+    if (recurringCategoryId) {
     const category = await tx.category.findFirst({ where: { id: recurring.categoryId, userId } })
     if (!category) {
       categoriaNome = recurring.categoria ?? 'Outros'
@@ -302,7 +309,7 @@ const executeRecurring = async (recurring, userId, tx) => {
     accountId: recurring.accountId,
     descricao: recurring.descricao,
     categoria: categoriaNome || 'Outros',
-    categoryId: recurring.categoryId ?? null,
+      categoryId: recurringCategoryId ?? null,
     valor: recurring.valor,
     tipo: recurring.tipo,
     status: recurring.status,
@@ -353,6 +360,10 @@ const executeRecurring = async (recurring, userId, tx) => {
 
 router.get('/', requireAuth, async (req, res) => {
   try {
+    if (!hasModel(prisma, 'recurringTransaction')) {
+      return res.json({ recurringTransactions: [] })
+    }
+
     const recurringTransactions = await prisma.recurringTransaction.findMany({
       where: { userId: req.user.id },
       orderBy: [{ isActive: 'desc' }, { nextRun: 'asc' }],
@@ -371,6 +382,9 @@ router.get('/', requireAuth, async (req, res) => {
 
 router.post('/', requireAuth, async (req, res) => {
   try {
+    if (!hasModel(prisma, 'recurringTransaction')) {
+      return res.status(404).json({ error: 'Recurso de transações recorrentes não disponível' })
+    }
     const parsed = CreateRecurringSchema.parse(req.body)
     const autoAdjustDay = parsed.autoAdjustDay !== false
 
@@ -429,6 +443,9 @@ router.post('/', requireAuth, async (req, res) => {
 
 router.put('/:id', requireAuth, async (req, res) => {
   try {
+    if (!hasModel(prisma, 'recurringTransaction')) {
+      return res.status(404).json({ error: 'Recurso de transações recorrentes não disponível' })
+    }
     const parsedId = Number(req.params.id)
     if (!Number.isInteger(parsedId)) {
       return res.status(400).json({ error: 'ID inválido' })
@@ -532,6 +549,9 @@ router.put('/:id', requireAuth, async (req, res) => {
 
 router.delete('/:id', requireAuth, async (req, res) => {
   try {
+    if (!hasModel(prisma, 'recurringTransaction')) {
+      return res.status(404).json({ error: 'Recurso de transações recorrentes não disponível' })
+    }
     const parsedId = Number(req.params.id)
     if (!Number.isInteger(parsedId)) {
       return res.status(400).json({ error: 'ID inválido' })
@@ -563,6 +583,9 @@ router.post('/:id/executar', requireAuth, async (req, res) => {
     if (!Number.isInteger(parsedId)) {
       return res.status(400).json({ error: 'ID inválido' })
     }
+    if (!hasModel(prisma, 'recurringTransaction')) {
+      return res.json({ processed: 0 })
+    }
 
     const recurring = await prisma.recurringTransaction.findFirst({ where: { id: parsedId, userId: req.user.id } })
     if (!recurring) {
@@ -582,6 +605,10 @@ router.post('/:id/executar', requireAuth, async (req, res) => {
 
 router.post('/processar', requireAuth, async (req, res) => {
   try {
+    if (!hasModel(prisma, 'recurringTransaction')) {
+      return res.json({ processed: 0 })
+    }
+
     const dueRecurring = await prisma.recurringTransaction.findMany({
       where: {
         userId: req.user.id,

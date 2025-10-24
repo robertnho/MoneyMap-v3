@@ -1,15 +1,18 @@
 import React, { useEffect, useState } from "react";
-import { Outlet, Link } from "react-router-dom";
+import { Outlet, Link, useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import UserProfile from "../components/UserProfile.jsx";
 import { Bell, Menu } from "lucide-react";
 import ThemeToggle from "../components/ThemeToggle.jsx";
 import api from "../services/api.js";
 import { dadosDemo } from "../data/dadosDemo.js";
+import { useAuth } from "../context/AuthContext.jsx";
 
 export default function DashboardLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const { token, sair, usuario } = useAuth()
+  const navigate = useNavigate()
 
   useEffect(() => {
     let mounted = true;
@@ -81,7 +84,7 @@ export default function DashboardLayout() {
               to="/dashboard"
               className="text-lg font-semibold tracking-wide text-slate-900 dark:text-slate-100"
             >
-              MoneyMapp TCC
+              MoneyMapp
             </Link>
             <span className="text-sm text-gray-500 dark:text-gray-400">
               • Área logada

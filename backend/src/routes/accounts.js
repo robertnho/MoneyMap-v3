@@ -79,27 +79,60 @@ router.post('/', requireAuth, async (req, res) => {
     const { name, color, isDefault, initialBalance, currency } = CreateAccountSchema.parse(req.body)
     const userId = req.user.id
 
-    const account = await prisma.$transaction(async (tx) => {
-      const hasDefault = await tx.account.findFirst({ where: { userId, isDefault: true } })
-      const makeDefault = isDefault ?? !hasDefault
+    let account
+    try {
+      account = await prisma.$transaction(async (tx) => {
+        const hasDefault = await tx.account.findFirst({ where: { userId, isDefault: true } })
+        const makeDefault = isDefault ?? !hasDefault
 
-      if (makeDefault) {
-        await tx.account.updateMany({ where: { userId }, data: { isDefault: false } })
-      }
+        if (makeDefault) {
+          await tx.account.updateMany({ where: { userId }, data: { isDefault: false } })
+        }
 
-      return tx.account.create({
-        data: {
-          name,
-          color,
-          isDefault: makeDefault,
-          userId,
-          initialBalance: initialBalance ?? new Prisma.Decimal('0'),
-          archivedAt: null,
-          deletedAt: null,
-          currency: currency ?? 'BRL',
-        },
+        return tx.account.create({
+          data: {
+            name,
+            color,
+            isDefault: makeDefault,
+            userId,
+            initialBalance: initialBalance ?? new Prisma.Decimal('0'),
+            archivedAt: null,
+            deletedAt: null,
+            currency: currency ?? 'BRL',
+          },
+        })
       })
-    })
+    } catch (error) {
+      // Se o schema não possui a coluna `currency`, tente recriar sem ela
+      const isCurrencyFieldError =
+        error?.message?.toLowerCase?.().includes('currency') || error?.code === 'P1012' || error instanceof Prisma.PrismaClientValidationError
+      if (isCurrencyFieldError) {
+        console.warn('Account create failed due to missing currency field, retrying without currency')
+        account = await prisma.$transaction(async (tx) => {
+          const hasDefault = await tx.account.findFirst({ where: { userId, isDefault: true } })
+          const makeDefault = isDefault ?? !hasDefault
+
+          if (makeDefault) {
+            await tx.account.updateMany({ where: { userId }, data: { isDefault: false } })
+          }
+
+          return tx.account.create({
+            data: {
+              name,
+              color,
+              isDefault: makeDefault,
+              userId,
+              initialBalance: initialBalance ?? new Prisma.Decimal('0'),
+              archivedAt: null,
+              deletedAt: null,
+              // omit currency
+            },
+          })
+        })
+      } else {
+        throw error
+      }
+    }
 
     res.status(201).json({ account })
   } catch (error) {
@@ -161,7 +194,20 @@ router.put('/:id', requireAuth, async (req, res) => {
         updateData.isDefault = false
       }
 
-      let saved = await tx.account.update({ where: { id: accountId }, data: updateData })
+      let saved
+      try {
+        saved = await tx.account.update({ where: { id: accountId }, data: updateData })
+      } catch (error) {
+        // se falhar por causa do campo currency ausente, tente sem o campo
+        const isCurrencyFieldError = error?.message?.toLowerCase?.().includes('currency') || error instanceof Prisma.PrismaClientValidationError
+        if (isCurrencyFieldError) {
+          console.warn('Account update failed due to missing currency field, retrying without currency')
+          const { currency: _omit, ...updateWithoutCurrency } = updateData
+          saved = await tx.account.update({ where: { id: accountId }, data: updateWithoutCurrency })
+        } else {
+          throw error
+        }
+      }
 
       if (isArchivingNow && existing.isDefault) {
         const fallback = await tx.account.findFirst({

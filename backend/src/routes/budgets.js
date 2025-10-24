@@ -1,9 +1,9 @@
 import { Router } from 'express'
-import { PrismaClient, Prisma } from '@prisma/client'
+import { Prisma } from '@prisma/client'
 import { z } from 'zod'
 import { requireAuth } from '../middleware/auth.js'
+import prisma from '../lib/prisma.js'
 
-const prisma = new PrismaClient()
 const router = Router()
 
 const amountSchema = z
@@ -18,11 +18,27 @@ const amountSchema = z
   .pipe(z.number().finite())
   .transform((v) => new Prisma.Decimal((Math.round(v * 100) / 100).toFixed(2)))
 
+let budgetsSupportsCategoryRelation = true
+
+const isCategoryFieldError = (error) =>
+  error instanceof Prisma.PrismaClientValidationError && /`category(Id)?`/.test(error.message)
+
+const parseCategoryInput = (value) => {
+  if (value === undefined) return undefined
+  if (value === null || value === '' || value === 'null') return null
+  return value
+}
+
+const categoryIdSchema = z.preprocess(
+  parseCategoryInput,
+  z.union([z.coerce.number().int().positive(), z.null()]).optional(),
+)
+
 const CreateBudgetSchema = z.object({
   name: z.string().trim().min(2).max(120),
   limitAmount: amountSchema,
   period: z.enum(['monthly', 'yearly', 'weekly']).optional(),
-  categoryId: z.coerce.number().int().positive(),
+  categoryId: categoryIdSchema,
 })
 
 const UpdateBudgetSchema = z.object({
@@ -31,7 +47,7 @@ const UpdateBudgetSchema = z.object({
   currentSpent: amountSchema.optional(),
   period: z.enum(['monthly', 'yearly', 'weekly']).optional(),
   status: z.enum(['active', 'paused', 'archived']).optional(),
-  categoryId: z.coerce.number().int().positive().optional(),
+  categoryId: categoryIdSchema,
 })
 
 const budgetsQuerySchema = z.object({
@@ -79,11 +95,25 @@ router.get('/', requireAuth, async (req, res) => {
         userId: req.user.id,
         ...(includeArchived ? {} : { status: { not: 'archived' } }),
       },
-      include: {
-        category: { select: { id: true, name: true, color: true } },
-      },
       orderBy: [{ status: 'asc' }, { createdAt: 'desc' }],
     })
+
+    const categoryIdList = budgetsSupportsCategoryRelation
+      ? budgets
+          .map((budget) => (Object.prototype.hasOwnProperty.call(budget, 'categoryId') ? budget.categoryId : undefined))
+          .filter((value) => value != null)
+      : []
+
+    const categories = budgetsSupportsCategoryRelation && categoryIdList.length
+      ? await prisma.category.findMany({
+          where: { id: { in: [...new Set(categoryIdList)] } },
+          select: { id: true, name: true, color: true },
+        })
+      : []
+
+    const categoryMap = budgetsSupportsCategoryRelation
+      ? new Map(categories.map((category) => [category.id, category]))
+      : new Map()
 
     const categoryTotals = await prisma.transaction.groupBy({
       by: ['categoryId'],
@@ -122,9 +152,9 @@ router.get('/', requireAuth, async (req, res) => {
 
     const enriched = budgets.map((budget) => {
       const limitValue = Number(budget.limitAmount ?? 0)
-      const rawSpent = budget.categoryId != null
+      const rawSpent = budgetsSupportsCategoryRelation && Object.prototype.hasOwnProperty.call(budget, 'categoryId') && budget.categoryId != null
         ? spentByCategoryId.get(budget.categoryId) ?? 0
-        : spentByCategoryId.get('null') ?? spentByCategoryName.get(budget.category?.name ?? budget.name) ?? Number(budget.currentSpent ?? 0)
+        : spentByCategoryId.get('null') ?? spentByCategoryName.get(budget.name) ?? Number(budget.currentSpent ?? 0)
 
   const spent = round2(rawSpent)
   const remaining = round2(limitValue - spent)
@@ -143,7 +173,10 @@ router.get('/', requireAuth, async (req, res) => {
         updatedAt: budget.updatedAt,
         limitAmount: limitValue,
         currentSpent: Number(budget.currentSpent ?? 0),
-        category: budget.category ? { ...budget.category } : null,
+        category:
+          budgetsSupportsCategoryRelation && Object.prototype.hasOwnProperty.call(budget, 'categoryId') && budget.categoryId != null
+            ? categoryMap.get(budget.categoryId) ?? null
+            : null,
         monthlyStatus: {
           month: resolvedMonth,
           year: resolvedYear,
@@ -178,25 +211,58 @@ router.get('/', requireAuth, async (req, res) => {
 router.post('/', requireAuth, async (req, res) => {
   try {
     const payload = CreateBudgetSchema.parse(req.body)
-    await ensureCategory(req.user.id, payload.categoryId)
+    let budget
+    let category = null
 
-    const budget = await prisma.budget.create({
-      data: {
+    try {
+      const data = {
         userId: req.user.id,
         name: payload.name,
         limitAmount: payload.limitAmount,
         currentSpent: new Prisma.Decimal('0'),
         period: payload.period ?? 'monthly',
-        categoryId: payload.categoryId,
-      },
-      include: { category: { select: { id: true, name: true, color: true } } },
-    })
+        ...(budgetsSupportsCategoryRelation && typeof payload.categoryId === 'number' ? { categoryId: payload.categoryId } : {}),
+      }
+
+      if (budgetsSupportsCategoryRelation && typeof payload.categoryId === 'number') {
+        await ensureCategory(req.user.id, payload.categoryId)
+      }
+
+      budget = await prisma.budget.create({ data })
+
+      if (
+        budgetsSupportsCategoryRelation &&
+        Object.prototype.hasOwnProperty.call(budget, 'categoryId') &&
+        typeof budget.categoryId === 'number'
+      ) {
+        category = await prisma.category.findUnique({
+          where: { id: budget.categoryId },
+          select: { id: true, name: true, color: true },
+        })
+      }
+    } catch (error) {
+      if (isCategoryFieldError(error)) {
+        budgetsSupportsCategoryRelation = false
+        budget = await prisma.budget.create({
+          data: {
+            userId: req.user.id,
+            name: payload.name,
+            limitAmount: payload.limitAmount,
+            currentSpent: new Prisma.Decimal('0'),
+            period: payload.period ?? 'monthly',
+          },
+        })
+      } else {
+        throw error
+      }
+    }
 
     res.status(201).json({
       budget: {
         ...budget,
         limitAmount: Number(budget.limitAmount ?? 0),
         currentSpent: Number(budget.currentSpent ?? 0),
+        category,
       },
     })
   } catch (e) {
@@ -216,23 +282,63 @@ router.put('/:id', requireAuth, async (req, res) => {
     const existing = await prisma.budget.findFirst({ where: { id, userId: req.user.id } })
     if (!existing) return res.status(404).json({ error: 'Orçamento não encontrado' })
 
-    if (payload.categoryId) {
-      await ensureCategory(req.user.id, payload.categoryId)
+    let category = null
+    let updated
+
+    try {
+      const data = {}
+
+      if (payload.name !== undefined) data.name = payload.name
+      if (payload.limitAmount !== undefined) data.limitAmount = payload.limitAmount
+      if (payload.currentSpent !== undefined) data.currentSpent = payload.currentSpent
+      if (payload.period !== undefined) data.period = payload.period
+      if (payload.status !== undefined) data.status = payload.status
+
+      if (budgetsSupportsCategoryRelation && Object.prototype.hasOwnProperty.call(payload, 'categoryId')) {
+        if (typeof payload.categoryId === 'number') {
+          await ensureCategory(req.user.id, payload.categoryId)
+          data.categoryId = payload.categoryId
+        } else {
+          data.categoryId = null
+        }
+      }
+
+      updated = await prisma.budget.update({
+        where: { id },
+        data,
+      })
+
+      if (
+        budgetsSupportsCategoryRelation &&
+        Object.prototype.hasOwnProperty.call(updated, 'categoryId') &&
+        typeof updated.categoryId === 'number'
+      ) {
+        category = await prisma.category.findUnique({
+          where: { id: updated.categoryId },
+          select: { id: true, name: true, color: true },
+        })
+      }
+    } catch (error) {
+      if (isCategoryFieldError(error)) {
+        budgetsSupportsCategoryRelation = false
+        const fallbackData = {}
+        if (payload.name !== undefined) fallbackData.name = payload.name
+        if (payload.limitAmount !== undefined) fallbackData.limitAmount = payload.limitAmount
+        if (payload.currentSpent !== undefined) fallbackData.currentSpent = payload.currentSpent
+        if (payload.period !== undefined) fallbackData.period = payload.period
+        if (payload.status !== undefined) fallbackData.status = payload.status
+        updated = await prisma.budget.update({ where: { id }, data: fallbackData })
+      } else {
+        throw error
+      }
     }
-
-    const data = { ...payload }
-
-    const updated = await prisma.budget.update({
-      where: { id },
-      data,
-      include: { category: { select: { id: true, name: true, color: true } } },
-    })
 
     res.json({
       budget: {
         ...updated,
         limitAmount: Number(updated.limitAmount ?? 0),
         currentSpent: Number(updated.currentSpent ?? 0),
+        category,
       },
     })
   } catch (e) {
@@ -264,17 +370,43 @@ router.post('/:id/reset-spent', requireAuth, async (req, res) => {
     const existing = await prisma.budget.findFirst({ where: { id, userId: req.user.id } })
     if (!existing) return res.status(404).json({ error: 'Orçamento não encontrado' })
 
-    const updated = await prisma.budget.update({
-      where: { id },
-      data: { currentSpent: new Prisma.Decimal('0') },
-      include: { category: { select: { id: true, name: true, color: true } } },
-    })
+    let updated
+    let category = null
+
+    try {
+      updated = await prisma.budget.update({
+        where: { id },
+        data: { currentSpent: new Prisma.Decimal('0') },
+      })
+
+      if (
+        budgetsSupportsCategoryRelation &&
+        Object.prototype.hasOwnProperty.call(updated, 'categoryId') &&
+        typeof updated.categoryId === 'number'
+      ) {
+        category = await prisma.category.findUnique({
+          where: { id: updated.categoryId },
+          select: { id: true, name: true, color: true },
+        })
+      }
+    } catch (error) {
+      if (isCategoryFieldError(error)) {
+        budgetsSupportsCategoryRelation = false
+        updated = await prisma.budget.update({
+          where: { id },
+          data: { currentSpent: new Prisma.Decimal('0') },
+        })
+      } else {
+        throw error
+      }
+    }
 
     res.json({
       budget: {
         ...updated,
         limitAmount: Number(updated.limitAmount ?? 0),
         currentSpent: 0,
+        category,
       },
     })
   } catch (e) {

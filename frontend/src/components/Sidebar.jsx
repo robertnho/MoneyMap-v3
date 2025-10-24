@@ -67,7 +67,7 @@ export default function Sidebar({ aberto, onFechar }) {
             </div>
             <div className={`ml-3 overflow-hidden transition-all ${expanded ? 'opacity-100 max-w-[999px]' : 'opacity-0 max-w-0'}`}>
               <h3 className="text-lg font-bold text-gray-900 dark:text-white whitespace-nowrap">MoneyMapp</h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">Versão TCC</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">Plataforma Financeira</p>
             </div>
           </div>
         </div>
@@ -145,7 +145,7 @@ export default function Sidebar({ aberto, onFechar }) {
             </div>
             <div className="ml-3">
               <h3 className="text-lg font-bold text-gray-900 dark:text-white">MoneyMapp</h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Versão TCC</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Plataforma Financeira</p>
             </div>
           </div>
           <button onClick={onFechar} className="p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">

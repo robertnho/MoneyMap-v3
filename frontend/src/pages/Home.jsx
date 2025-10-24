@@ -129,7 +129,7 @@ export default function Home() {
             transition={{ duration: 0.8, delay: 0.4 }}
             className="mb-6 bg-gradient-to-r from-white via-white to-blue-100 bg-clip-text text-5xl font-extrabold text-transparent md:text-7xl"
           >
-            MoneyMapp TCC
+            MoneyMapp
           </motion.h1>
           
           <motion.h2 
@@ -464,9 +464,9 @@ export default function Home() {
             </div>
             
             <div className="mb-4 space-y-2">
-              <p className="text-white/80">© 2024 MoneyMapp TCC. Todos os direitos reservados.</p>
+              <p className="text-white/80">© 2025 MoneyMapp. Todos os direitos reservados.</p>
               <p className="text-sm text-white/60">
-                Desenvolvido como Trabalho de Conclusão de Curso - Tecnologia da Informação
+                Plataforma completa de educação e gestão financeira
               </p>
             </div>
             
