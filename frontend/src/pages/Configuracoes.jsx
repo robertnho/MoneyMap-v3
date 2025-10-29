@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useTheme } from '../contexts/ThemeContext.jsx'
 import { formatarMoedaBRL, formatarDataISOParaBR } from '../utils/formatadores.js'
-import api from '../services/api'
+import api from '../services/api.ts'
 import {
   Settings,
   User,

@@ -106,14 +106,18 @@ app.use((req, res, next) => {
 // ===== ARQUIVOS ESTÁTICOS /public (sem index em "/") =====
 app.use('/public', express.static(path.join(__dirname, '..', 'public'), { index: false }))
 
-// ===== HEALTHCHECK =====
-app.get('/health', async (req, res) => {
+// ===== HEALTHCHECKS =====
+app.get('/health', (req, res) => {
+  res.json({ ok: true, time: new Date().toISOString() })
+})
+
+app.get('/readyz', async (req, res) => {
   try {
     await prisma.$queryRaw`SELECT 1`
     res.json({ ok: true, db: 'up', time: new Date().toISOString() })
   } catch (e) {
-    console.error('healthcheck error:', e)
-    res.status(500).json({ ok: false, error: 'db down' })
+    console.error('readyz error:', e)
+    res.status(503).json({ ok: false, error: 'db down' })
   }
 })
 
@@ -284,9 +288,10 @@ app.use((err, req, res, next) => {
 /* eslint-enable no-unused-vars */
 
 // ===== START =====
-const PORT = process.env.PORT || 3000
-app.listen(PORT, () => {
-  console.log(`[auth] listening on http://localhost:${PORT}`)
+const PORT = Number(process.env.PORT || 3000)
+const HOST = process.env.HOST || '0.0.0.0'
+app.listen(PORT, HOST, () => {
+  console.log(`[server] listening on http://${HOST}:${PORT}`)
 })
 
 export default app

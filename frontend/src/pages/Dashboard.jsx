@@ -35,7 +35,7 @@ import {
   LineChart,
   Line,
 } from 'recharts'
-import api from '../services/api'
+import api from '../services/api.ts'
 
 /* ============================================================================
    HELPERS

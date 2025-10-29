@@ -1,0 +1,42 @@
+services:
+  - type: web
+    name: moneymapp-backend
+    env: node
+    branch: main
+    autoDeploy: true
+    buildCommand: |
+      cd backend
+      npm ci
+      npm run prisma:generate
+      npx prisma migrate deploy
+    startCommand: |
+      cd backend
+      npm run start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: STATIC_DIR
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: LOG_BODY
+        value: "false"
+      - key: NOTIFY_BUDGET_THRESHOLD
+        value: "0.8"
+      - key: NOTIFY_DEBT_DAYS
+        value: "3"

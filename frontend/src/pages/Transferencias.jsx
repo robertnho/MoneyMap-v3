@@ -25,7 +25,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion'
 import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer } from 'recharts'
 import { useTheme } from '../contexts/ThemeContext.jsx'
-import api from '../services/api.js'
+import api from '../services/api.ts'
 import { formatarDataISOParaBR, formatarMoedaBRL } from '../utils/formatadores.js'
 
 const STATUS_OPTIONS = [

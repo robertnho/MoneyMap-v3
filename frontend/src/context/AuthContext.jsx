@@ -1,6 +1,6 @@
 // src/context/AuthContext.jsx
 import { createContext, useEffect, useMemo, useState, useContext } from 'react'
-import api from '../services/api'
+import api, { setAuthToken } from '../services/api.ts'
 
 const AuthContexto = createContext(null)
 
@@ -14,13 +14,9 @@ export function AuthProvider({ children }) {
   })
   const [token, setToken] = useState(() => localStorage.getItem('mm_token') ?? '')
 
-  // Propaga/remova o Authorization no axios quando o token mudar
+  // Atualiza o cabeçalho Authorization em todas as chamadas quando o token mudar
   useEffect(() => {
-    if (token) {
-      api.instancia.defaults.headers.common['Authorization'] = `Bearer ${token}`
-    } else {
-      delete api.instancia.defaults.headers.common['Authorization']
-    }
+    setAuthToken(token)
   }, [token])
 
   // LOGIN — aceita { email, senha } OU { email, password }
@@ -81,7 +77,7 @@ export function AuthProvider({ children }) {
     setUsuario(null)
     localStorage.removeItem('mm_token')
     localStorage.removeItem('mm_usuario')
-    delete api.instancia.defaults.headers.common['Authorization']
+  setAuthToken(null)
   }
 
   const permissoes = useMemo(() => {

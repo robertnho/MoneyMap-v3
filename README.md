@@ -26,6 +26,21 @@ npm run dev             # http://localhost:5173
 > Em produção, você pode rodar `npm run build` no frontend e apontar
 > `STATIC_DIR` no backend para a pasta `frontend/dist` para servir o SPA pela API.
 
+## Deploy no Render
+
+1. Crie o banco MySQL (AlwaysData, PlanetScale, etc.) e capture a `DATABASE_URL` completa (`mysql://usuario:senha@host:3306/banco`).
+2. Faça fork deste repositório ou conecte-o direto ao Render e confirme que o arquivo `render.yaml` esteja na raiz.
+3. Ao criar o serviço web no Render escolha **Use render.yaml**, selecione a branch `main` e confirme o plano desejado.
+4. Defina as variáveis de ambiente marcadas com `sync: false` no Render (consulte `backend/.env.example` para referência). O Render preencherá automaticamente `PORT`.
+5. Durante o deploy o Render executará `npm ci`, `npm run prisma:generate` e `npx prisma migrate deploy` dentro do *Build Command*. O *Start Command* apenas chama `npm run start`, então o app sobe imediatamente e aplica as migrations durante o build. Após a primeira subida, rode um *Manual Deploy* com o comando `npm run seed` (Deploys → Manual Deploy → Custom Command) caso queira os dados de demonstração.
+
+> O healthcheck padrão do serviço aponta para `/health`. Se desejar habilitar logs de corpo de requisições em produção, ajuste `LOG_BODY` para `true` (não recomendado em ambientes públicos).
+
+### Endpoints de saúde
+
+- `GET /health` — liveness simples (não acessa o banco) para aponte no Render.
+- `GET /readyz` — readiness que valida a conexão com o banco; retorna **200** quando o MySQL responde e **503** caso contrário.
+
 ## CORS
 Backend já vem com `cors()` habilitado para aceitar chamadas do frontend dev.
 

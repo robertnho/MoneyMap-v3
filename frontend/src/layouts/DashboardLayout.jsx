@@ -4,7 +4,7 @@ import Sidebar from "../components/Sidebar";
 import UserProfile from "../components/UserProfile.jsx";
 import { Bell, Menu } from "lucide-react";
 import ThemeToggle from "../components/ThemeToggle.jsx";
-import api from "../services/api.js";
+import api from "../services/api.ts";
 import { dadosDemo } from "../data/dadosDemo.js";
 import { useAuth } from "../context/AuthContext.jsx";
 

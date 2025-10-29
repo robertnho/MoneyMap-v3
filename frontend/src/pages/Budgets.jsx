@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useTheme } from '../contexts/ThemeContext.jsx'
-import api from '../services/api'
+import api from '../services/api.ts'
 import BudgetModal from '../components/BudgetModal'
 import Button from '../components/ui/Button'
 

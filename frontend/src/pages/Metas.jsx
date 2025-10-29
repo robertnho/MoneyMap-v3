@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Target, TrendingUp, Calendar, Plus, CheckCircle, Circle, DollarSign, Percent } from 'lucide-react'
 import { useTheme } from '../contexts/ThemeContext.jsx'
-import api from '../services/api'
+import api from '../services/api.ts'
 import GoalModal from '../components/GoalModal'
 
 function MetaCard({ meta, isDark, onEdit, onDelete }) {

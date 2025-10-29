@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTheme } from '../contexts/ThemeContext.jsx'
-import api from '../services/api.js'
+import api from '../services/api.ts'
 import { formatarDataISOParaBR, formatarMoedaBRL } from '../utils/formatadores.js'
 import {
   Plus,

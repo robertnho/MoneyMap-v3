@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import Modal from './ui/Modal'
 import Input from './ui/Input'
 import Button from './ui/Button'
-import api from '../services/api'
+import api from '../services/api.ts'
 
 export default function BudgetModal({ isOpen, onClose, initial = null, onSaved }) {
   const [name, setName] = useState('')

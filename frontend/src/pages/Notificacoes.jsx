@@ -21,7 +21,7 @@ import {
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from 'recharts'
-import api from '../services/api'
+import api from '../services/api.ts'
 import Button from '../components/ui/Button.jsx'
 import { SkeletonList } from '../components/ui/Skeleton.jsx'
 import { dadosDemo } from '../data/dadosDemo.js'
