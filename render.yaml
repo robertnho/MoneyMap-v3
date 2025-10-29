@@ -4,14 +4,8 @@ services:
     env: node
     branch: main
     autoDeploy: true
-    buildCommand: |
-      cd backend
-      npm ci
-      npm run prisma:generate
-      npx prisma migrate deploy
-    startCommand: |
-      cd backend
-      npm run start
+    buildCommand: cd backend && npm ci && npm run prisma:generate && npx prisma migrate deploy
+    startCommand: cd backend && npm run start
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
