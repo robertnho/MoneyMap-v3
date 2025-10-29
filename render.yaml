@@ -5,8 +5,8 @@ services:
     branch: main
     autoDeploy: true
     rootDir: backend
-    buildCommand: npm run build
-    startCommand: npm run dev
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
