@@ -5,7 +5,7 @@ services:
     branch: main
     autoDeploy: true
     rootDir: backend
-    buildCommand: npm install && npm run build
+    buildCommand: npm install && npm run build && cat package.json
     startCommand: npm run start
     healthCheckPath: /health
     envVars:
